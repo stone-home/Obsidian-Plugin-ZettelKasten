@@ -10,22 +10,48 @@ export enum NoteType {
 	UNKNOWN = 'unknown'
 }
 
-// 插件设置接口
+// 插件设置接口 - 扩展更多配置项
 interface ZettelkastenSettings {
+	// 路径设置
 	fleetingPath: string;
 	literaturePath: string;
 	permanentPath: string;
 	atomicPath: string;
+
+	// 基础设置
 	useTemplater: boolean;
+	autoOpenNewNote: boolean;
+	showUpgradeNotifications: boolean;
+
+	// 模板设置
+	includeTimestamp: boolean;
+	defaultTags: string[];
+
+	// 高级设置
+	maxRecentNotes: number;
+	enableAutoLinking: boolean;
 }
 
-// 默认设置
+// 默认设置 - 更完整的配置
 const DEFAULT_SETTINGS: ZettelkastenSettings = {
+	// 路径设置
 	fleetingPath: '000-inbox/1-fleeting',
 	literaturePath: '000-inbox/2-literature',
 	permanentPath: '000-inbox/3-permanent',
 	atomicPath: '000-inbox/4-atoms',
-	useTemplater: true
+
+	// 基础设置
+	useTemplater: true,
+	autoOpenNewNote: true,
+	showUpgradeNotifications: true,
+
+	// 模板设置
+	includeTimestamp: true,
+	defaultTags: [],
+
+	// 高级设置
+	maxRecentNotes: 10,
+	enableAutoLinking: false
 }
 
 // 文件名输入Modal
@@ -933,9 +959,10 @@ tags: []
 	}
 }
 
-// 设置选项卡
+// 设置选项卡 - 重构为多标签页界面
 class ZettelkastenSettingTab extends PluginSettingTab {
 	plugin: ZettelkastenWorkflow;
+	private activeTab: string = 'basic';
 
 	constructor(app: App, plugin: ZettelkastenWorkflow) {
 		super(app, plugin);
@@ -944,63 +971,348 @@ class ZettelkastenSettingTab extends PluginSettingTab {
 
 	display(): void {
 		const { containerEl } = this;
-
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Zettelkasten 工作流设置' });
+		// 创建标题
+		containerEl.createEl('h1', { text: 'Zettelkasten 工作流设置' });
 
-		new Setting(containerEl)
-			.setName('Fleeting 笔记路径')
-			.setDesc('临时笔记的默认保存路径')
-			.addText(text => text
-				.setPlaceholder('000-inbox/1-fleeting')
-				.setValue(this.plugin.settings.fleetingPath)
-				.onChange(async (value) => {
-					this.plugin.settings.fleetingPath = value;
-					await this.plugin.saveSettings();
-				}));
+		// 创建标签页导航
+		this.createTabNavigation(containerEl);
 
-		new Setting(containerEl)
-			.setName('Literature 笔记路径')
-			.setDesc('文献笔记的默认保存路径')
-			.addText(text => text
-				.setPlaceholder('000-inbox/2-literature')
-				.setValue(this.plugin.settings.literaturePath)
-				.onChange(async (value) => {
-					this.plugin.settings.literaturePath = value;
-					await this.plugin.saveSettings();
-				}));
+		// 创建内容区域
+		const contentEl = containerEl.createDiv({ cls: 'zettel-settings-content' });
 
-		new Setting(containerEl)
-			.setName('Permanent 笔记路径')
-			.setDesc('永久笔记的默认保存路径')
-			.addText(text => text
-				.setPlaceholder('000-inbox/3-permanent')
-				.setValue(this.plugin.settings.permanentPath)
-				.onChange(async (value) => {
-					this.plugin.settings.permanentPath = value;
-					await this.plugin.saveSettings();
-				}));
+		// 根据当前激活的标签页显示内容
+		switch (this.activeTab) {
+			case 'basic':
+				this.displayBasicSettings(contentEl);
+				break;
+			case 'paths':
+				this.displayPathSettings(contentEl);
+				break;
+			case 'templates':
+				this.displayTemplateSettings(contentEl);
+				break;
+			case 'advanced':
+				this.displayAdvancedSettings(contentEl);
+				break;
+		}
+	}
 
-		new Setting(containerEl)
-			.setName('Atomic 笔记路径')
-			.setDesc('原子笔记的默认保存路径')
-			.addText(text => text
-				.setPlaceholder('000-inbox/4-atoms')
-				.setValue(this.plugin.settings.atomicPath)
-				.onChange(async (value) => {
-					this.plugin.settings.atomicPath = value;
-					await this.plugin.saveSettings();
-				}));
+	private createTabNavigation(containerEl: HTMLElement) {
+		const tabNavEl = containerEl.createDiv({ cls: 'zettel-tab-navigation' });
 
-		new Setting(containerEl)
-			.setName('使用 Templater')
-			.setDesc('是否集成 Templater 插件进行模板管理')
+		const tabs = [
+			{ id: 'basic', name: '🔧 基础设置', desc: '核心功能配置' },
+			{ id: 'paths', name: '📁 路径设置', desc: '笔记保存路径' },
+			{ id: 'templates', name: '📝 模板设置', desc: '笔记模板配置' },
+			{ id: 'advanced', name: '⚙️ 高级设置', desc: '高级功能选项' }
+		];
+
+		tabs.forEach(tab => {
+			const tabEl = tabNavEl.createDiv({
+				cls: `zettel-tab ${this.activeTab === tab.id ? 'active' : ''}`
+			});
+
+			const tabButton = tabEl.createEl('button', {
+				text: tab.name,
+				cls: 'zettel-tab-button'
+			});
+
+			tabButton.createEl('div', {
+				text: tab.desc,
+				cls: 'zettel-tab-desc'
+			});
+
+			tabButton.addEventListener('click', () => {
+				this.activeTab = tab.id;
+				this.display(); // 重新渲染
+			});
+		});
+	}
+
+	private displayBasicSettings(contentEl: HTMLElement) {
+		contentEl.createEl('h2', { text: '🔧 基础设置' });
+		contentEl.createEl('p', {
+			text: '配置 Zettelkasten 插件的核心功能和行为',
+			cls: 'setting-section-description'
+		});
+
+		new Setting(contentEl)
+			.setName('使用 Templater 插件')
+			.setDesc('启用后将集成 Templater 插件进行高级模板管理')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.useTemplater)
 				.onChange(async (value) => {
 					this.plugin.settings.useTemplater = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(contentEl)
+			.setName('自动打开新笔记')
+			.setDesc('创建新笔记后自动在编辑器中打开')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.autoOpenNewNote)
+				.onChange(async (value) => {
+					this.plugin.settings.autoOpenNewNote = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('显示升级通知')
+			.setDesc('笔记升级完成后显示成功通知')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showUpgradeNotifications)
+				.onChange(async (value) => {
+					this.plugin.settings.showUpgradeNotifications = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('启用自动链接')
+			.setDesc('自动检测并创建相关笔记之间的链接')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableAutoLinking)
+				.onChange(async (value) => {
+					this.plugin.settings.enableAutoLinking = value;
+					await this.plugin.saveSettings();
+				}));
+	}
+
+	private displayPathSettings(contentEl: HTMLElement) {
+		contentEl.createEl('h2', { text: '📁 路径设置' });
+		contentEl.createEl('p', {
+			text: '配置不同类型笔记的默认保存路径',
+			cls: 'setting-section-description'
+		});
+
+		new Setting(contentEl)
+			.setName('🕒 Fleeting 笔记路径')
+			.setDesc('临时笔记的默认保存路径')
+			.addText(text => text
+				.setPlaceholder('例如: 000-inbox/1-fleeting')
+				.setValue(this.plugin.settings.fleetingPath)
+				.onChange(async (value) => {
+					this.plugin.settings.fleetingPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('📚 Literature 笔记路径')
+			.setDesc('文献笔记的默认保存路径')
+			.addText(text => text
+				.setPlaceholder('例如: 000-inbox/2-literature')
+				.setValue(this.plugin.settings.literaturePath)
+				.onChange(async (value) => {
+					this.plugin.settings.literaturePath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('📝 Permanent 笔记路径')
+			.setDesc('永久笔记的默认保存路径')
+			.addText(text => text
+				.setPlaceholder('例如: 000-inbox/3-permanent')
+				.setValue(this.plugin.settings.permanentPath)
+				.onChange(async (value) => {
+					this.plugin.settings.permanentPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('⚛️ Atomic 笔记路径')
+			.setDesc('原子笔记的默认保存路径')
+			.addText(text => text
+				.setPlaceholder('例如: 000-inbox/4-atoms')
+				.setValue(this.plugin.settings.atomicPath)
+				.onChange(async (value) => {
+					this.plugin.settings.atomicPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// 添加路径重置按钮
+		new Setting(contentEl)
+			.setName('重置为默认路径')
+			.setDesc('将所有路径重置为插件默认值')
+			.addButton(button => button
+				.setButtonText('重置路径')
+				.setCta()
+				.onClick(async () => {
+					this.plugin.settings.fleetingPath = DEFAULT_SETTINGS.fleetingPath;
+					this.plugin.settings.literaturePath = DEFAULT_SETTINGS.literaturePath;
+					this.plugin.settings.permanentPath = DEFAULT_SETTINGS.permanentPath;
+					this.plugin.settings.atomicPath = DEFAULT_SETTINGS.atomicPath;
+					await this.plugin.saveSettings();
+					this.display(); // 重新渲染以显示更新的值
+				}));
+	}
+
+	private displayTemplateSettings(contentEl: HTMLElement) {
+		contentEl.createEl('h2', { text: '📝 模板设置' });
+		contentEl.createEl('p', {
+			text: '配置笔记模板的生成选项',
+			cls: 'setting-section-description'
+		});
+
+		new Setting(contentEl)
+			.setName('包含时间戳')
+			.setDesc('在笔记 frontmatter 中包含详细的创建时间戳')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.includeTimestamp)
+				.onChange(async (value) => {
+					this.plugin.settings.includeTimestamp = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('默认标签')
+			.setDesc('创建新笔记时自动添加的默认标签（用逗号分隔）')
+			.addTextArea(text => text
+				.setPlaceholder('例如: zettelkasten, note, draft')
+				.setValue(this.plugin.settings.defaultTags.join(', '))
+				.onChange(async (value) => {
+					// 将逗号分隔的字符串转换为数组
+					this.plugin.settings.defaultTags = value
+						.split(',')
+						.map(tag => tag.trim())
+						.filter(tag => tag.length > 0);
+					await this.plugin.saveSettings();
+				}));
+
+		// 模板预览
+		const previewEl = contentEl.createDiv({ cls: 'zettel-template-preview' });
+		previewEl.createEl('h3', { text: '🔍 模板预览' });
+
+		const previewContent = previewEl.createEl('pre', { cls: 'zettel-preview-content' });
+		previewContent.textContent = this.generateTemplatePreview();
+	}
+
+	private displayAdvancedSettings(contentEl: HTMLElement) {
+		contentEl.createEl('h2', { text: '⚙️ 高级设置' });
+		contentEl.createEl('p', {
+			text: '高级功能和性能优化选项',
+			cls: 'setting-section-description'
+		});
+
+		new Setting(contentEl)
+			.setName('最大最近笔记数量')
+			.setDesc('在快速访问列表中显示的最近笔记数量')
+			.addSlider(slider => slider
+				.setLimits(5, 50, 5)
+				.setValue(this.plugin.settings.maxRecentNotes)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.maxRecentNotes = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// 重置所有设置
+		new Setting(contentEl)
+			.setName('🔄 重置所有设置')
+			.setDesc('将所有设置重置为默认值（需要重启插件）')
+			.addButton(button => button
+				.setButtonText('重置所有设置')
+				.setWarning()
+				.onClick(async () => {
+					const confirmed = confirm(
+						'确定要重置所有设置吗？这将清除所有自定义配置并需要重启插件。'
+					);
+					if (confirmed) {
+						this.plugin.settings = { ...DEFAULT_SETTINGS };
+						await this.plugin.saveSettings();
+						alert('设置已重置，请重新加载插件以生效。');
+					}
+				}));
+
+		// 导出/导入设置
+		new Setting(contentEl)
+			.setName('📤 导出设置')
+			.setDesc('将当前设置导出为 JSON 文件')
+			.addButton(button => button
+				.setButtonText('导出设置')
+				.onClick(() => {
+					this.exportSettings();
+				}));
+
+		new Setting(contentEl)
+			.setName('📥 导入设置')
+			.setDesc('从 JSON 文件导入设置')
+			.addButton(button => button
+				.setButtonText('导入设置')
+				.onClick(() => {
+					this.importSettings();
+				}));
+	}
+
+	private generateTemplatePreview(): string {
+		const sampleTags = this.plugin.settings.defaultTags.length > 0
+			? this.plugin.settings.defaultTags
+			: ['sample', 'tag'];
+
+		const timestamp = this.plugin.settings.includeTimestamp
+			? new Date().toISOString()
+			: new Date().toISOString().split('T')[0];
+
+		return `---
+note_type: fleeting
+created: ${timestamp}
+source_notes: []
+derived_notes: []
+tags: [${sampleTags.map(tag => `"${tag}"`).join(', ')}]
+---
+
+# Fleeting Note
+
+## 💭 快速想法
+
+## 📍 来源
+
+## 🏷️ 标签`;
+	}
+
+	private exportSettings() {
+		const dataStr = JSON.stringify(this.plugin.settings, null, 2);
+		const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(dataBlob);
+		link.download = 'zettelkasten-settings.json';
+		link.click();
+	}
+
+	private importSettings() {
+		const input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+
+		input.onchange = async (e) => {
+			const file = (e.target as HTMLInputElement).files?.[0];
+			if (!file) return;
+
+			try {
+				const text = await file.text();
+				const importedSettings = JSON.parse(text);
+
+				// 验证导入的设置
+				if (this.validateSettings(importedSettings)) {
+					this.plugin.settings = { ...DEFAULT_SETTINGS, ...importedSettings };
+					await this.plugin.saveSettings();
+					this.display(); // 重新渲染
+					alert('设置导入成功！');
+				} else {
+					alert('设置文件格式无效！');
+				}
+			} catch (error) {
+				alert('导入失败：' + error.message);
+			}
+		};
+
+		input.click();
+	}
+
+	private validateSettings(settings: any): boolean {
+		// 基本的设置验证
+		const requiredFields = ['fleetingPath', 'literaturePath', 'permanentPath', 'atomicPath'];
+		return requiredFields.every(field => typeof settings[field] === 'string');
 	}
 }

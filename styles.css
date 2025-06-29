@@ -7,6 +7,7 @@ If your plugin does not need CSS, delete this file.
 
 */
 
+
 .zettel-current-note-section {
 	background: var(--background-secondary);
 	padding: 16px;
@@ -88,6 +89,177 @@ If your plugin does not need CSS, delete this file.
 .zettel-warning {
 	color: var(--text-error);
 	font-style: italic;
+}
+
+.zettel-info {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--interactive-normal);
+	cursor: pointer;
+}
+
+.modal-button-container button:hover {
+	background: var(--interactive-hover);
+}
+
+.modal-button-container button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.modal-button-container button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/* 文件名输入表单样式 */
+.file-name-input-container {
+	margin: 16px 0;
+}
+
+.file-name-label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: bold;
+	color: var(--text-normal);
+}
+
+.file-name-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+}
+
+.file-name-input:focus {
+	outline: none;
+	border-color: var(--text-accent);
+	box-shadow: 0 0 0 2px var(--text-accent-transparent);
+}
+
+/* 设置界面标签页样式 */
+.zettel-tab-navigation {
+	display: flex;
+	margin-bottom: 24px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	gap: 4px;
+}
+
+.zettel-tab {
+	flex: 1;
+}
+
+.zettel-tab-button {
+	width: 100%;
+	padding: 12px 16px;
+	background: var(--background-primary);
+	border: none;
+	border-bottom: 2px solid transparent;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	text-align: center;
+	border-radius: 6px 6px 0 0;
+}
+
+.zettel-tab-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+.zettel-tab.active .zettel-tab-button {
+	background: var(--background-secondary);
+	border-bottom-color: var(--text-accent);
+	color: var(--text-accent);
+}
+
+.zettel-tab-desc {
+	font-size: 11px;
+	color: var(--text-muted);
+	margin-top: 4px;
+}
+
+.zettel-tab.active .zettel-tab-desc {
+	color: var(--text-accent);
+}
+
+.zettel-settings-content {
+	padding: 0 8px;
+}
+
+.setting-section-description {
+	color: var(--text-muted);
+	font-size: 14px;
+	margin-bottom: 20px;
+	padding: 12px;
+	background: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 3px solid var(--text-accent);
+}
+
+/* 模板预览样式 */
+.zettel-template-preview {
+	margin-top: 24px;
+	padding: 16px;
+	background: var(--background-secondary);
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.zettel-preview-content {
+	background: var(--background-primary);
+	padding: 12px;
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+	color: var(--text-muted);
+	overflow-x: auto;
+	white-space: pre-wrap;
+	border: 1px solid var(--background-modifier-border);
+}
+
+/* 状态栏样式 */
+.status-bar-item.mod-clickable:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* 侧边栏图标样式 */
+.zettelkasten-ribbon-class {
+	color: var(--text-muted);
+}
+
+.zettelkasten-ribbon-class:hover {
+	color: var(--text-normal);
+}
+
+/* 按钮变体样式 */
+button.mod-warning {
+	background: var(--color-red);
+	color: var(--text-on-accent);
+	border-color: var(--color-red);
+}
+
+button.mod-warning:hover {
+	background: var(--color-red);
+	opacity: 0.9;
+});
+font-style: italic;
 }
 
 .zettel-info {

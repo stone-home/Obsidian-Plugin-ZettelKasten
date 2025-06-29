@@ -1,15 +1,12 @@
-// manifest.json
 {
-	"id": "zettelkasten-workflow",
-	"name": "Zettelkasten Workflow",
+	"id": "stone-zettelkasten",
+	"name": "Stone Zettelkasten",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "A workflow assistant for Zettelkasten note-taking method with four types of notes: fleeting, literature, atomic, and permanent.",
+	"description": "Stone - A workflow assistant for Zettelkasten note-taking method with four types of notes: fleeting, literature, atomic, and permanent.",
 	"author": "Your Name",
 	"authorUrl": "",
 	"fundingUrl": {
 		"Buy Me a Coffee": "https://www.buymeacoffee.com"
 	}
 }
-
-
