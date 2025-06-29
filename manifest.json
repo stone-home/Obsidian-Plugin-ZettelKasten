@@ -1,11 +1,15 @@
+// manifest.json
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "zettelkasten-workflow",
+	"name": "Zettelkasten Workflow",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
-	"isDesktopOnly": false
+	"description": "A workflow assistant for Zettelkasten note-taking method with four types of notes: fleeting, literature, atomic, and permanent.",
+	"author": "Your Name",
+	"authorUrl": "",
+	"fundingUrl": {
+		"Buy Me a Coffee": "https://www.buymeacoffee.com"
+	}
 }
+
+

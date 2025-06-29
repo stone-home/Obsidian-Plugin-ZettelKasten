@@ -6,3 +6,164 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.zettel-current-note-section {
+	background: var(--background-secondary);
+	padding: 16px;
+	border-radius: 8px;
+	margin: 16px 0;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.zettel-workflow-section {
+	margin: 16px 0;
+}
+
+.zettel-upgrade-section {
+	margin-bottom: 20px;
+}
+
+.zettel-create-section {
+	margin-top: 20px;
+}
+
+.zettel-section-desc {
+	color: var(--text-muted);
+	font-size: 13px;
+	margin: 8px 0 12px 0;
+	font-style: italic;
+}
+
+.zettel-divider {
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	margin: 20px 0;
+}
+
+.zettel-workflow-button {
+	display: block;
+	width: 100%;
+	padding: 12px 16px;
+	margin: 8px 0;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	cursor: pointer;
+	text-align: left;
+	transition: all 0.2s ease;
+	font-size: 14px;
+}
+
+.zettel-workflow-button:hover {
+	background: var(--interactive-hover);
+	border-color: var(--text-accent);
+}
+
+.zettel-workflow-button:active {
+	background: var(--interactive-active);
+}
+
+/* 升级按钮样式 */
+.zettel-upgrade-button {
+	border-left: 3px solid var(--color-accent);
+	background: var(--background-secondary);
+}
+
+.zettel-upgrade-button:hover {
+	background: var(--interactive-hover);
+	border-left-color: var(--color-accent);
+}
+
+/* 创建按钮样式 */
+.zettel-create-button {
+	border-left: 3px solid var(--color-green);
+	background: var(--background-primary);
+}
+
+.zettel-create-button:hover {
+	background: var(--interactive-hover);
+	border-left-color: var(--color-green);
+}
+
+.zettel-warning {
+	color: var(--text-error);
+	font-style: italic;
+}
+
+.zettel-info {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+	padding: 8px 16px;
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--interactive-normal);
+	cursor: pointer;
+}
+
+.modal-button-container button:hover {
+	background: var(--interactive-hover);
+}
+
+.modal-button-container button.mod-cta {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.modal-button-container button.mod-cta:hover {
+	background: var(--interactive-accent-hover);
+}
+
+/* 文件名输入表单样式 */
+.file-name-input-container {
+	margin: 16px 0;
+}
+
+.file-name-label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: bold;
+	color: var(--text-normal);
+}
+
+.file-name-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+}
+
+.file-name-input:focus {
+	outline: none;
+	border-color: var(--text-accent);
+	box-shadow: 0 0 0 2px var(--text-accent-transparent);
+}
+
+/* 状态栏样式 */
+.status-bar-item.mod-clickable:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* 侧边栏图标样式 */
+.zettelkasten-ribbon-class {
+	color: var(--text-muted);
+}
+
+.zettelkasten-ribbon-class:hover {
+	color: var(--text-normal);
+}
