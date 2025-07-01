@@ -13,6 +13,7 @@ import { BaseNote } from './notes/note';
 import { NoteType } from './types';
 import { TemplateEditorModal } from './template/editor';
 import { TemplateListModal } from './template/list';
+import { Utils } from './utils';
 
 interface TemplateMetadata {
 	name: string;
@@ -32,21 +33,32 @@ interface ZettelkastenTemplateSettings {
 }
 
 const DEFAULT_SETTINGS: ZettelkastenTemplateSettings = {
-	templateFolder: 'Templates',
+	templateFolder: '.obsidian/plugins/zettelkasten-templates/templates',
 	dateFormat: 'YYYY-MM-DD',
 	defaultNoteType: NoteType.FLEETING,
 	templates: {}
 };
 
 export default class ZettelkastenTemplatePlugin extends Plugin {
-	settings: ZettelkastenTemplateSettings | undefined;
-	noteFactory: NoteFactory | undefined;
+	settings: ZettelkastenTemplateSettings;
+	noteFactory: NoteFactory;
 
 	async onload() {
 		await this.loadSettings();
 
 		// Initialize note factory
 		this.noteFactory = new NoteFactory(this.app);
+
+		// Register note classes - 需要为每种类型注册一个基础类
+		// 由于我们只使用 BaseNote，为每种类型都注册它
+		Object.values(NoteType).forEach(noteType => {
+			if (noteType !== NoteType.UNKNOWN) {  // 跳过 UNKNOWN 类型
+				this.noteFactory.registerNoteClass(noteType, BaseNote);
+			}
+		});
+
+		// Ensure template folder exists
+		await this.ensureTemplateFolder();
 
 		// Register commands
 		this.addCommand({
@@ -77,19 +89,34 @@ export default class ZettelkastenTemplatePlugin extends Plugin {
 		await this.loadTemplates();
 	}
 
+	async ensureTemplateFolder() {
+		const folder = this.app.vault.getAbstractFileByPath(this.settings.templateFolder);
+		if (!folder) {
+			try {
+				await this.app.vault.createFolder(this.settings.templateFolder);
+			} catch (error) {
+				console.error('Failed to create template folder:', error);
+			}
+		}
+	}
+
 	async loadTemplates() {
 		const templateFolder = this.app.vault.getAbstractFileByPath(this.settings.templateFolder);
 
 		if (!templateFolder || !(templateFolder instanceof TFolder)) {
-			// Create template folder if it doesn't exist
-			await this.app.vault.createFolder(this.settings.templateFolder);
+			console.log('Template folder not found:', this.settings.templateFolder);
 			return;
 		}
+
+		// Clear existing templates in factory
+		this.settings.templates = {};
 
 		// Load all markdown files in template folder
 		const files = this.app.vault.getMarkdownFiles().filter(
 			file => file.path.startsWith(this.settings.templateFolder)
 		);
+
+		console.log(`Found ${files.length} files in template folder`);
 
 		for (const file of files) {
 			try {
@@ -100,6 +127,8 @@ export default class ZettelkastenTemplatePlugin extends Plugin {
 					const templateId = file.basename;
 					this.settings.templates[templateId] = metadata;
 
+					console.log(`Loaded template: ${templateId}`, metadata);
+
 					// Load template into factory
 					const template = await this.noteFactory.loadFromFile(file.path);
 					this.noteFactory.registerTemplate(metadata.noteType, templateId, template);
@@ -107,12 +136,15 @@ export default class ZettelkastenTemplatePlugin extends Plugin {
 					if (metadata.isDefault) {
 						this.noteFactory.setDefaultTemplate(metadata.noteType, templateId);
 					}
+				} else {
+					console.log(`File ${file.name} is not a valid template`);
 				}
 			} catch (error) {
 				console.error(`Failed to load template ${file.path}:`, error);
 			}
 		}
 
+		console.log('Templates loaded:', Object.keys(this.settings.templates).length);
 		await this.saveSettings();
 	}
 
@@ -142,6 +174,12 @@ export default class ZettelkastenTemplatePlugin extends Plugin {
 		const defaultMatch = frontmatter.match(/is-default:\s*(true|false)/);
 		if (defaultMatch) metadata.isDefault = defaultMatch[1] === 'true';
 
+		const createdMatch = frontmatter.match(/created-at:\s*(.+)/);
+		if (createdMatch) metadata.createdAt = createdMatch[1].trim();
+
+		const updatedMatch = frontmatter.match(/updated-at:\s*(.+)/);
+		if (updatedMatch) metadata.updatedAt = updatedMatch[1].trim();
+
 		// Ensure required fields
 		if (!metadata.name) return null;
 
@@ -152,42 +190,99 @@ export default class ZettelkastenTemplatePlugin extends Plugin {
 			filenameFormat: metadata.filenameFormat || '{{date}}-{{title}}',
 			isDefault: metadata.isDefault || false,
 			createdAt: metadata.createdAt || new Date().toISOString(),
-			updatedAt: new Date().toISOString()
+			updatedAt: metadata.updatedAt || new Date().toISOString()
 		};
 	}
 
-	async createTemplate(metadata: TemplateMetadata, content: string = '') {
-		const templatePath = `${this.settings.templateFolder}/${metadata.name}.md`;
+	async createTemplate(metadata: TemplateMetadata, customProperties: Record<string, any> = {}, sections: any[] = []) {
+		const templateId = Utils.sanitizeFilename(metadata.name);
+		const templatePath = `${this.settings.templateFolder}/${templateId}.md`;
 
-		// Create template content with metadata
-		const frontmatter = this.generateTemplateFrontmatter(metadata);
-		const fullContent = `${frontmatter}\n${content}`;
+		// Build complete frontmatter including base properties
+		const frontmatter = this.generateCompleteFrontmatter(metadata, customProperties);
+
+		// Build body content
+		let bodyContent = '';
+		if (sections.length === 0) {
+			// Add default section
+			bodyContent = '# Content\n\n';
+		} else {
+			sections.forEach(section => {
+				bodyContent += `${'#'.repeat(section.level)} ${section.name}\n\n`;
+				if (section.content) {
+					bodyContent += `${section.content}\n\n`;
+				}
+			});
+		}
+
+		const fullContent = `${frontmatter}\n${bodyContent}`;
 
 		// Save template file
 		await this.app.vault.create(templatePath, fullContent);
 
 		// Update settings
-		this.settings.templates[metadata.name] = metadata;
+		this.settings.templates[templateId] = metadata;
 		await this.saveSettings();
 
-		// Reload templates
+		// Reload templates to update factory
 		await this.loadTemplates();
 
 		new Notice(`Template "${metadata.name}" created successfully`);
+		return templateId;
 	}
 
-	generateTemplateFrontmatter(metadata: TemplateMetadata): string {
-		return `---
-template-name: ${metadata.name}
-type: ${metadata.noteType}
-template-description: ${metadata.description}
-filename-format: ${metadata.filenameFormat}
-is-default: ${metadata.isDefault}
-template: true
----`;
+	generateCompleteFrontmatter(metadata: TemplateMetadata, customProperties: Record<string, any> = {}): string {
+		const now = Utils.generateDate();
+
+		// Start with template metadata
+		let frontmatter = '---\n';
+
+		// Template metadata (always at top)
+		frontmatter += `template-name: ${metadata.name}\n`;
+		frontmatter += `template-description: ${metadata.description}\n`;
+		frontmatter += `filename-format: ${metadata.filenameFormat}\n`;
+		frontmatter += `is-default: ${metadata.isDefault}\n`;
+		frontmatter += `created-at: ${metadata.createdAt}\n`;
+		frontmatter += `updated-at: ${metadata.updatedAt}\n`;
+		frontmatter += `template: true\n`;
+		frontmatter += '\n';
+
+		// Base note properties
+		frontmatter += `# Base Note Properties\n`;
+		frontmatter += `title: \n`;
+		frontmatter += `type: ${metadata.noteType}\n`;
+		frontmatter += `url: \n`;
+		frontmatter += `create: ${now}\n`;
+		frontmatter += `id: {{zettel-id}}\n`;
+		frontmatter += `tags:\n`;
+		frontmatter += `aliases:\n`;
+		frontmatter += `source_notes:\n`;
+
+		// Custom properties
+		if (Object.keys(customProperties).length > 0) {
+			frontmatter += '\n# Custom Properties\n';
+			for (const [key, prop] of Object.entries(customProperties)) {
+				const value = prop.value;
+				const type = prop.type;
+
+				if (type === 'list' || Array.isArray(value)) {
+					frontmatter += `${key}:\n`;
+					if (Array.isArray(value) && value.length > 0) {
+						value.forEach(item => {
+							frontmatter += `  - ${item}\n`;
+						});
+					}
+				} else {
+					frontmatter += `${key}: ${value || ''}\n`;
+				}
+			}
+		}
+
+		frontmatter += '---';
+		return frontmatter;
 	}
 
-	async updateTemplate(templateId: string, updates: Partial<TemplateMetadata>, content?: string) {
+	async updateTemplate(templateId: string, updates: Partial<TemplateMetadata>, customProperties?: Record<string, any>, sections?: any[]) {
 		const templatePath = `${this.settings.templateFolder}/${templateId}.md`;
 		const file = this.app.vault.getAbstractFileByPath(templatePath);
 
@@ -199,21 +294,26 @@ template: true
 		const currentMetadata = this.settings.templates[templateId];
 		const updatedMetadata = { ...currentMetadata, ...updates, updatedAt: new Date().toISOString() };
 
-		if (content !== undefined) {
-			// Update entire file
-			const frontmatter = this.generateTemplateFrontmatter(updatedMetadata);
-			const fullContent = `${frontmatter}\n${content}`;
-			await this.app.vault.modify(file, fullContent);
+		// Generate new content
+		const frontmatter = this.generateCompleteFrontmatter(updatedMetadata, customProperties || {});
+
+		let bodyContent = '';
+		if (sections && sections.length > 0) {
+			sections.forEach(section => {
+				bodyContent += `${'#'.repeat(section.level)} ${section.name}\n\n`;
+				if (section.content) {
+					bodyContent += `${section.content}\n\n`;
+				}
+			});
 		} else {
-			// Update only frontmatter
+			// Keep existing body if no sections provided
 			const currentContent = await this.app.vault.read(file);
 			const bodyMatch = currentContent.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
-			const body = bodyMatch ? bodyMatch[1] : '';
-
-			const frontmatter = this.generateTemplateFrontmatter(updatedMetadata);
-			const fullContent = `${frontmatter}\n${body}`;
-			await this.app.vault.modify(file, fullContent);
+			bodyContent = bodyMatch ? bodyMatch[1] : '';
 		}
+
+		const fullContent = `${frontmatter}\n${bodyContent}`;
+		await this.app.vault.modify(file, fullContent);
 
 		// Update settings
 		this.settings.templates[templateId] = updatedMetadata;
@@ -261,6 +361,10 @@ template: true
 			// Generate filename
 			const filename = this.generateFilename(metadata.filenameFormat, customTitle || note.getTitle());
 			note.setTitle(filename);
+
+			// Replace template variables
+			note.setProperty('id', Utils.generateZettelID());
+			note.setProperty('create', Utils.generateDate());
 
 			// Save the note
 			const file = await note.save();
@@ -345,7 +449,7 @@ class TemplateSelectorModal extends Modal {
 
 				const name = item.createEl('div', { text: metadata.name, cls: 'template-name' });
 				if (metadata.isDefault) {
-					name.createSpan({ text: ' (default)', cls: 'template-default' });
+					name.createSpan({ text: ' ★', cls: 'template-default' });
 				}
 
 				if (metadata.description) {
@@ -384,11 +488,13 @@ class ZettelkastenTemplateSettingTab extends PluginSettingTab {
 			.setName('Template folder')
 			.setDesc('Folder where templates are stored')
 			.addText(text => text
-				.setPlaceholder('Templates')
+				.setPlaceholder('.obsidian/plugins/zettelkasten-templates/templates')
 				.setValue(this.plugin.settings.templateFolder)
 				.onChange(async (value) => {
 					this.plugin.settings.templateFolder = value;
 					await this.plugin.saveSettings();
+					await this.plugin.ensureTemplateFolder();
+					await this.plugin.loadTemplates();
 				}));
 
 		new Setting(containerEl)
@@ -422,6 +528,7 @@ class ZettelkastenTemplateSettingTab extends PluginSettingTab {
 			.setDesc('Open the template manager')
 			.addButton(button => button
 				.setButtonText('Open Template Manager')
+				.setCta()
 				.onClick(() => {
 					new TemplateListModal(this.app, this.plugin).open();
 				}));

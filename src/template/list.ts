@@ -1,22 +1,26 @@
-
-import { App, Modal, ButtonComponent } from 'obsidian';
+import { App, Modal, Setting, ButtonComponent } from 'obsidian';
 import ZettelkastenTemplatePlugin from '../main';
 import { TemplateEditorModal } from './editor';
 import { NoteType } from '../types';
 
+
 export class TemplateListModal extends Modal {
 	plugin: ZettelkastenTemplatePlugin;
 	activeFilter: NoteType | 'all' = 'all';
+	gridContainer: HTMLElement | null = null;
 
 	constructor(app: App, plugin: ZettelkastenTemplatePlugin) {
 		super(app);
 		this.plugin = plugin;
 	}
 
-	onOpen() {
+	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.addClass('zettelkasten-template-list');
+
+		// Reload templates to ensure we have the latest
+		await this.plugin.loadTemplates();
 
 		// Header
 		const header = contentEl.createDiv('template-list-header');
@@ -35,9 +39,9 @@ export class TemplateListModal extends Modal {
 		const filterContainer = contentEl.createDiv('template-filters');
 		this.createFilterTabs(filterContainer);
 
-		// Template grid
-		const gridContainer = contentEl.createDiv('template-grid-container');
-		this.renderTemplateGrid(gridContainer);
+		// Template grid - 保存引用
+		this.gridContainer = contentEl.createDiv('template-grid-container');
+		this.renderTemplateGrid(this.gridContainer);
 	}
 
 	createFilterTabs(container: HTMLElement) {
@@ -46,26 +50,58 @@ export class TemplateListModal extends Modal {
 		// All templates tab
 		const allTab = tabs.createDiv('filter-tab');
 		allTab.setText('All');
-		allTab.addClass(this.activeFilter === 'all' ? 'active' : '');
+		if (this.activeFilter === 'all') {
+			allTab.addClass('active');
+		}
 		allTab.addEventListener('click', () => {
-			this.activeFilter = 'all';
-			this.onOpen(); // Refresh view
+			if (this.activeFilter !== 'all') {
+				// 更新状态
+				this.activeFilter = 'all';
+				// 更新UI
+				tabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+				allTab.classList.add('active');
+				// 刷新内容
+				if (this.gridContainer) {
+					this.gridContainer.empty();
+					this.renderTemplateGrid(this.gridContainer);
+				}
+			}
 		});
 
 		// Type-specific tabs
 		Object.values(NoteType).forEach(type => {
+			// 确保 type 有值且不是 UNKNOWN
+			if (!type || type === NoteType.UNKNOWN || typeof type !== 'string' || type.trim() === '') {
+				return;
+			}
+
 			const tab = tabs.createDiv('filter-tab');
 			tab.setText(type.toUpperCase());
-			tab.addClass(this.activeFilter === type ? 'active' : '');
+			if (this.activeFilter === type) {
+				tab.addClass('active');
+			}
+
 			tab.addEventListener('click', () => {
-				this.activeFilter = type;
-				this.onOpen(); // Refresh view
+				if (this.activeFilter !== type) {
+					// 更新状态
+					this.activeFilter = type;
+					// 更新UI
+					tabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+					tab.classList.add('active');
+					// 刷新内容
+					if (this.gridContainer) {
+						this.gridContainer.empty();
+						this.renderTemplateGrid(this.gridContainer);
+					}
+				}
 			});
 		});
 	}
 
 	renderTemplateGrid(container: HTMLElement) {
 		const templates = Object.entries(this.plugin.settings.templates);
+
+		console.log('Rendering templates:', templates.length);
 
 		// Filter templates
 		const filteredTemplates = this.activeFilter === 'all'
@@ -95,7 +131,7 @@ export class TemplateListModal extends Modal {
 
 			const badge = titleRow.createDiv('type-badge');
 			badge.setText(metadata.noteType.toUpperCase());
-			badge.addClass(`type-${metadata.noteType}`);
+			badge.addClass(`type-${metadata.noteType.toLowerCase()}`);  // 确保类名是小写
 
 			if (metadata.isDefault) {
 				titleRow.createDiv('default-indicator').setText('★ Default');
@@ -153,3 +189,5 @@ export class TemplateListModal extends Modal {
 		contentEl.empty();
 	}
 }
+
+

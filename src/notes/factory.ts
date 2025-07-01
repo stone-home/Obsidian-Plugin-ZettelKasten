@@ -11,10 +11,10 @@ import { Utils } from "../utils";
 export class NoteFactory {
 	private app: App;
 	private logger = Logger.createLogger('NoteFactory');
-	// NoteTypeMap is a map storing basic note classes for each NoteType when creation a new note
 	private noteTypeMap: Map<NoteType, new (app: App, noteType: string, template?: BaseNote) => BaseNote>;
-	// Templates is a map of storing designed templates using to update notes created by noteTypeMap class type
+	// 改进的模板存储结构：按类型分组存储模板
 	private templates: Map<NoteType, Map<string, BaseNote>> = new Map();
+	// 可选：存储默认模板
 	private defaultTemplates: Map<NoteType, string> = new Map();
 
 	constructor(app: App) {
@@ -287,11 +287,17 @@ export class NoteFactory {
 		if (match) {
 			const [, frontmatter, bodyContent] = match;
 
-			// Parse frontmatter properties directly to IProperties format
+			// Parse frontmatter properties
 			const parsedProperties = this.parseFrontmatter(frontmatter);
 
-			// Update note properties using the built-in update method
-			note.getProperties().update(parsedProperties, true);
+			// Convert to raw values and update note properties individually
+			for (const [key, propValue] of Object.entries(parsedProperties)) {
+				if (propValue && typeof propValue.getValue === 'function') {
+					// It's a KeyValue object, get the actual value
+					const value = propValue.getValue();
+					this.applyPropertyToNote(note, key, value);
+				}
+			}
 
 			// Parse body content and update note body
 			const parsedBody = this.parseBody(bodyContent);
@@ -423,6 +429,56 @@ export class NoteFactory {
 
 		this.logger.debug(`Parsed body with sections`);
 		return body;
+	}
+
+	/**
+	 * Apply a property value to a note
+	 */
+	private applyPropertyToNote(note: BaseNote, key: string, value: any): void {
+		switch (key) {
+			case 'title':
+				if (value) note.setTitle(value);
+				break;
+			case 'type':
+				// Type is already set by detectNoteType
+				break;
+			case 'url':
+				if (value) note.setUrl(value);
+				break;
+			case 'id':
+			case 'create':
+				// Use setProperty for protected properties with force
+				note.setProperty(key, value);
+				break;
+			case 'tags':
+				if (Array.isArray(value) && value.length > 0) {
+					note.addTag(value);
+				}
+				break;
+			case 'aliases':
+				if (Array.isArray(value) && value.length > 0) {
+					note.addAlias(value);
+				}
+				break;
+			case 'source_notes':
+			case 'sources':
+				if (Array.isArray(value)) {
+					value.forEach(source => {
+						if (source) note.addSourceNote(source);
+					});
+				}
+				break;
+			case 'new':
+				note.setProperty('new', value);
+				break;
+			default:
+				// Custom properties - skip template metadata
+				if (!['template-name', 'template-description', 'filename-format',
+					'is-default', 'template', 'created-at', 'updated-at'].includes(key)) {
+					note.setProperty(key, value);
+				}
+				break;
+		}
 	}
 
 	/**
