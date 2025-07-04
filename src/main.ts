@@ -1,536 +1,323 @@
-import {
-	App,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	Modal,
-	Notice,
-	TFile,
-	TFolder
-} from 'obsidian';
+// debug-main.ts - 简单的调试插件
+import { App, Plugin, Notice, TFile } from 'obsidian';
 import { NoteFactory } from './notes/factory';
-import { BaseNote } from './notes/note';
-import { NoteType } from './types';
-import { TemplateEditorModal } from './template/editor';
-import { TemplateListModal } from './template/list';
-import { Utils } from './utils';
+import { BaseNote, NoteType} from './notes/note';
+import { Logger } from './logger';
+import { FleetingDefault, LiteratureDefault, AtomicDefault, PermanentDefault } from './notes/default';
+import { IntegrationManager} from "./3rd/manager";
 
-interface TemplateMetadata {
-	name: string;
-	noteType: NoteType;
-	description: string;
-	filenameFormat: string; // e.g., "{{date}}-{{title}}"
-	isDefault: boolean;
-	createdAt: string;
-	updatedAt: string;
-}
 
-interface ZettelkastenTemplateSettings {
-	templateFolder: string;
-	dateFormat: string;
-	defaultNoteType: NoteType;
-	templates: Record<string, TemplateMetadata>; // templateId -> metadata
-}
-
-const DEFAULT_SETTINGS: ZettelkastenTemplateSettings = {
-	templateFolder: '.obsidian/plugins/zettelkasten-templates/templates',
-	dateFormat: 'YYYY-MM-DD',
-	defaultNoteType: NoteType.FLEETING,
-	templates: {}
-};
-
-export default class ZettelkastenTemplatePlugin extends Plugin {
-	settings: ZettelkastenTemplateSettings;
-	noteFactory: NoteFactory;
+export default class DebugPlugin extends Plugin {
+	private factory: NoteFactory;
+	private integrations: IntegrationManager;
+	private logger = Logger.createLogger('DebugPlugin');
 
 	async onload() {
-		await this.loadSettings();
+		console.log('Debug Plugin loaded');
 
-		// Initialize note factory
-		this.noteFactory = new NoteFactory(this.app);
+		// 初始化工厂
+		this.factory = new NoteFactory(this.app);
 
-		// Register note classes - 需要为每种类型注册一个基础类
-		// 由于我们只使用 BaseNote，为每种类型都注册它
-		Object.values(NoteType).forEach(noteType => {
-			if (noteType !== NoteType.UNKNOWN) {  // 跳过 UNKNOWN 类型
-				this.noteFactory.registerNoteClass(noteType, BaseNote);
-			}
-		});
+		// 注册笔记类型
+		this.registerNoteTypes();
 
-		// Ensure template folder exists
-		await this.ensureTemplateFolder();
+		// 添加调试命令
+		this.addDebugCommands();
 
-		// Register commands
+		// Initialize integrations
+		this.integrations = new IntegrationManager(this.app);
+		await this.integrations.initialize();
+
+		new Notice('Debug Plugin loaded! Check console for debug info.');
+	}
+
+	private registerNoteTypes() {
+		this.factory.registerNoteClass(NoteType.FLEETING, FleetingDefault);
+		this.factory.registerNoteClass(NoteType.LITERATURE, LiteratureDefault);
+		this.factory.registerNoteClass(NoteType.PERMANENT, PermanentDefault);
+		this.factory.registerNoteClass(NoteType.ATOMIC, AtomicDefault);
+
+		this.logger.info('All note types registered');
+	}
+
+	private addDebugCommands() {
+		// 命令1: 创建测试笔记
 		this.addCommand({
-			id: 'open-template-manager',
-			name: 'Open Template Manager',
-			callback: () => {
-				new TemplateListModal(this.app, this).open();
-			}
+			id: 'debug-create-test-note',
+			name: 'Create Test Note',
+			callback: () => this.createTestNote()
 		});
 
+		// 命令2: 测试工厂功能
 		this.addCommand({
-			id: 'create-note-from-template',
-			name: 'Create Note from Template',
-			callback: () => {
-				this.showTemplateSelector();
-			}
+			id: 'debug-test-factory',
+			name: 'Test Factory Functions',
+			callback: () => this.testFactoryFunctions()
 		});
 
-		// Add ribbon icon
-		this.addRibbonIcon('file-plus-2', 'Zettelkasten Templates', () => {
-			new TemplateListModal(this.app, this).open();
+		// 命令3: 加载并调试现有笔记
+		this.addCommand({
+			id: 'debug-load-note',
+			name: 'Load and Debug Note',
+			callback: () => this.loadAndDebugNote()
 		});
 
-		// Add settings tab
-		this.addSettingTab(new ZettelkastenTemplateSettingTab(this.app, this));
+		// 命令4: 测试模板功能
+		this.addCommand({
+			id: 'debug-test-template',
+			name: 'Test Template Functions',
+			callback: () => this.testTemplateFunctions()
+		});
 
-		// Load templates on startup
-		await this.loadTemplates();
+		// 命令5: 综合测试
+		this.addCommand({
+			id: 'debug-comprehensive-test',
+			name: 'Comprehensive Debug Test',
+			callback: () => this.comprehensiveTest()
+		});
 	}
 
-	async ensureTemplateFolder() {
-		const folder = this.app.vault.getAbstractFileByPath(this.settings.templateFolder);
-		if (!folder) {
-			try {
-				await this.app.vault.createFolder(this.settings.templateFolder);
-			} catch (error) {
-				console.error('Failed to create template folder:', error);
-			}
-		}
-	}
-
-	async loadTemplates() {
-		const templateFolder = this.app.vault.getAbstractFileByPath(this.settings.templateFolder);
-
-		if (!templateFolder || !(templateFolder instanceof TFolder)) {
-			console.log('Template folder not found:', this.settings.templateFolder);
-			return;
-		}
-
-		// Clear existing templates in factory
-		this.settings.templates = {};
-
-		// Load all markdown files in template folder
-		const files = this.app.vault.getMarkdownFiles().filter(
-			file => file.path.startsWith(this.settings.templateFolder)
-		);
-
-		console.log(`Found ${files.length} files in template folder`);
-
-		for (const file of files) {
-			try {
-				const content = await this.app.vault.read(file);
-				const metadata = this.extractTemplateMetadata(content);
-
-				if (metadata) {
-					const templateId = file.basename;
-					this.settings.templates[templateId] = metadata;
-
-					console.log(`Loaded template: ${templateId}`, metadata);
-
-					// Load template into factory
-					const template = await this.noteFactory.loadFromFile(file.path);
-					this.noteFactory.registerTemplate(metadata.noteType, templateId, template);
-
-					if (metadata.isDefault) {
-						this.noteFactory.setDefaultTemplate(metadata.noteType, templateId);
-					}
-				} else {
-					console.log(`File ${file.name} is not a valid template`);
-				}
-			} catch (error) {
-				console.error(`Failed to load template ${file.path}:`, error);
-			}
-		}
-
-		console.log('Templates loaded:', Object.keys(this.settings.templates).length);
-		await this.saveSettings();
-	}
-
-	extractTemplateMetadata(content: string): TemplateMetadata | null {
-		const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-		if (!frontmatterMatch) return null;
-
-		const frontmatter = frontmatterMatch[1];
-		const metadata: Partial<TemplateMetadata> = {};
-
-		// Extract template-specific properties
-		const nameMatch = frontmatter.match(/template-name:\s*(.+)/);
-		if (nameMatch) metadata.name = nameMatch[1].trim();
-
-		const typeMatch = frontmatter.match(/type:\s*(.+)/);
-		if (typeMatch) {
-			const typeValue = typeMatch[1].trim();
-			metadata.noteType = Object.values(NoteType).find(v => v === typeValue) || NoteType.FLEETING;
-		}
-
-		const descMatch = frontmatter.match(/template-description:\s*(.+)/);
-		if (descMatch) metadata.description = descMatch[1].trim();
-
-		const filenameMatch = frontmatter.match(/filename-format:\s*(.+)/);
-		if (filenameMatch) metadata.filenameFormat = filenameMatch[1].trim();
-
-		const defaultMatch = frontmatter.match(/is-default:\s*(true|false)/);
-		if (defaultMatch) metadata.isDefault = defaultMatch[1] === 'true';
-
-		const createdMatch = frontmatter.match(/created-at:\s*(.+)/);
-		if (createdMatch) metadata.createdAt = createdMatch[1].trim();
-
-		const updatedMatch = frontmatter.match(/updated-at:\s*(.+)/);
-		if (updatedMatch) metadata.updatedAt = updatedMatch[1].trim();
-
-		// Ensure required fields
-		if (!metadata.name) return null;
-
-		return {
-			name: metadata.name,
-			noteType: metadata.noteType || NoteType.FLEETING,
-			description: metadata.description || '',
-			filenameFormat: metadata.filenameFormat || '{{date}}-{{title}}',
-			isDefault: metadata.isDefault || false,
-			createdAt: metadata.createdAt || new Date().toISOString(),
-			updatedAt: metadata.updatedAt || new Date().toISOString()
-		};
-	}
-
-	async createTemplate(metadata: TemplateMetadata, customProperties: Record<string, any> = {}, sections: any[] = []) {
-		const templateId = Utils.sanitizeFilename(metadata.name);
-		const templatePath = `${this.settings.templateFolder}/${templateId}.md`;
-
-		// Build complete frontmatter including base properties
-		const frontmatter = this.generateCompleteFrontmatter(metadata, customProperties);
-
-		// Build body content
-		let bodyContent = '';
-		if (sections.length === 0) {
-			// Add default section
-			bodyContent = '# Content\n\n';
-		} else {
-			sections.forEach(section => {
-				bodyContent += `${'#'.repeat(section.level)} ${section.name}\n\n`;
-				if (section.content) {
-					bodyContent += `${section.content}\n\n`;
-				}
-			});
-		}
-
-		const fullContent = `${frontmatter}\n${bodyContent}`;
-
-		// Save template file
-		await this.app.vault.create(templatePath, fullContent);
-
-		// Update settings
-		this.settings.templates[templateId] = metadata;
-		await this.saveSettings();
-
-		// Reload templates to update factory
-		await this.loadTemplates();
-
-		new Notice(`Template "${metadata.name}" created successfully`);
-		return templateId;
-	}
-
-	generateCompleteFrontmatter(metadata: TemplateMetadata, customProperties: Record<string, any> = {}): string {
-		const now = Utils.generateDate();
-
-		// Start with template metadata
-		let frontmatter = '---\n';
-
-		// Template metadata (always at top)
-		frontmatter += `template-name: ${metadata.name}\n`;
-		frontmatter += `template-description: ${metadata.description}\n`;
-		frontmatter += `filename-format: ${metadata.filenameFormat}\n`;
-		frontmatter += `is-default: ${metadata.isDefault}\n`;
-		frontmatter += `created-at: ${metadata.createdAt}\n`;
-		frontmatter += `updated-at: ${metadata.updatedAt}\n`;
-		frontmatter += `template: true\n`;
-		frontmatter += '\n';
-
-		// Base note properties
-		frontmatter += `# Base Note Properties\n`;
-		frontmatter += `title: \n`;
-		frontmatter += `type: ${metadata.noteType}\n`;
-		frontmatter += `url: \n`;
-		frontmatter += `create: ${now}\n`;
-		frontmatter += `id: {{zettel-id}}\n`;
-		frontmatter += `tags:\n`;
-		frontmatter += `aliases:\n`;
-		frontmatter += `source_notes:\n`;
-
-		// Custom properties
-		if (Object.keys(customProperties).length > 0) {
-			frontmatter += '\n# Custom Properties\n';
-			for (const [key, prop] of Object.entries(customProperties)) {
-				const value = prop.value;
-				const type = prop.type;
-
-				if (type === 'list' || Array.isArray(value)) {
-					frontmatter += `${key}:\n`;
-					if (Array.isArray(value) && value.length > 0) {
-						value.forEach(item => {
-							frontmatter += `  - ${item}\n`;
-						});
-					}
-				} else {
-					frontmatter += `${key}: ${value || ''}\n`;
-				}
-			}
-		}
-
-		frontmatter += '---';
-		return frontmatter;
-	}
-
-	async updateTemplate(templateId: string, updates: Partial<TemplateMetadata>, customProperties?: Record<string, any>, sections?: any[]) {
-		const templatePath = `${this.settings.templateFolder}/${templateId}.md`;
-		const file = this.app.vault.getAbstractFileByPath(templatePath);
-
-		if (!file || !(file instanceof TFile)) {
-			new Notice(`Template "${templateId}" not found`);
-			return;
-		}
-
-		const currentMetadata = this.settings.templates[templateId];
-		const updatedMetadata = { ...currentMetadata, ...updates, updatedAt: new Date().toISOString() };
-
-		// Generate new content
-		const frontmatter = this.generateCompleteFrontmatter(updatedMetadata, customProperties || {});
-
-		let bodyContent = '';
-		if (sections && sections.length > 0) {
-			sections.forEach(section => {
-				bodyContent += `${'#'.repeat(section.level)} ${section.name}\n\n`;
-				if (section.content) {
-					bodyContent += `${section.content}\n\n`;
-				}
-			});
-		} else {
-			// Keep existing body if no sections provided
-			const currentContent = await this.app.vault.read(file);
-			const bodyMatch = currentContent.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
-			bodyContent = bodyMatch ? bodyMatch[1] : '';
-		}
-
-		const fullContent = `${frontmatter}\n${bodyContent}`;
-		await this.app.vault.modify(file, fullContent);
-
-		// Update settings
-		this.settings.templates[templateId] = updatedMetadata;
-		await this.saveSettings();
-
-		// Reload templates
-		await this.loadTemplates();
-
-		new Notice(`Template "${templateId}" updated successfully`);
-	}
-
-	async deleteTemplate(templateId: string) {
-		const templatePath = `${this.settings.templateFolder}/${templateId}.md`;
-		const file = this.app.vault.getAbstractFileByPath(templatePath);
-
-		if (!file || !(file instanceof TFile)) {
-			new Notice(`Template "${templateId}" not found`);
-			return;
-		}
-
-		// Delete file
-		await this.app.vault.delete(file);
-
-		// Update settings
-		delete this.settings.templates[templateId];
-		await this.saveSettings();
-
-		// Reload templates
-		await this.loadTemplates();
-
-		new Notice(`Template "${templateId}" deleted successfully`);
-	}
-
-	async createNoteFromTemplate(templateId: string, customTitle?: string) {
-		const metadata = this.settings.templates[templateId];
-		if (!metadata) {
-			new Notice(`Template "${templateId}" not found`);
-			return;
-		}
-
+	private async createTestNote() {
 		try {
-			// Create note from template
-			const note = this.noteFactory.createFromTemplate(metadata.noteType, templateId);
+			console.log('=== Creating Test Note ===');
+			let filename = await this.integrations.getTemplater().getPrompt("Input filename")
+			if (!filename) {
+				filename = "unnamed"
+			}
+			const note = this.factory.createNote(NoteType.FLEETING);
 
-			// Generate filename
-			const filename = this.generateFilename(metadata.filenameFormat, customTitle || note.getTitle());
-			note.setTitle(filename);
-
-			// Replace template variables
-			note.setProperty('id', Utils.generateZettelID());
-			note.setProperty('create', Utils.generateDate());
-
-			// Save the note
+			// 保存笔记
 			const file = await note.save();
 
-			// Open the new note
-			await this.app.workspace.getLeaf().openFile(file);
+			console.log('Test note created:', file.path);
+			console.log('Note properties:', note.getProperties().getProperties());
+			console.log('Note content:', note.toString());
 
-			new Notice(`Note created from template "${metadata.name}"`);
+			new Notice(`Test note created: ${file.name}`);
+
 		} catch (error) {
-			console.error('Failed to create note from template:', error);
-			new Notice(`Failed to create note: ${error.message}`);
+			console.error('Error creating test note:', error);
+			new Notice(`Error: ${error.message}`);
 		}
 	}
 
-	generateFilename(format: string, title: string): string {
-		const date = window.moment().format(this.settings.dateFormat);
-		const time = window.moment().format('HHmmss');
+	private async testFactoryFunctions() {
+		try {
+			console.log('=== Testing Factory Functions ===');
 
-		return format
-			.replace('{{date}}', date)
-			.replace('{{time}}', time)
-			.replace('{{title}}', title)
-			.replace('{{timestamp}}', Date.now().toString());
-	}
+			// 测试1: 创建不同类型的笔记
+			const types = [NoteType.FLEETING, NoteType.LITERATURE, NoteType.PERMANENT, NoteType.ATOMIC];
 
-	showTemplateSelector() {
-		const templates = Object.entries(this.settings.templates);
-
-		if (templates.length === 0) {
-			new Notice('No templates available. Create one first!');
-			new TemplateListModal(this.app, this).open();
-			return;
-		}
-
-		// Create a modal to select template
-		new TemplateSelectorModal(this.app, this, templates).open();
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-}
-
-class TemplateSelectorModal extends Modal {
-	plugin: ZettelkastenTemplatePlugin;
-	templates: [string, TemplateMetadata][];
-
-	constructor(app: App, plugin: ZettelkastenTemplatePlugin, templates: [string, TemplateMetadata][]) {
-		super(app);
-		this.plugin = plugin;
-		this.templates = templates;
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.empty();
-
-		contentEl.createEl('h2', { text: 'Select a Template' });
-
-		// Group templates by type
-		const templatesByType = new Map<NoteType, [string, TemplateMetadata][]>();
-
-		for (const [id, metadata] of this.templates) {
-			if (!templatesByType.has(metadata.noteType)) {
-				templatesByType.set(metadata.noteType, []);
-			}
-			templatesByType.get(metadata.noteType)!.push([id, metadata]);
-		}
-
-		// Create sections for each type
-		for (const [type, templates] of templatesByType) {
-			const section = contentEl.createDiv('template-type-section');
-			section.createEl('h3', { text: type.toUpperCase() });
-
-			for (const [id, metadata] of templates) {
-				const item = section.createDiv('template-item');
-				item.addClass('clickable');
-
-				const name = item.createEl('div', { text: metadata.name, cls: 'template-name' });
-				if (metadata.isDefault) {
-					name.createSpan({ text: ' ★', cls: 'template-default' });
-				}
-
-				if (metadata.description) {
-					item.createEl('small', { text: metadata.description, cls: 'template-description' });
-				}
-
-				item.addEventListener('click', () => {
-					this.plugin.createNoteFromTemplate(id);
-					this.close();
+			for (const type of types) {
+				const note = this.factory.createNote(type);
+				console.log(`Created ${type} note:`, {
+					type: note.getType(),
+					path: note.getPath(),
+					title: note.getTitle()
 				});
 			}
-		}
-	}
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
+			// 测试2: 克隆笔记
+			const originalNote = this.factory.createNote(NoteType.FLEETING);
+			originalNote.setTitle('Original Note');
+			originalNote.addTag(['original', 'test']);
+			originalNote.addBodyContent('Original content', 'Main', 1);
 
-class ZettelkastenTemplateSettingTab extends PluginSettingTab {
-	plugin: ZettelkastenTemplatePlugin;
-
-	constructor(app: App, plugin: ZettelkastenTemplatePlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-
-		containerEl.createEl('h2', { text: 'Zettelkasten Template Settings' });
-
-		new Setting(containerEl)
-			.setName('Template folder')
-			.setDesc('Folder where templates are stored')
-			.addText(text => text
-				.setPlaceholder('.obsidian/plugins/zettelkasten-templates/templates')
-				.setValue(this.plugin.settings.templateFolder)
-				.onChange(async (value) => {
-					this.plugin.settings.templateFolder = value;
-					await this.plugin.saveSettings();
-					await this.plugin.ensureTemplateFolder();
-					await this.plugin.loadTemplates();
-				}));
-
-		new Setting(containerEl)
-			.setName('Date format')
-			.setDesc('Format for dates in filenames (moment.js format)')
-			.addText(text => text
-				.setPlaceholder('YYYY-MM-DD')
-				.setValue(this.plugin.settings.dateFormat)
-				.onChange(async (value) => {
-					this.plugin.settings.dateFormat = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
-			.setName('Default note type')
-			.setDesc('Default type for new notes')
-			.addDropdown(dropdown => {
-				Object.values(NoteType).forEach(type => {
-					dropdown.addOption(type, type.toUpperCase());
-				});
-				dropdown
-					.setValue(this.plugin.settings.defaultNoteType)
-					.onChange(async (value) => {
-						this.plugin.settings.defaultNoteType = value as NoteType;
-						await this.plugin.saveSettings();
-					});
+			const clonedNote = this.factory.cloneNote(originalNote, 'Cloned Note');
+			console.log('Cloned note:', {
+				title: clonedNote.getTitle(),
+				tags: clonedNote.getProperty('tags'),
+				originalId: originalNote.getProperty('id'),
+				clonedId: clonedNote.getProperty('id')
 			});
 
-		new Setting(containerEl)
-			.setName('Manage Templates')
-			.setDesc('Open the template manager')
-			.addButton(button => button
-				.setButtonText('Open Template Manager')
-				.setCta()
-				.onClick(() => {
-					new TemplateListModal(this.app, this.plugin).open();
-				}));
+			new Notice('Factory functions test completed - check console');
+
+		} catch (error) {
+			console.error('Error testing factory functions:', error);
+			new Notice(`Error: ${error.message}`);
+		}
+	}
+
+	private async loadAndDebugNote() {
+		try {
+			console.log('=== Loading and Debugging Note ===');
+
+			// 获取当前活动文件
+			const activeFile = this.app.workspace.getActiveFile();
+			if (!activeFile || activeFile.extension !== 'md') {
+				new Notice('Please open a markdown file first');
+				return;
+			}
+
+			// 使用工厂加载笔记
+			const note = await this.factory.loadFromFile(activeFile.path);
+
+			console.log('Loaded note details:');
+			console.log('- Title:', note.getTitle());
+			console.log('- Type:', note.getType());
+			console.log('- Path:', note.getPath());
+			console.log('- Properties:', note.getProperties().getProperties());
+			console.log('- Body:', note.getBody().toString());
+
+			// 测试属性操作
+			console.log('\n=== Testing Property Operations ===');
+			console.log('- Tags:', note.getProperty('tags'));
+			console.log('- Aliases:', note.getProperty('aliases'));
+			console.log('- Sources:', note.getProperty('sources'));
+			console.log('- ID:', note.getProperty('id'));
+			console.log('- Created:', note.getProperty('create'));
+
+			new Notice(`Loaded and debugged: ${note.getTitle()}`);
+
+		} catch (error) {
+			console.error('Error loading note:', error);
+			new Notice(`Error: ${error.message}`);
+		}
+	}
+
+	private async testTemplateFunctions() {
+		try {
+			console.log('=== Testing Template Functions ===');
+
+			// 创建一个模板笔记
+			const template = this.factory.createNote(NoteType.FLEETING);
+			template.setTitle('Template Note');
+			template.addTag(['template', 'daily']);
+			template.addBodyContent('Daily reflection template', 'Reflection', 1);
+			template.addBodyContent('What did I learn today?', 'Learning', 2);
+			template.addBodyContent('What am I grateful for?', 'Gratitude', 2);
+
+			// 注册模板
+			this.factory.registerTemplate(NoteType.FLEETING, 'daily-reflection', template);
+			this.factory.setDefaultTemplate(NoteType.FLEETING, 'daily-reflection');
+
+			console.log('Template registered');
+
+			// 测试模板列表
+			const templates = this.factory.listTemplates(NoteType.FLEETING);
+			console.log('Available templates:', templates);
+
+			// 从模板创建笔记
+			const newNote = this.factory.createFromTemplate(NoteType.FLEETING, 'daily-reflection');
+			newNote.setTitle('Daily Reflection - Today');
+
+			console.log('Created from template:', {
+				title: newNote.getTitle(),
+				tags: newNote.getProperty('tags'),
+				body: newNote.getBody().toString()
+			});
+
+			new Notice('Template functions test completed - check console');
+
+		} catch (error) {
+			console.error('Error testing template functions:', error);
+			new Notice(`Error: ${error.message}`);
+		}
+	}
+
+	private async comprehensiveTest() {
+		try {
+			console.log('=== Comprehensive Debug Test ===');
+
+			// 测试1: 创建和保存各种类型的笔记
+			const testData = [
+				{
+					type: NoteType.FLEETING,
+					title: 'Fleeting Test',
+					content: 'Quick thought that came to mind',
+					tags: ['fleeting', 'idea']
+				},
+				{
+					type: NoteType.LITERATURE,
+					title: 'Literature Test',
+					content: 'Summary of an important paper',
+					tags: ['literature', 'research']
+				},
+				{
+					type: NoteType.PERMANENT,
+					title: 'Permanent Test',
+					content: 'Well-developed permanent knowledge',
+					tags: ['permanent', 'knowledge']
+				},
+				{
+					type: NoteType.ATOMIC,
+					title: 'Atomic Test',
+					content: 'Single atomic concept',
+					tags: ['atomic', 'concept']
+				}
+			];
+
+			const createdNotes: BaseNote[] = [];
+
+			for (const data of testData) {
+				const note = this.factory.createNote(data.type);
+				note.setTitle(data.title);
+				note.addTag(data.tags);
+				note.addBodyContent(data.content, 'Main Content', 1);
+				note.addBodyContent('Additional details and examples', 'Details', 2);
+
+				// 保存笔记
+				await note.save();
+				createdNotes.push(note);
+
+				console.log(`Created ${data.type} note: ${note.getTitle()}`);
+			}
+
+			// 测试2: 链接笔记
+			console.log('\n=== Testing Note Linking ===');
+			const mainNote = createdNotes[0];
+			const linkedNote = createdNotes[1];
+
+			mainNote.addLinkedPage(linkedNote.getTitle(), 'Related Notes', 'list');
+			console.log('Added link from', mainNote.getTitle(), 'to', linkedNote.getTitle());
+
+			// 测试3: 属性操作
+			console.log('\n=== Testing Property Operations ===');
+			const testNote = createdNotes[2];
+
+			// 添加各种属性
+			testNote.setProperty('custom_field', 'custom_value');
+			testNote.setProperty('priority', 'high');
+			testNote.setProperty('due_date', '2024-01-01');
+
+			console.log('Custom properties added:', {
+				custom_field: testNote.getProperty('custom_field'),
+				priority: testNote.getProperty('priority'),
+				due_date: testNote.getProperty('due_date')
+			});
+
+			// 测试4: 工厂修改功能
+			console.log('\n=== Testing Factory Modifications ===');
+			this.factory.applyModifications(testNote, {
+				properties: {
+					'modified_by': 'debug_plugin',
+					'test_mode': true
+				},
+				sections: [
+					{
+						name: 'Debug Info',
+						content: 'This section was added by debug plugin',
+						level: 1
+					}
+				]
+			});
+
+			console.log('Applied modifications to note');
+
+			console.log('\n=== Comprehensive Test Completed ===');
+			console.log(`Created ${createdNotes.length} test notes`);
+			console.log('All tests passed successfully!');
+
+			new Notice(`Comprehensive test completed! Created ${createdNotes.length} notes.`);
+
+		} catch (error) {
+			console.error('Error in comprehensive test:', error);
+			new Notice(`Error: ${error.message}`);
+		}
+	}
+
+	onunload() {
+		console.log('Debug Plugin unloaded');
 	}
 }

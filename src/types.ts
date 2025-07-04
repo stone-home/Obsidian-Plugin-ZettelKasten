@@ -1,11 +1,3 @@
-// 笔记类型枚举
-export enum NoteType {
-	FLEETING = 'fleeting',
-	LITERATURE = 'literature',
-	PERMANENT = 'permanent',
-	ATOMIC = 'atomic',
-	UNKNOWN = 'unknown'
-}
 
 // 插件设置接口 - 扩展更多配置项
 export interface ZettelkastenSettings {

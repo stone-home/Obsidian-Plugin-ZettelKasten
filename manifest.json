@@ -1,10 +1,10 @@
 {
-	"id": "stone-zettelkasten",
-	"name": "Stone Zettelkasten",
+	"id": "zettelkasten-debug",
+	"name": "Zettelkasten Debug Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Stone - A workflow assistant for Zettelkasten note-taking method with four types of notes: fleeting, literature, atomic, and permanent.",
-	"author": "Your Name",
+	"description": "Debug plugin for testing note factory and note functionality",
+	"author": "Debug Helper",
 	"authorUrl": "",
 	"fundingUrl": {
 		"Buy Me a Coffee": "https://www.buymeacoffee.com"

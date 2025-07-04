@@ -1,7 +1,6 @@
 import { App, TFile } from "obsidian";
-import { BaseNote, KeyValue, IProperties, Body } from "./note";
+import { BaseNote, Body, NoteType} from "./note";
 import { Logger } from "../logger";
-import { NoteType } from "../types";
 import { Utils } from "../utils";
 
 /**

@@ -1,7 +1,17 @@
 import {App, TFile} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
-import {NoteType} from "../types";
+import { IntegrationManager} from "../3rd/manager";
+
+
+// Pre-defined Types of Notes
+export enum NoteType {
+	FLEETING = 'fleeting',
+	LITERATURE = 'literature',
+	PERMANENT = 'permanent',
+	ATOMIC = 'atomic',
+	UNKNOWN = 'unknown'
+}
 
 
 // [TS] KeyValue is a generic class that can hold any type of value
@@ -322,12 +332,17 @@ export abstract class BaseNote {
 	protected template?: BaseNote;
 	protected noteType: string;
 	private logger = Logger.createLogger('BaseNote');
+	private integrations: IntegrationManager;
+
+	abstract defaultProperty(): Property;
+	abstract defaultBody(): Body;
 
 	constructor(app: App, noteType: string, template?: BaseNote) {
 		this.app = app;
 		this.noteType = noteType;
-		this.properties = new Property();
-		this.body = new Body();
+		this.properties = this.defaultProperty();
+		this.body = this.defaultBody()
+		this.integrations = new IntegrationManager(app);
 		if (template) {
 			template.getProperties().update(this.properties.getProperties(), true);
 			template.getBody().update(this.getBody())
@@ -438,12 +453,25 @@ export abstract class BaseNote {
 		return link;
 	}
 
+	public pre_process(): void {
+		this.logger.info("Pre-process before generating content");
+		// This method can be overridden in subclasses for specific pre-processing
+		return null;
+	}
+
+	async post_process(s_note: string): Promise<string> {
+		this.logger.info("Post-process after generating content");
+		// This method can be overridden in subclasses for specific post-processing
+		return s_note;
+	}
+
 	// Generate string-form content
-	public toString(): string {
+	public async toString(): Promise<string> {
 		this.logger.info("Generate string-form content");
+		this.pre_process();
 		let note: string = this.properties.toString();
-		note = this.body.toString();
-		return note;
+		note += this.body.toString();
+		return this.post_process(note)
 	}
 
 	// Check if the note exists in the vault
@@ -456,14 +484,25 @@ export abstract class BaseNote {
 	protected async checkBeforeSave(): Promise<void> {
 		this.logger.debug("Execute a Checking-before-saving");
 
-		// 检查目录是否存在
+		// check whether the directory exists
 		const dirExists = await this.exist(true);
 		if (!dirExists) {
 			await this.app.vault.createFolder(this.getPath());
 			this.logger.warn(`Dir was created, ${this.getPath()}`);
 		}
 
-		// 检查文件名冲突
+		// Check whether title is empty
+		if (!this.getTitle()) {
+			let title: Promise<string|null> = this.integrations.getTemplater().getPrompt("Typing title for the note")
+			if (title === null){
+				// @ts-ignore
+				title = "Untitled Note";
+			}
+			// @ts-ignore
+			this.setTitle(title)
+		}
+
+		// Checking whether title is duplicated
 		const fileExists = await this.exist();
 		if (fileExists) {
 			const randomSuffix = Math.floor(Math.random() * 100) + 1;
@@ -476,7 +515,8 @@ export abstract class BaseNote {
 		this.logger.info(`Start saving note to ${this.getObPath()}`);
 
 		await this.checkBeforeSave();
-		const file = await this.app.vault.create(this.getObPath(true), this.toString());
+		const s_note = await this.toString();
+		const file = await this.app.vault.create(this.getObPath(true), s_note);
 
 		// Execute linking operations
 		await this.linkingPages();
