@@ -1,7 +1,7 @@
-import { App, TFile } from "obsidian";
-import { BaseNote, Body, NoteType} from "./note";
-import { Logger } from "../logger";
-import { Utils } from "../utils";
+import {App, TFile} from "obsidian";
+import {BaseNote, Body, NoteType} from "./note";
+import {Logger} from "../logger";
+import {Utils} from "../utils";
 
 /**
  * Factory class for creating and managing notes
@@ -10,7 +10,7 @@ import { Utils } from "../utils";
 export class NoteFactory {
 	private app: App;
 	private logger = Logger.createLogger('NoteFactory');
-	private noteTypeMap: Map<NoteType, new (app: App, noteType: string, template?: BaseNote) => BaseNote>;
+	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseNote) => BaseNote>;
 	// 改进的模板存储结构：按类型分组存储模板
 	private templates: Map<NoteType, Map<string, BaseNote>> = new Map();
 	// 可选：存储默认模板
@@ -27,7 +27,7 @@ export class NoteFactory {
 	 */
 	public registerNoteClass(
 		noteType: NoteType,
-		noteClass: new (app: App, noteType: string, template?: BaseNote) => BaseNote
+		noteClass: new (app: App, noteType: NoteType, template?: BaseNote) => BaseNote
 	): void {
 		this.noteTypeMap.set(noteType, noteClass);
 		this.logger.info(`Registered note class for type: ${noteType}`);
@@ -43,7 +43,7 @@ export class NoteFactory {
 			throw new Error(`Unknown note type: ${noteType}`);
 		}
 
-		const note = new NoteClass(this.app, noteType.valueOf(), template);
+		const note = new NoteClass(this.app, noteType, template);
 		this.logger.info(`Created new ${noteType} note`);
 		return note;
 	}
@@ -54,23 +54,24 @@ export class NoteFactory {
 	public async loadFromFile(path: string): Promise<BaseNote> {
 		this.logger.info(`Loading note from file: ${path}`);
 
-		// Get the file from vault
+		// 获取 TFile 对象
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (!file || !(file instanceof TFile)) {
 			throw new Error(`File not found or is not a valid file: ${path}`);
 		}
-
-		// Read file content
-		const content = await this.app.vault.read(file);
-
-		// Parse to determine note type
-		const noteType = this.detectNoteType(content);
-
-		// Create base note instance
-		const note = this.createNote(noteType);
+		// fetch the file name
+		const fileName = file.name;
 
 		// Parse and populate the note
-		await this.populateNoteFromContent(note, content, path);
+		let note = await this.populateNoteFromContent(file);
+		// Ensure file name and synchronize the value of title in frontmatter
+		note.setTitle(fileName);
+		// Set the save path based on file location
+		const pathParts = path.split('/');
+		if (pathParts.length > 1) {
+			pathParts.pop(); // Remove filename
+			note.setPath(pathParts.join('/'));
+		}
 
 		return note;
 	}
@@ -252,256 +253,81 @@ export class NoteFactory {
 	}
 
 	/**
-	 * Detect note type from content
-	 */
-	private detectNoteType(content: string): NoteType {
-		const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-
-		if (frontmatterMatch) {
-			const frontmatter = frontmatterMatch[1];
-			const typeMatch = frontmatter.match(/type:\s*(.+)/);
-
-			if (typeMatch) {
-				const typeValue = typeMatch[1].trim();
-				const typeKey = Utils.getKeyByValue(NoteType, typeValue);
-				if (typeKey) {
-					return NoteType[typeKey];
-				}
-			}
-		}
-
-		// Default to FLEETING if no type found
-		this.logger.warn('No note type found in file, defaulting to FLEETING');
-		return NoteType.FLEETING;
-	}
-
-	/**
 	 * Populate a note instance with content from a file
 	 */
-	private async populateNoteFromContent(note: BaseNote, content: string, path: string): Promise<void> {
-		// Parse frontmatter and body
-		const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-		const match = content.match(frontmatterRegex);
+	private async populateNoteFromContent(note: TFile): Promise<BaseNote> {
+		// Load frontmatter and content
+		const cache = this.app.metadataCache.getFileCache(note);
+		const frontmatter = cache!.frontmatter
 
-		if (match) {
-			const [, frontmatter, bodyContent] = match;
-
-			// Parse frontmatter properties
-			const parsedProperties = this.parseFrontmatter(frontmatter);
-
-			// Convert to raw values and update note properties individually
-			for (const [key, propValue] of Object.entries(parsedProperties)) {
-				if (propValue && typeof propValue.getValue === 'function') {
-					// It's a KeyValue object, get the actual value
-					const value = propValue.getValue();
-					this.applyPropertyToNote(note, key, value);
-				}
-			}
-
-			// Parse body content and update note body
-			const parsedBody = this.parseBody(bodyContent);
-			parsedBody.update(note.getBody());
-
-			// Mark as not new since it's loaded from file
-			note.setProperty('new', false);
-
-		} else {
-			// No frontmatter found, treat entire content as body
-			this.logger.warn('No frontmatter found in file, treating entire content as body');
-			const parsedBody = this.parseBody(content);
-			parsedBody.update(note.getBody());
+		// Gather type first to create a note
+		let enumKey = Utils.getKeyByValue(NoteType, frontmatter!.type)
+		if (!enumKey){
+			enumKey = "FLEETING";
 		}
+		let newNote: BaseNote = this.createNote(NoteType[enumKey]);
+		const properties = newNote.getProperties();
 
-		// Set the save path based on file location
-		const pathParts = path.split('/');
-		if (pathParts.length > 1) {
-			pathParts.pop(); // Remove filename
-			note.setPath(pathParts.join('/'));
-		}
-
-		this.logger.info(`Successfully populated note: ${note.getTitle()}`);
-	}
-
-	/**
-	 * Parse frontmatter into key-value pairs
-	 */
-	private parseFrontmatter(frontmatter: string): Record<string, any> {
-		const properties: Record<string, any> = {};
-		const lines = frontmatter.split('\n');
-
-		let currentKey: string | null = null;
-		let currentValue: any = null;
-		let inArray = false;
-
-		for (const line of lines) {
-			const trimmed = line.trim();
-
-			if (!trimmed) continue;
-
-			// Check if it's an array item
-			if (trimmed.startsWith('- ') && currentKey && inArray) {
-				if (!Array.isArray(currentValue)) {
-					currentValue = [];
-				}
-				currentValue.push(trimmed.substring(2).trim());
-				continue;
-			}
-
-			// Check if it's a key-value pair
-			const colonIndex = line.indexOf(':');
-			if (colonIndex > 0) {
-				// Save previous key-value if exists
-				if (currentKey !== null) {
-					properties[currentKey] = currentValue;
-				}
-
-				currentKey = line.substring(0, colonIndex).trim();
-				const valueStr = line.substring(colonIndex + 1).trim();
-
-				// Check if value is empty (potential array)
-				if (!valueStr) {
-					inArray = true;
-					currentValue = [];
-				} else {
-					inArray = false;
-					// Parse value based on content
-					if (valueStr === 'true' || valueStr === 'false') {
-						currentValue = valueStr === 'true';
-					} else if (!isNaN(Number(valueStr))) {
-						currentValue = Number(valueStr);
-					} else {
-						currentValue = valueStr;
-					}
-				}
+		if (frontmatter) {
+			for (const [key, propValue] of Object.entries(frontmatter)) {
+				properties.setPropertyValue(key, propValue, true)
 			}
 		}
 
-		// Save last key-value pair
-		if (currentKey !== null) {
-			properties[currentKey] = currentValue;
-		}
-
-		this.logger.debug(`Parsed properties: ${JSON.stringify(properties)}`);
-		return properties;
+		const body: Body = await this.parseBody(note);
+		newNote.getBody().update(body);
+		return newNote;
 	}
 
 	/**
 	 * Parse body content into Body object
 	 */
-	private parseBody(bodyContent: string): Body {
+	private async parseBody(note: TFile): Promise<Body> {
+		const content = await this.app.vault.read(note);
+		const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+		const match = content.match(frontmatterRegex);
 		const body = new Body();
-		const lines = bodyContent.split('\n');
 
-		let currentSection = 'default';
-		let currentHeadLevel = 1;
-		let contentBuffer: string[] = [];
+		if (match) {
+			const [, frontmatter, bodyContent] = match;
+			const lines = bodyContent.split('\n');
 
-		for (const line of lines) {
-			// Check if line is a header
-			const headerMatch = line.match(/^(#+)\s+(.+)$/);
+			let currentSection = 'default';
+			let currentHeadLevel = 1;
+			let contentBuffer: string[] = [];
 
-			if (headerMatch) {
-				// Save previous section content if exists
-				if (contentBuffer.length > 0) {
-					body.addContent(contentBuffer.join('\n').trim(), currentSection, currentHeadLevel);
-					contentBuffer = [];
-				}
+			for (const line of lines) {
+				// Check if line is a header
+				const headerMatch = line.match(/^(#+)\s+(.+)$/);
 
-				// Update current section
-				currentHeadLevel = headerMatch[1].length;
-				currentSection = headerMatch[2].trim();
+				if (headerMatch) {
+					// Save previous section content if exists
+					if (contentBuffer.length > 0) {
+						body.addContent(contentBuffer.join('\n').trim(), currentSection, currentHeadLevel);
+						contentBuffer = [];
+					}
 
-				// Create new section
-				body.newSection(currentSection, currentHeadLevel);
-			} else {
-				// Add line to content buffer (skip empty lines at the beginning)
-				if (line.trim() || contentBuffer.length > 0) {
-					contentBuffer.push(line);
+					// Update current section
+					currentHeadLevel = headerMatch[1].length;
+					currentSection = headerMatch[2].trim();
+
+					// Create new section
+					body.newSection(currentSection, currentHeadLevel);
+				} else {
+					// Add line to content buffer (skip empty lines at the beginning)
+					if (line.trim() || contentBuffer.length > 0) {
+						contentBuffer.push(line);
+					}
 				}
 			}
-		}
 
-		// Save remaining content
-		if (contentBuffer.length > 0) {
-			body.addContent(contentBuffer.join('\n').trim(), currentSection, currentHeadLevel);
+			// Save remaining content
+			if (contentBuffer.length > 0) {
+				body.addContent(contentBuffer.join('\n').trim(), currentSection, currentHeadLevel);
+			}
 		}
 
 		this.logger.debug(`Parsed body with sections`);
 		return body;
-	}
-
-	/**
-	 * Apply a property value to a note
-	 */
-	private applyPropertyToNote(note: BaseNote, key: string, value: any): void {
-		switch (key) {
-			case 'title':
-				if (value) note.setTitle(value);
-				break;
-			case 'type':
-				// Type is already set by detectNoteType
-				break;
-			case 'url':
-				if (value) note.setUrl(value);
-				break;
-			case 'id':
-			case 'create':
-				// Use setProperty for protected properties with force
-				note.setProperty(key, value);
-				break;
-			case 'tags':
-				if (Array.isArray(value) && value.length > 0) {
-					note.addTag(value);
-				}
-				break;
-			case 'aliases':
-				if (Array.isArray(value) && value.length > 0) {
-					note.addAlias(value);
-				}
-				break;
-			case 'source_notes':
-			case 'sources':
-				if (Array.isArray(value)) {
-					value.forEach(source => {
-						if (source) note.addSourceNote(source);
-					});
-				}
-				break;
-			case 'new':
-				note.setProperty('new', value);
-				break;
-			default:
-				// Custom properties - skip template metadata
-				if (!['template-name', 'template-description', 'filename-format',
-					'is-default', 'template', 'created-at', 'updated-at'].includes(key)) {
-					note.setProperty(key, value);
-				}
-				break;
-		}
-	}
-
-	/**
-	 * Apply modifications to a note (useful for template editor)
-	 */
-	public applyModifications(note: BaseNote, modifications: {
-		properties?: Record<string, any>,
-		sections?: Array<{ name: string, content: string, level: number }>
-	}): void {
-		// Apply property modifications
-		if (modifications.properties) {
-			for (const [key, value] of Object.entries(modifications.properties)) {
-				note.setProperty(key, value);
-			}
-		}
-
-		// Apply body modifications
-		if (modifications.sections) {
-			for (const section of modifications.sections) {
-				note.getBody().newSection(section.name, section.level);
-				note.addBodyContent(section.content, section.name, section.level);
-			}
-		}
-
-		this.logger.info('Applied modifications to note');
 	}
 }

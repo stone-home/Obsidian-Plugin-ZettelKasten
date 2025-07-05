@@ -25,7 +25,7 @@ export default class DebugPlugin extends Plugin {
 		this.addDebugCommands();
 
 		// Initialize integrations
-		this.integrations = new IntegrationManager(this.app);
+		this.integrations = IntegrationManager.getInstance(this.app);
 		await this.integrations.initialize();
 
 		new Notice('Debug Plugin loaded! Check console for debug info.');
@@ -80,10 +80,6 @@ export default class DebugPlugin extends Plugin {
 	private async createTestNote() {
 		try {
 			console.log('=== Creating Test Note ===');
-			let filename = await this.integrations.getTemplater().getPrompt("Input filename")
-			if (!filename) {
-				filename = "unnamed"
-			}
 			const note = this.factory.createNote(NoteType.FLEETING);
 
 			// 保存笔记
@@ -153,20 +149,11 @@ export default class DebugPlugin extends Plugin {
 			// 使用工厂加载笔记
 			const note = await this.factory.loadFromFile(activeFile.path);
 
-			console.log('Loaded note details:');
-			console.log('- Title:', note.getTitle());
-			console.log('- Type:', note.getType());
-			console.log('- Path:', note.getPath());
-			console.log('- Properties:', note.getProperties().getProperties());
-			console.log('- Body:', note.getBody().toString());
+			console.log("Loaded note:" + activeFile.path)
+			console.log(note.getProperties());
+			console.log(note.getBody())
+			console.log(note)
 
-			// 测试属性操作
-			console.log('\n=== Testing Property Operations ===');
-			console.log('- Tags:', note.getProperty('tags'));
-			console.log('- Aliases:', note.getProperty('aliases'));
-			console.log('- Sources:', note.getProperty('sources'));
-			console.log('- ID:', note.getProperty('id'));
-			console.log('- Created:', note.getProperty('create'));
 
 			new Notice(`Loaded and debugged: ${note.getTitle()}`);
 

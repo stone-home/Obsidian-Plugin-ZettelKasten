@@ -3,7 +3,7 @@ import { BaseNote, NoteType, Body, Property} from './note';
 
 class BaseDefault extends BaseNote {
 
-	constructor(app: App, noteType: string, template?: BaseNote) {
+	constructor(app: App, noteType: NoteType, template?: BaseNote) {
 		super(app, noteType, template);
 	}
 
@@ -21,7 +21,7 @@ class BaseDefault extends BaseNote {
 
 export class FleetingDefault extends BaseDefault {
 	defaultBody(): Body {
-		let _body: Body = super.getBody();
+		let _body: Body = super.defaultBody();
 		_body.newSection("💥Ideas/Thoughts", 1)
 		return _body;
 	}
@@ -30,7 +30,7 @@ export class FleetingDefault extends BaseDefault {
 
 export class LiteratureDefault extends BaseDefault {
 	defaultBody(): Body {
-		let _body: Body = super.getBody();
+		let _body: Body = super.defaultBody();
 		_body.newSection("🗃️content", 1)
 		return _body;
 	}
@@ -38,7 +38,7 @@ export class LiteratureDefault extends BaseDefault {
 
 export class AtomicDefault extends BaseDefault {
 	defaultBody(): Body {
-		let _body: Body = super.getBody();
+		let _body: Body = super.defaultBody();
 		_body.newSection("**💭Thoughts:", 4)
 		_body.newSection("⚡️Key Points", 1)
 		return _body;
@@ -48,7 +48,7 @@ export class AtomicDefault extends BaseDefault {
 
 export class PermanentDefault extends BaseDefault {
 	defaultBody(): Body {
-		let _body: Body = super.getBody();
+		let _body: Body = super.defaultBody();
 		_body.newSection("🗃️content", 1)
 		return _body;
 	}

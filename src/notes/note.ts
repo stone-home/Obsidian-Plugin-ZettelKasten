@@ -74,7 +74,7 @@ export class Property {
 			"id": new KeyValue("id", Utils.generateZettelID()),
 			"tags": new KeyValue("tags", []),
 			"aliases": new KeyValue("aliases", []),
-			"sources": new KeyValue("source_notes", []),
+			"sources": new KeyValue("sources", []),
 			"new": new KeyValue("new", true),
 		};
 	}
@@ -241,6 +241,13 @@ export class Body {
 		this.sections.get(sectionName)!.addContent(content);
 	}
 
+	/* * Update the body with another Body instance.
+	 * This method merges this body's content into the provided Body instance.
+	 * Then, whole provided Body instance will be assigned to this body.
+	 * If a section with the same name and head level exists, it appends the content.
+	 * If not, it creates a new section with the given name and head level.
+	 * @param body The Body instance to update from.
+	 */
 	public update(body: Body): void {
 		for (const [name, content] of this.sections) {
 			if (body.sections.has(name) && body.sections.get(name)?.head_level == content.head_level) {
@@ -330,19 +337,20 @@ export abstract class BaseNote {
 	protected savePath: string = '000-inbox';
 	protected subPage: boolean = false;
 	protected template?: BaseNote;
-	protected noteType: string;
+	protected noteType: NoteType;
 	private logger = Logger.createLogger('BaseNote');
 	private integrations: IntegrationManager;
 
 	abstract defaultProperty(): Property;
 	abstract defaultBody(): Body;
 
-	constructor(app: App, noteType: string, template?: BaseNote) {
+	constructor(app: App, noteType: NoteType, template?: BaseNote) {
 		this.app = app;
 		this.noteType = noteType;
 		this.properties = this.defaultProperty();
 		this.body = this.defaultBody()
-		this.integrations = new IntegrationManager(app);
+		this.integrations = IntegrationManager.getInstance(this.app)
+		this.logger.info("Templater Status: " + this.integrations.getTemplater().isAvailable())
 		if (template) {
 			template.getProperties().update(this.properties.getProperties(), true);
 			template.getBody().update(this.getBody())
@@ -456,7 +464,6 @@ export abstract class BaseNote {
 	public pre_process(): void {
 		this.logger.info("Pre-process before generating content");
 		// This method can be overridden in subclasses for specific pre-processing
-		return null;
 	}
 
 	async post_process(s_note: string): Promise<string> {
@@ -493,7 +500,8 @@ export abstract class BaseNote {
 
 		// Check whether title is empty
 		if (!this.getTitle()) {
-			let title: Promise<string|null> = this.integrations.getTemplater().getPrompt("Typing title for the note")
+			let title: string| null = await this.integrations.getTemplater().getPrompt("Typing title for the note")
+			this.logger.info("The note title is empty, chaneging to user input: " + title);
 			if (title === null){
 				// @ts-ignore
 				title = "Untitled Note";
@@ -509,12 +517,14 @@ export abstract class BaseNote {
 			this.setTitle(`${this.getTitle()} ${randomSuffix}`);
 			this.logger.warn(`Due to duplicated filename, file name changes to ${this.getTitle()}`);
 		}
+
+		// Overwrite the value of type
+		this.setType(this.noteType)
 	}
 
 	public async save(): Promise<TFile> {
-		this.logger.info(`Start saving note to ${this.getObPath()}`);
-
 		await this.checkBeforeSave();
+		this.logger.info(`Start saving note to ${this.getObPath()}`);
 		const s_note = await this.toString();
 		const file = await this.app.vault.create(this.getObPath(true), s_note);
 
