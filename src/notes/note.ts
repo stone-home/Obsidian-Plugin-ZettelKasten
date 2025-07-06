@@ -395,9 +395,6 @@ export abstract class BaseNote {
 		return this.savePath;
 	}
 
-	public setUrl(url: string): void {
-		this.properties.setUrl(url);
-	}
 
 	public addTag(tag: string | string[]): void {
 		const tags = Array.isArray(tag) ? tag : [tag];
@@ -407,12 +404,6 @@ export abstract class BaseNote {
 	public addAlias(alias: string | string[]): void {
 		const aliases = Array.isArray(alias) ? alias : [alias];
 		this.properties.addAlias(alias);
-	}
-
-	public addSourceNote(sourceNote: string): void {
-		if (!this.properties.getSources().includes(sourceNote)) {
-			this.properties.addSources(sourceNote);
-		}
 	}
 
 	public setProperty(key: string, value: any): void {

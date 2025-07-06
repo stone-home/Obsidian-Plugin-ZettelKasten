@@ -1,6 +1,7 @@
 import { App } from 'obsidian'
 import {BaseNote, NoteType, Body, Property, IProperties, KeyValue} from './note';
 import {Utils} from "../utils";
+import {IntegrationManager} from "../3rd/manager";
 
 
 export class BaseTemplate extends BaseNote {
@@ -121,14 +122,31 @@ export class ZettelkastenProperty extends Property {
 
 // This default note is used for supplementing mandatory fields in the Zettelkasten system
 export class BaseDefault extends BaseNote {
+	protected properties: ZettelkastenProperty;
+
+	constructor(app: App, noteType: NoteType, template?: BaseTemplate) {
+		super(app, noteType, template);
+		this.properties = this.defaultProperty()
+	}
+
 	defaultBody(): Body {
 		let _body: Body = new Body();
 		_body.newSection("**🔗Source**", 4)
 		return _body;
 	}
 
-	defaultProperty(): Property {
+	defaultProperty(): ZettelkastenProperty {
 		return new ZettelkastenProperty();
+	}
+
+	public setUrl(url: string): void {
+		this.properties.setUrl(url);
+	}
+
+	public addSourceNote(sourceNote: string): void {
+		if (!this.properties.getSources().includes(sourceNote)) {
+			this.properties.addSources(sourceNote);
+		}
 	}
 
 }
