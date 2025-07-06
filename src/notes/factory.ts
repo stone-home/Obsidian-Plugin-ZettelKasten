@@ -261,7 +261,7 @@ export class NoteFactory {
 	 * @param templateName - Unique name for the template
 	 * @param template - The template note instance
 	 */
-	public async registerTemplate(noteType: NoteType, templateName: string, template: BaseTemplate): Promise<TemplateMetadata|undefined> {
+	public async registerTemplate(noteType: NoteType, templateName: string, template: BaseNote): Promise<TemplateMetadata|undefined> {
 		if (!this.templates.has(noteType)) {
 			this.templates.set(noteType, new Map());
 		}
@@ -287,7 +287,7 @@ export class NoteFactory {
 	/**
 	 * Get a specific template
 	 */
-	public async getTemplate(noteType: NoteType, templateName: string): Promise<BaseTemplate | undefined> {
+	public async getTemplate(noteType: NoteType, templateName: string): Promise<BaseNote | undefined> {
 		const templatePath = this.templates.get(noteType)?.get(templateName)?.path;
 		if (!templatePath) {
 			this.logger.error(`Template '${templateName}' not found for type: ${noteType}`);
@@ -370,7 +370,7 @@ export class NoteFactory {
 	 * @param templateName - Name of the template to use (optional, uses default if not specified)
 	 */
 	public async createFromTemplate(noteType: NoteType, templateName?: string): Promise<BaseNote> {
-		let template: BaseTemplate | undefined;
+		let template: BaseNote | undefined;
 
 		if (!templateName) {
 			templateName = this.getDefaultTemplate(noteType);
