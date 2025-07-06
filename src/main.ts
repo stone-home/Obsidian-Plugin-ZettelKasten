@@ -3,7 +3,7 @@ import { App, Plugin, Notice, TFile } from 'obsidian';
 import { NoteFactory } from './notes/factory';
 import { BaseNote, NoteType} from './notes/note';
 import { Logger } from './logger';
-import { FleetingDefault, LiteratureDefault, AtomicDefault, PermanentDefault } from './notes/default';
+import { BaseDefault } from './notes/default';
 import { IntegrationManager} from "./3rd/manager";
 
 
@@ -17,6 +17,7 @@ export default class DebugPlugin extends Plugin {
 
 		// 初始化工厂
 		this.factory = new NoteFactory(this.app);
+		await this.factory.initializeDefaultTemplates()
 
 		// 注册笔记类型
 		this.registerNoteTypes();
@@ -32,10 +33,10 @@ export default class DebugPlugin extends Plugin {
 	}
 
 	private registerNoteTypes() {
-		this.factory.registerNoteClass(NoteType.FLEETING, FleetingDefault);
-		this.factory.registerNoteClass(NoteType.LITERATURE, LiteratureDefault);
-		this.factory.registerNoteClass(NoteType.PERMANENT, PermanentDefault);
-		this.factory.registerNoteClass(NoteType.ATOMIC, AtomicDefault);
+		this.factory.registerNoteClass(NoteType.FLEETING, BaseDefault);
+		this.factory.registerNoteClass(NoteType.LITERATURE, BaseDefault);
+		this.factory.registerNoteClass(NoteType.PERMANENT, BaseDefault);
+		this.factory.registerNoteClass(NoteType.ATOMIC, BaseDefault);
 
 		this.logger.info('All note types registered');
 	}
@@ -159,6 +160,7 @@ export default class DebugPlugin extends Plugin {
 
 		} catch (error) {
 			console.error('Error loading note:', error);
+			// @ts-ignore
 			new Notice(`Error: ${error.message}`);
 		}
 	}
@@ -168,7 +170,7 @@ export default class DebugPlugin extends Plugin {
 			console.log('=== Testing Template Functions ===');
 
 			// 创建一个模板笔记
-			const template = this.factory.createNote(NoteType.FLEETING);
+			const template = this.factory.createTemplate(NoteType.FLEETING);
 			template.setTitle('Template Note');
 			template.addTag(['template', 'daily']);
 			template.addBodyContent('Daily reflection template', 'Reflection', 1);
@@ -176,8 +178,8 @@ export default class DebugPlugin extends Plugin {
 			template.addBodyContent('What am I grateful for?', 'Gratitude', 2);
 
 			// 注册模板
-			this.factory.registerTemplate(NoteType.FLEETING, 'daily-reflection', template);
-			this.factory.setDefaultTemplate(NoteType.FLEETING, 'daily-reflection');
+			await this.factory.registerTemplate(NoteType.FLEETING, 'daily-reflection', template);
+			await this.factory.setDefaultTemplate(NoteType.FLEETING, 'daily-reflection');
 
 			console.log('Template registered');
 
@@ -186,7 +188,7 @@ export default class DebugPlugin extends Plugin {
 			console.log('Available templates:', templates);
 
 			// 从模板创建笔记
-			const newNote = this.factory.createFromTemplate(NoteType.FLEETING, 'daily-reflection');
+			const newNote = await this.factory.createFromTemplate(NoteType.FLEETING, 'daily-reflection');
 			newNote.setTitle('Daily Reflection - Today');
 
 			console.log('Created from template:', {
@@ -194,6 +196,12 @@ export default class DebugPlugin extends Plugin {
 				tags: newNote.getProperty('tags'),
 				body: newNote.getBody().toString()
 			});
+			await newNote.save();
+
+			const newNote1 = await this.factory.createFromTemplate(NoteType.FLEETING, 'default');
+			newNote1.setTitle('Default Template Note');
+
+			await newNote1.save();
 
 			new Notice('Template functions test completed - check console');
 

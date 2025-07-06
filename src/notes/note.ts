@@ -1,4 +1,4 @@
-import {App, TFile} from "obsidian";
+import {App, TFile, TFolder} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
 import { IntegrationManager} from "../3rd/manager";
@@ -36,8 +36,12 @@ export class KeyValue<T> {
 		let output: string = "";
 		// [TS] using different approach to format the output based on the type of value
 		if (Array.isArray(this.value)) {
-			const formattedArray = this.value.map(item => `  - ${item}`).join('\n');
-			output = `${this.key}:\n${formattedArray}\n`;
+			if (this.value.length === 0){
+				output = `${this.key}: []\n`; // Return empty array format
+			} else {
+				const formattedArray = this.value.map(item => `  - ${item}`).join('\n');
+				output = `${this.key}:\n${formattedArray}\n`;
+			}
 		} else {
 			output = `${this.key}: ${this.value}\n`;
 		}
@@ -49,33 +53,24 @@ export class KeyValue<T> {
 export interface IProperties {
 	title: KeyValue<string>;
 	type: KeyValue<string>;
-	url: KeyValue<string>;
-	create: KeyValue<string>;
-	id: KeyValue<string>;
 	tags: KeyValue<string[]>;
 	aliases: KeyValue<string[]>;
-	sources: KeyValue<string[]>;
-	new: KeyValue<boolean>;
 	// [TS] new is a boolean indicating if the note is new
 	[key: string]: KeyValue<any>;
 }
 
+
 export class Property {
-	private _properties: IProperties;
-	private logger = Logger.createLogger('Property');
+	protected _properties: IProperties;
+	protected logger = Logger.createLogger('Property');
 	private static readonly protectedKeys: string[] = ['id', 'create'];
 
 	constructor() {
 		this._properties = {
 			"title": new KeyValue("title", ""),
 			"type": new KeyValue("type", ""),
-			"url": new KeyValue("url", ""),
-			"create": new KeyValue("create", Utils.generateDate()),
-			"id": new KeyValue("id", Utils.generateZettelID()),
 			"tags": new KeyValue("tags", []),
 			"aliases": new KeyValue("aliases", []),
-			"sources": new KeyValue("sources", []),
-			"new": new KeyValue("new", true),
 		};
 	}
 
@@ -94,7 +89,7 @@ export class Property {
 				const incomingKeyValue = updates[key];
 				if (incomingKeyValue) {
 					const valueToSet = incomingKeyValue.getValue();
-					this.setPropertyValue(key, valueToSet, true);
+					this.setPropertyValue(key, valueToSet, false);
 				}
 			}
 		}
@@ -111,6 +106,15 @@ export class Property {
 		this.setPropertyValue(key, value);
 	}
 
+	public remove(key: string): void {
+		if (this._properties.hasOwnProperty(key)) {
+			delete this._properties[key];
+			this.logger.info(`property ${key} is removed`);
+		} else {
+			this.logger.warn(`Attempted to remove non-existing property: ${key}`);
+		}
+	}
+
 	public getPropertyValue<T = any>(key: string): T {
 		this.logger.debug(`property ${key}:${this._properties[key]?.getValue()} is returned`);
 		return this._properties[key]?.getValue();
@@ -125,7 +129,7 @@ export class Property {
 			if (Array.isArray(currentValue)) {
 				if (cleanup) {
 					this.logger.info(`property ${key} is cleaned up`);
-					currentValue.length = 0; // 更高效的清空数组方式
+					currentValue.length = 0;
 				}
 				const valuesToAdd = Array.isArray(value) ? value : [value];
 				currentValue.push(...valuesToAdd);
@@ -157,16 +161,6 @@ export class Property {
 		this.setPropertyValue("type", type);
 	}
 
-	public getUrl(): string {
-		this.logger.debug("Get Property: url");
-		return this.getPropertyValue("url");
-	}
-
-	public setUrl(url: string): void {
-		this.logger.info(`Set Property: url:${url}`);
-		this.setPropertyValue("url", url);
-	}
-
 	public getTags(): string[] {
 		this.logger.debug("Get Property: tags");
 		return this.getPropertyValue("tags");
@@ -187,24 +181,8 @@ export class Property {
 		this.setPropertyValue("aliases", alias);
 	}
 
-	public addSources(sourceNote: string| string[]): void {
-		this.logger.info(`Add Property: source_notes:${sourceNote}`);
-		this.setPropertyValue("sources", sourceNote);
-	}
-
-	public getSources(): string[] {
-		this.logger.debug("Get Property: source_notes");
-		return this.getPropertyValue("sources");
-	}
-
-	public getId(): string {
-		this.logger.debug("Get Property: id");
-		return this.getPropertyValue("id");
-	}
-
 	public toString(): string {
 		this.logger.debug("Generate string-form content");
-		this.addAlias(this.getId());
 		let propString = "---\n";
 		for (const key in this._properties) {
 			propString += this._properties[key].toString();
@@ -268,8 +246,8 @@ export class Body {
 		let body: string = "";
 		for (const [name, content] of this.sections) {
 			if (content) {
-				body += `${'#'.repeat(content.head_level)} ${name}\n\n`;
-				body += content.content.join('\n') + '\n\n';
+				body += `${'#'.repeat(content.head_level)} ${name}\n`;
+				body += content.content.join('\n') + '\n';
 			}
 		}
 
@@ -352,12 +330,28 @@ export abstract class BaseNote {
 		this.integrations = IntegrationManager.getInstance(this.app)
 		this.logger.info("Templater Status: " + this.integrations.getTemplater().isAvailable())
 		if (template) {
+			this.updateByTemplate(template, true);
+		}
+	}
+
+	public updateByTemplate(template: BaseNote, keepNoteOrder: boolean = true): void {
+		if (keepNoteOrder) {
 			template.getProperties().update(this.properties.getProperties(), true);
 			template.getBody().update(this.getBody())
 
 			this.properties = template.getProperties();
 			this.body = template.getBody();
+		} else {
+			this.properties.update(template.getProperties().getProperties())
+			this.body.update(this.getBody())
 		}
+		// Due to each template exists a field, call 'template'
+		// must remove it before saving
+		if (this.properties.getPropertyValue("template")) {
+			this.logger.debug("Remove template property before saving");
+			this.properties.remove("template");
+		}
+
 	}
 
 	public getProperties(): Property {
@@ -483,9 +477,19 @@ export abstract class BaseNote {
 
 	// Check if the note exists in the vault
 	public async exist(dir: boolean = false): Promise<boolean> {
-		const path = dir ? this.getPath() : this.getObPath();
-		const file = this.app.vault.getAbstractFileByPath(path);
-		return file !== null;
+		try {
+			const path = dir ? this.getPath() : this.getObPath(true); // 确保文件路径包含扩展名
+			const file = this.app.vault.getAbstractFileByPath(path);
+
+			if (dir) {
+				return file instanceof TFolder; // 确保检查的是文件夹
+			} else {
+				return file instanceof TFile;   // 确保检查的是文件
+			}
+		} catch (error) {
+			this.logger.error(`Error checking existence: ${error}`);
+			return false;
+		}
 	}
 
 	protected async checkBeforeSave(): Promise<void> {
