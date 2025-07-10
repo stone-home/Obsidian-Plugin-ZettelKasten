@@ -1,3 +1,6 @@
+import { Notice } from 'obsidian';
+
+
 // src/logger.ts - 适配 Obsidian 环境的简化 Logger
 export class Logger {
 	static isDebugMode: boolean = false;
@@ -7,9 +10,57 @@ export class Logger {
 		Logger.isDebugMode = debug;
 	}
 
-	// 错误日志 - 总是显示
-	public static error(message: string, ...args: any[]): void {
-		console.error(`[Zettelkasten] ERROR: ${message}`, ...args);
+	/**
+	 * Safely extracts error message from unknown error type
+	 * @param error - The error object of unknown type
+	 * @returns {string} A safe error message string
+	 */
+	public static getErrorMessage(error: unknown): string {
+		if (error instanceof Error) {
+			return error.message;
+		}
+		if (typeof error === 'string') {
+			return error;
+		}
+		if (error && typeof error === 'object') {
+			// Try to get message property from object
+			const errorObj = error as any;
+			if (errorObj.message && typeof errorObj.message === 'string') {
+				return errorObj.message;
+			}
+			// Try to stringify the object
+			try {
+				return JSON.stringify(error);
+			} catch {
+				return '[Object object]';
+			}
+		}
+		return String(error);
+	}
+
+	/**
+	 * Safely extracts error details including message and stack trace
+	 * @param error - The error object of unknown type
+	 * @returns {object} Error details with message and stack
+	 */
+	public static getErrorDetails(error: unknown): { message: string; stack?: string } {
+		const message = Logger.getErrorMessage(error);
+
+		if (error instanceof Error && error.stack) {
+			return { message, stack: error.stack };
+		}
+
+		return { message };
+	}
+
+	// 错误日志 - 总是显示，支持 unknown 类型
+	public static error(message: string, error?: unknown): void {
+		if (error !== undefined) {
+			const errorDetails = Logger.getErrorDetails(error);
+			console.error(`[Zettelkasten] ERROR: ${message} - ${errorDetails.message}`, errorDetails.stack ? { stack: errorDetails.stack } : {});
+		} else {
+			console.error(`[Zettelkasten] ERROR: ${message}`);
+		}
 	}
 
 	// 警告日志 - 总是显示
@@ -36,6 +87,24 @@ export class Logger {
 		}
 	}
 
+	/**
+	 * Logs error with context and shows user notification
+	 * @param context - Context description for the error
+	 * @param error - The error object
+	 * @param showNotice - Whether to show user notification (default: true)
+	 */
+	public static logError(context: string, error: unknown, showNotice: boolean = true): void {
+		Logger.error(context, error);
+
+		if (showNotice) {
+			const errorMessage = Logger.getErrorMessage(error);
+			// Try to show notice if available
+			if (typeof Notice !== 'undefined') {
+				new Notice(`${context}: ${errorMessage}`, 6000);
+			}
+		}
+	}
+
 	// 创建带上下文的 Logger 实例
 	public static createLogger(context: string): ContextLogger {
 		return new ContextLogger(context);
@@ -55,8 +124,13 @@ export class ContextLogger {
 		return `[Zettelkasten:${this.context}] ${level}: ${message}`;
 	}
 
-	public error(message: string, ...args: any[]): void {
-		console.error(this.formatMessage('ERROR', message), ...args);
+	public error(message: string, error?: unknown): void {
+		if (error !== undefined) {
+			const errorDetails = Logger.getErrorDetails(error);
+			console.error(this.formatMessage('ERROR', `${message} - ${errorDetails.message}`), errorDetails.stack ? { stack: errorDetails.stack } : {});
+		} else {
+			console.error(this.formatMessage('ERROR', message));
+		}
 	}
 
 	public warn(message: string, ...args: any[]): void {
@@ -77,6 +151,33 @@ export class ContextLogger {
 		if (Logger.isDebugMode) {
 			console.log(this.formatMessage('DEBUG', message), ...args);
 		}
+	}
+
+	/**
+	 * Logs error with context and shows user notification
+	 * @param message - Error context message
+	 * @param error - The error object
+	 * @param showNotice - Whether to show user notification (default: true)
+	 */
+	public logError(message: string, error: unknown, showNotice: boolean = true): void {
+		this.error(message, error);
+
+		if (showNotice) {
+			const errorMessage = Logger.getErrorMessage(error);
+			// Try to show notice if available
+			if (typeof Notice !== 'undefined') {
+				new Notice(`${message}: ${errorMessage}`, 6000);
+			}
+		}
+	}
+
+	/**
+	 * Get safe error message for custom handling
+	 * @param error - The error object
+	 * @returns {string} Safe error message
+	 */
+	public getErrorMessage(error: unknown): string {
+		return Logger.getErrorMessage(error);
 	}
 }
 

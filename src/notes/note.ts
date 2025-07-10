@@ -1,21 +1,11 @@
 import {App, TFile, TFolder} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
-import { IntegrationManager} from "../3rd/manager";
+import { IntegrationManager} from "../3rd";
+import {INoteLink, IKeyValue, IProperties, IZettelkastenProperties} from "./types";
+import {NoteType} from "./config";
 
-
-// Pre-defined Types of Notes
-export enum NoteType {
-	FLEETING = 'fleeting',
-	LITERATURE = 'literature',
-	PERMANENT = 'permanent',
-	ATOMIC = 'atomic',
-	UNKNOWN = 'unknown'
-}
-
-
-// [TS] KeyValue is a generic class that can hold any type of value
-export class KeyValue<T> {
+export class KeyValue<T> implements IKeyValue<T>{
 	private key: string;
 	private value: T;
 
@@ -47,16 +37,6 @@ export class KeyValue<T> {
 		}
 		return output;
 	}
-}
-
-// IProperties interface defines the structure of properties for a note
-export interface IProperties {
-	title: KeyValue<string>;
-	type: KeyValue<string>;
-	tags: KeyValue<string[]>;
-	aliases: KeyValue<string[]>;
-	// [TS] new is a boolean indicating if the note is new
-	[key: string]: KeyValue<any>;
 }
 
 
@@ -255,12 +235,7 @@ export class Body {
 	}
 }
 
-export interface INoteLink {
-	targetNote: string;
-	header?: string;
-	form?: 'list' | 'checklist';
-	link(sourceNote: string): Promise<void>;
-}
+
 
 export class NoteLink implements INoteLink {
 	public targetNote: string;
@@ -328,7 +303,6 @@ export abstract class BaseNote {
 		this.properties = this.defaultProperty();
 		this.body = this.defaultBody()
 		this.integrations = IntegrationManager.getInstance(this.app)
-		this.logger.info("Templater Status: " + this.integrations.getTemplater().isAvailable())
 		if (template) {
 			this.updateByTemplate(template, true);
 		}
@@ -377,7 +351,7 @@ export abstract class BaseNote {
 		let note_key = Utils.getKeyByValue(NoteType, this.properties.getType());
 		if (!note_key) {
 			this.logger.warn(`Note type ${this.properties.getType()} is not recognized, defaulting to UNKNOWN`);
-			note_key = 'UNKNOWN';
+			note_key = 'FLEETING';
 		}
 		return NoteType[note_key];
 	}
@@ -536,6 +510,96 @@ export abstract class BaseNote {
 			await link.link(this.getTitle());
 		}
 		this.logger.info("Linking pages finished");
+	}
+
+}
+
+
+// Zettelkasten Relevant Class
+export class ZettelkastenProperty extends Property {
+	protected logger = Logger.createLogger('ZettelkastenProperty');
+	protected _properties: IZettelkastenProperties;
+
+	constructor() {
+		super();
+		this._properties = {
+			"title": new KeyValue("title", ""),
+			"type": new KeyValue("type", ""),
+			"url": new KeyValue("url", ""),
+			"create": new KeyValue("create", Utils.generateDate()),
+			"id": new KeyValue("id", Utils.generateZettelID()),
+			"tags": new KeyValue("tags", []),
+			"aliases": new KeyValue("aliases", []),
+			"sources": new KeyValue("sources", []),
+			"new": new KeyValue("new", true),
+		}
+	}
+
+	public getUrl(): string {
+		this.logger.debug("Get Property: url");
+		return this.getPropertyValue("url");
+	}
+
+	public setUrl(url: string): void {
+		this.logger.info(`Set Property: url:${url}`);
+		this.setPropertyValue("url", url);
+	}
+
+	public addSources(sourceNote: string| string[]): void {
+		this.logger.info(`Add Property: source_notes:${sourceNote}`);
+		this.setPropertyValue("sources", sourceNote);
+	}
+
+	public getSources(): string[] {
+		this.logger.debug("Get Property: source_notes");
+		return this.getPropertyValue("sources");
+	}
+
+	public getId(): string {
+		this.logger.debug("Get Property: id");
+		return this.getPropertyValue("id");
+	}
+
+	public toString(): string {
+		this.logger.debug("Generate string-form content");
+		this.addAlias(this.getId());
+		let propString = "---\n";
+		for (const key in this._properties) {
+			propString += this._properties[key].toString();
+		}
+		propString += "---\n";
+		return propString;
+	}
+}
+
+
+// This default note is used for supplementing mandatory fields in the Zettelkasten system
+export class BaseDefault extends BaseNote {
+	protected properties: ZettelkastenProperty;
+
+	constructor(app: App, noteType: NoteType, template?: BaseNote) {
+		super(app, noteType, template);
+		this.properties = this.defaultProperty()
+	}
+
+	defaultBody(): Body {
+		let _body: Body = new Body();
+		_body.newSection("**🔗Source**", 4)
+		return _body;
+	}
+
+	defaultProperty(): ZettelkastenProperty {
+		return new ZettelkastenProperty();
+	}
+
+	public setUrl(url: string): void {
+		this.properties.setUrl(url);
+	}
+
+	public addSourceNote(sourceNote: string): void {
+		if (!this.properties.getSources().includes(sourceNote)) {
+			this.properties.addSources(sourceNote);
+		}
 	}
 
 }

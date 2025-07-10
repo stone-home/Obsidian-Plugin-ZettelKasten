@@ -6,215 +6,325 @@ Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
 Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
 */
 
-.zettelkasten-template-list {
-	padding: 20px;
+
+/* 📝A CSS class for zettelkasten modal */
+.zettelkasten-modal {
+	max-width: 90vw;
+	min-width: 510px;
+	width: fit-content;
 }
 
-.template-list-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
-}
-
-.template-filters {
-	margin-bottom: 20px;
-}
-
-.filter-tabs {
-	display: flex;
-	gap: 10px;
-	border-bottom: 2px solid var(--background-modifier-border);
-}
-
-.filter-tab {
-	padding: 8px 16px;
-	cursor: pointer;
-	border-bottom: 2px solid transparent;
-	transition: all 0.2s;
-}
-
-.filter-tab:hover {
-	background-color: var(--background-modifier-hover);
-}
-
-.filter-tab.active {
-	border-bottom-color: var(--interactive-accent);
-	color: var(--interactive-accent);
-}
-
-.template-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: 16px;
-}
-
-.template-card {
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	padding: 16px;
-	background-color: var(--background-secondary);
-	transition: all 0.2s;
-}
-
-.template-card:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	transform: translateY(-2px);
-}
-
-.card-header {
-	margin-bottom: 12px;
-}
-
-.title-row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	margin-bottom: 8px;
-}
-
-.title-row h3 {
-	margin: 0;
-	flex: 1;
-}
-
-.type-badge {
-	padding: 2px 8px;
-	border-radius: 4px;
-	font-size: 12px;
-	font-weight: bold;
-}
-
-.type-fleeting { background-color: #e3f2fd; color: #1976d2; }
-.type-literature { background-color: #f3e5f5; color: #7b1fa2; }
-.type-permanent { background-color: #e8f5e9; color: #388e3c; }
-.type-atomic { background-color: #fff3e0; color: #f57c00; }
-
-.default-indicator {
-	color: gold;
-	font-size: 12px;
-}
-
-.card-description {
-	color: var(--text-muted);
-	font-size: 14px;
-	margin-bottom: 8px;
-}
-
-.filename-format {
-	font-family: monospace;
-	font-size: 12px;
-	color: var(--text-muted);
-	margin-bottom: 8px;
-}
-
-.timestamps {
-	display: flex;
-	justify-content: space-between;
-	font-size: 11px;
-	color: var(--text-faint);
-	margin-bottom: 12px;
-}
-
-.card-actions {
-	display: flex;
-	gap: 8px;
-}
-
-.card-actions button {
-	flex: 1;
-}
-
-.empty-state {
+.modal-title {
 	text-align: center;
-	padding: 40px;
-	color: var(--text-muted);
+	margin-bottom: 1.5rem;
+	color: var(--text-accent);
+	font-size: 1.3rem;
 }
 
-.zettelkasten-template-editor {
-	padding: 20px;
-}
-
-.editor-section {
-	margin-bottom: 30px;
-	border-bottom: 1px solid var(--background-modifier-border);
-	padding-bottom: 20px;
-}
-
-.editor-section:last-child {
-	border-bottom: none;
-}
-
-.properties-container,
-.content-container {
-	margin: 15px 0;
-}
-
-.property-row {
-	display: flex;
-	gap: 10px;
-	margin-bottom: 10px;
-	align-items: center;
-}
-
-.property-key {
-	flex: 1;
-}
-
-.property-value {
-	flex: 2;
-}
-
-.property-delete,
-.section-delete {
-	width: 30px;
-	height: 30px;
-	border-radius: 4px;
-	background: var(--background-modifier-error);
-	color: var(--text-on-accent);
-	border: none;
-	cursor: pointer;
-	font-size: 20px;
-	line-height: 1;
-}
-
-.section-editor {
+.zettel-section {
+	margin-bottom: 1.5rem;
+	padding: 1rem;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	padding: 15px;
-	margin-bottom: 15px;
+	border-radius: 6px;
 	background: var(--background-secondary);
 }
 
+.zettel-section h3 {
+	margin: 0 0 0.5rem 0;
+	color: var(--text-normal);
+	font-size: 1rem;
+}
+
 .section-header {
+	margin-bottom: 0.75rem;
+}
+
+.section-subtitle {
+	color: var(--text-muted);
+	font-size: 0.8rem;
+	margin: 0;
+}
+
+/* Compact New Note Cards */
+.note-cards-container {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.5rem;
+}
+
+.note-card {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 0.5rem 0.25rem;
+	text-align: center;
+	background: var(--background-primary);
+	transition: all 0.2s ease;
+	min-height: 50px;
 	display: flex;
-	gap: 10px;
-	margin-bottom: 10px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.clickable-card {
+	cursor: pointer;
+}
+
+.clickable-card:hover {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.note-card-icon {
+	margin-bottom: 0.25rem;
+}
+
+.note-card-icon .card-emoji {
+	font-size: 1.2rem;
+	display: block;
+	line-height: 1;
+}
+
+.note-card-title {
+	font-size: 0.7rem;
+	font-weight: 500;
+	margin: 0;
+	color: var(--text-normal);
+	line-height: 1.2;
+}
+
+/* Active Note Section */
+.active-note-section {
+	background: var(--background-primary-alt);
+}
+
+.active-note-card {
+	background: var(--background-primary);
+	border-radius: 4px;
+	padding: 0.75rem;
+}
+
+.note-info-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.info-row {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.75rem;
 	align-items: center;
 }
 
-.heading-level {
-	width: 80px;
+.info-label {
+	font-weight: 500;
+	color: var(--text-muted);
+	min-width: 50px;
+	font-size: 0.85rem;
 }
 
-.section-name {
-	flex: 1;
+.info-value {
+	color: var(--text-normal);
+	word-break: break-word;
+	font-size: 0.85rem;
 }
 
-.section-content {
-	width: 100%;
-	min-height: 100px;
-	font-family: monospace;
-	font-size: 14px;
+/* Compact Upgrade Cards */
+.upgrade-cards-container {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+	gap: 0.4rem;
 }
 
-.editor-actions {
+.upgrade-card {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 0.4rem 0.2rem;
+	text-align: center;
+	background: var(--background-primary);
+	transition: all 0.2s ease;
+	min-height: 45px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.upgrade-card.disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.upgrade-card:not(.disabled).clickable-card:hover {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+	transform: translateY(-1px);
+}
+
+.upgrade-card.selected {
+	border-color: var(--interactive-accent);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.upgrade-card.selected .upgrade-card-title {
+	color: var(--text-on-accent);
+}
+
+.upgrade-card-icon {
+	margin-bottom: 0.2rem;
+}
+
+.upgrade-card-icon .card-emoji {
+	font-size: 1rem;
+	display: block;
+	line-height: 1;
+}
+
+.upgrade-card-title {
+	font-size: 0.65rem;
+	font-weight: 500;
+	margin: 0;
+	color: var(--text-normal);
+	line-height: 1.1;
+}
+
+.no-options {
+	color: var(--text-muted);
+	font-style: italic;
+	text-align: center;
+	padding: 0.75rem;
+	font-size: 0.85rem;
+}
+
+/* Action Buttons */
+.modal-button-container {
 	display: flex;
 	justify-content: flex-end;
-	gap: 10px;
-	margin-top: 20px;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--background-modifier-border);
 }
 
-.editor-actions button {
-	padding: 8px 20px;
+.modal-button-container button {
+	padding: 0.4rem 0.8rem;
+	border-radius: 4px;
+	border: none;
+	cursor: pointer;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.mod-cancel {
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+}
+
+.mod-cta {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.mod-cancel:hover {
+	background-color: var(--background-secondary-alt);
+}
+
+.mod-cta:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+	.zettelkasten-modal {
+		width: 95vw;
+	}
+
+	.note-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.4rem;
+	}
+
+	.upgrade-cards-container {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.info-row {
+		grid-template-columns: 1fr;
+		gap: 0.2rem;
+	}
+
+	.info-label {
+		font-size: 0.75rem;
+	}
+
+	.info-value {
+		font-size: 0.8rem;
+	}
+}
+
+@media (max-width: 350px) {
+	.note-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.upgrade-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.note-card {
+		min-height: 45px;
+		padding: 0.4rem 0.2rem;
+	}
+
+	.upgrade-card {
+		min-height: 40px;
+		padding: 0.3rem 0.1rem;
+	}
+
+	.card-emoji {
+		font-size: 1rem !important;
+	}
+
+	.note-card-title,
+	.upgrade-card-title {
+		font-size: 0.6rem;
+	}
+}
+
+/* Additional Styles for Plugin Integration */
+.zettelkasten-status {
+	color: var(--text-accent);
+	font-size: 0.9rem;
+	transition: background-color 0.2s;
+}
+
+.zettelkasten-status:hover {
+	background-color: var(--background-modifier-hover);
+	border-radius: 4px;
+	padding: 2px 6px;
+}
+
+.template-button {
+	display: block;
+	width: 100%;
+	margin: 0.4rem 0;
+	padding: 0.6rem;
+	background: var(--interactive-normal);
+	border: none;
+	border-radius: 4px;
+	color: var(--text-normal);
+	cursor: pointer;
+	text-align: left;
+	transition: background-color 0.2s;
+	font-size: 0.85rem;
+}
+
+.template-button:hover {
+	background: var(--interactive-hover);
 }

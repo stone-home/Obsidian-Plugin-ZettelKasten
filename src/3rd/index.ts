@@ -1,0 +1,1 @@
+export { IntegrationManager } from './manager';

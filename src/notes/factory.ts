@@ -1,7 +1,7 @@
 import {App, TFile} from "obsidian";
-import {BaseNote, Body, NoteType} from "./note";
 import {Logger} from "../logger";
 import {Utils} from "../utils";
+import {BaseNote, Body} from "./note";
 import {
 	AtomicDefaultTemplate,
 	BaseTemplate,
@@ -9,11 +9,9 @@ import {
 	LiteratureDefaultTemplate,
 	PermanentDefaultTemplate,
 } from "./default";
+import {ITemplateMetadata } from "./types";
+import { NoteType } from "./config"
 
-
-interface TemplateMetadata {
-	"path": string,
-}
 
 /**
  * Factory class for creating and managing notes
@@ -24,10 +22,10 @@ export class NoteFactory {
 	private logger = Logger.createLogger('NoteFactory');
 	// The value should be fetch from settings, but for now we use a default value
 	private defaultTemplateName: string = 'default';
-	private defaultTemplatesDir: string = '900-templates';
+	private defaultTemplatesDir: string = '900-templates'; // todo: make this configurable in settings
 	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseNote) => BaseNote>;
 	// The templates are stored in a Map where the key is the NoteType
-	private templates: Map<NoteType, Map<string, TemplateMetadata>> = new Map();
+	private templates: Map<NoteType, Map<string, ITemplateMetadata>> = new Map();
 	// Default templates for each note type
 	private defaultTemplates: Map<NoteType, string> = new Map();
 
@@ -106,7 +104,7 @@ export class NoteFactory {
 	public async loadFromFile(path: string): Promise<BaseNote> {
 		this.logger.info(`Loading note from file: ${path}`);
 
-		// 获取 TFile 对象
+		// obtain TFile object from the path
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (!file || !(file instanceof TFile)) {
 			throw new Error(`File not found or is not a valid file: ${path}`);
@@ -261,7 +259,7 @@ export class NoteFactory {
 	 * @param templateName - Unique name for the template
 	 * @param template - The template note instance
 	 */
-	public async registerTemplate(noteType: NoteType, templateName: string, template: BaseNote): Promise<TemplateMetadata|undefined> {
+	public async registerTemplate(noteType: NoteType, templateName: string, template: BaseNote): Promise<ITemplateMetadata|undefined> {
 		if (!this.templates.has(noteType)) {
 			this.templates.set(noteType, new Map());
 		}
@@ -280,7 +278,7 @@ export class NoteFactory {
 	/**
 	 * Get all templates for a specific note type
 	 */
-	public getTemplatesForType(noteType: NoteType): Map<string, TemplateMetadata> | undefined {
+	public getTemplatesForType(noteType: NoteType): Map<string, ITemplateMetadata> | undefined {
 		return this.templates.get(noteType);
 	}
 

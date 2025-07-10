@@ -210,4 +210,13 @@ export class Utils {
 	static getKeyByValue<T extends Record<string, string>>(enumObject: T, value: string): keyof T | undefined {
 		return (Object.keys(enumObject) as Array<keyof T>).find(key => enumObject[key] === value);
 	}
+
+	/**
+	 * Creates a mutable copy of a readonly object.
+	 * @param obj
+	 * @return {T} A mutable copy of the object
+	 */
+	static makeMutable<T>(obj: T): { -readonly [K in keyof T]: T[K] } {
+		return { ...obj } as { -readonly [K in keyof T]: T[K] };
+	}
 }
