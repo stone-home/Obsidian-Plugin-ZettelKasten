@@ -4,22 +4,22 @@ repositoryUrl: "https://github.com/stone-home/Obsidian-Plugin-ZettelKasten"
 plugins:
   - "@semantic-release/commit-analyzer"
   - "@semantic-release/release-notes-generator"
-  - - "@semantic-release/npm" # First element: plugin name
-	- npmPublish: false # Second element: options object
-  - - "@semantic-release/exec" # First element: plugin name
-	- prepareCmd: "npm run version"
+  - ["@semantic-release/npm", { "npmPublish": false }]
+  - ["@semantic-release/exec", { "prepareCmd": "npm run version" }]
   - - "@semantic-release/git"
-    - assets: # Second element: options object
-      - "package.json"
-      - "manifest.json"
-      - "versions.json"
-    - message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-  - - '@semantic-release/github' # First element: plugin name
-    - assets: # Second element: options object
-      - path: main.js
-        label: main.js
-      - path: manifest.json
-        label: manifest.json
-      - path: styles.css
-        label: styles.css
-
+    # 'assets' and 'message' must be in the same options object
+    - assets:
+        # Add CHANGELOG.md to the files that get committed
+        - "CHANGELOG.md"
+        - "package.json"
+        - "manifest.json"
+        - "versions.json"
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+  - - "@semantic-release/github"
+    - assets:
+        - path: main.js
+          label: main.js
+        - path: manifest.json
+          label: manifest.json
+        - path: styles.css
+          label: styles.css
