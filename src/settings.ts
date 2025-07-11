@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, TFile, Notice, debounce } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFile, Notice, debounce, TextComponent } from 'obsidian';
 import ZettelkastenPlugin from './main';
 import { INoteOption, NoteTypeData, CreateNoteOptions, NoteType, ConfigHelper } from './notes'; // Import NoteType and ConfigHelper
 import { DEFAULT_SETTINGS } from './config'; //
@@ -202,7 +202,31 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					this.plugin.settings.atomicPath = value;
 					await this.plugin.saveSettings();
 				}));
-	}
+
+		let templateDirPathTextComponent: TextComponent;
+		new Setting(containerEl)
+			.setName('Template Directory Path')
+			.setDesc('Default folder path for storing templates used in note creation.')
+			.addText(text => {
+					text
+						.setPlaceholder('e.g., templates')
+						.setValue(this.plugin.settings.templateDirPath)
+					templateDirPathTextComponent = text
+				}
+			)
+			.addButton(button => button
+				.setButtonText('Confirm')
+				.onClick(async () => {
+					const pathValue = templateDirPathTextComponent.getValue().trim();
+					this.plugin.settings.templateDirPath = pathValue;
+					await this.plugin.saveSettings();
+					this.factory.updateSettings(this.plugin.settings);
+					await this.factory.initializeDefaultTemplates();
+					new Notice("Template directory path updated successfully.", 3000);
+				})
+
+			)
+
 
 	private renderNoteCreationSettings(containerEl: HTMLElement): void {
 		containerEl.createEl('p', { text: 'Configure the available note types and their default properties when creating a new note.' });

@@ -4,11 +4,19 @@ repositoryUrl: "https://github.com/stone-home/Obsidian-Plugin-ZettelKasten"
 plugins:
   - "@semantic-release/commit-analyzer"
   - "@semantic-release/release-notes-generator"
+  - "@semantic-release/changelog"
   - - '@semantic-release/github' # First element: plugin name
     - assets: # Second element: options object
-        - path: main.js
-          label: main.js
-        - path: manifest.json
-          label: manifest.json
-        - path: styles.css
-          label: styles.css
+      - path: main.js
+        label: main.js
+      - path: manifest.json
+        label: manifest.json
+      - path: styles.css
+        label: styles.css
+  - - "@semantic-release/git"
+    - assets: # Second element: options object
+      - "package.json"
+      - "manifest.json"
+      - "versions.json"
+    - message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+

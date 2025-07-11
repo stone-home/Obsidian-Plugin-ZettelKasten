@@ -11,6 +11,7 @@ import {
 } from "./default";
 import {ITemplateMetadata } from "./types";
 import { NoteType } from "./config"
+import { ZettelkastenSettings} from "../types";
 
 
 /**
@@ -28,10 +29,15 @@ export class NoteFactory {
 	private templates: Map<NoteType, Map<string, ITemplateMetadata>> = new Map();
 	// Default templates for each note type
 	private defaultTemplates: Map<NoteType, string> = new Map();
+	// The settings for the plugin
 
 	constructor(app: App) {
 		this.app = app;
 		this.noteTypeMap = new Map();
+	}
+
+	public async updateSettings(settings: ZettelkastenSettings): void {
+		this.defaultTemplatesDir = settings.templateDirPath
 	}
 
 	public initializeDefaultNoteClasses(): void {

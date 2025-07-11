@@ -2,25 +2,26 @@ import { ZettelkastenSettings } from "./types";
 import {CreateNoteOptions, NoteTypeData} from "./notes";
 
 export const DEFAULT_SETTINGS: ZettelkastenSettings = {
-	// 路径设置
-	fleetingPath: '000-inbox/1-fleeting',
-	literaturePath: '000-inbox/2-literature',
-	permanentPath: '000-inbox/3-permanent',
-	atomicPath: '000-inbox/4-atoms',
+	// Paths for different types of notes
+	fleetingPath: 'inbox/fleeting',
+	literaturePath: 'inbox/literature',
+	permanentPath: 'inbox/permanent',
+	atomicPath: 'inbox/atoms',
 
-	// 基础设置
+	// Basic settings
 	useTemplater: true,
 	autoOpenNewNote: true,
 	showUpgradeNotifications: true,
 
-	// 模板设置
+	// Template settings
 	includeTimestamp: true,
 	defaultTags: [],
+	templateDirPath: "templates",
+	// Initialize createNoteOptions with the default values from config.ts
+	createNoteOptions: [],
 
-	// 高级设置
+	// Advanced settings
 	maxRecentNotes: 10,
 	enableAutoLinking: false,
 
-	// Initialize createNoteOptions with the default values from config.ts
-	createNoteOptions: []
 }
