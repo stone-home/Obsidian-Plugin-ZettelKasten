@@ -1,9 +1,9 @@
 {
 	"id": "zettelkasten-manager",
 	"name": "Zettelkasten Manager",
-	"version": "0.0.0",
-	"minAppVersion": "0.0.0",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
 	"description": "The Plugin is used for managing Zettelkasten notes in Obsidian.",
 	"author": "Stone",
-	"authorUrl": "https://stonebo.github.io/stone-journey.github.io/",
+	"authorUrl": "https://stonebo.github.io/stone-journey.github.io/"
 }
