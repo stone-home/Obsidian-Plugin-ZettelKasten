@@ -1,6 +1,6 @@
 {
 	"name": "Zettelkasten Manager",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "The Readme has not done yet.",
 	"main": "main.js",
 	"scripts": {
