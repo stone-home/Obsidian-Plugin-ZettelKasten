@@ -1,8 +1,11 @@
-import { App, PluginSettingTab, Setting, TFile, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, TFile, Notice, debounce } from 'obsidian';
 import ZettelkastenPlugin from './main';
 import { INoteOption, NoteTypeData, CreateNoteOptions, NoteType, ConfigHelper } from './notes'; // Import NoteType and ConfigHelper
 import { DEFAULT_SETTINGS } from './config'; //
-import { ZettelKastenModal } from './notes'; // Import ZettelKastenModal
+import { IntegrationManager} from "./3rd";
+import { Logger } from './logger'; // Import Logger for logging
+import { NoteFactory } from './notes';
+import {Obj} from "tern"; // Import NoteFactory for note creation
 
 // Define your sections for horizontal navigation
 interface SettingsSection {
@@ -15,22 +18,22 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
 	{ id: 'general', name: 'Basic', icon: 'gear' },
 	{ id: 'paths', name: 'Paths', icon: 'folder' },
 	{ id: 'note-creation', name: 'Note Creation', icon: 'file-plus' },
-	// Add more sections/tabs as needed, matching names from your screenshot if applicable
-	// e.g., { id: 'model', name: 'Model', icon: 'boxes' },
-	// { id: 'qa', name: 'QA', icon: 'question-mark' },
-	// { id: 'command', name: 'Command', icon: 'terminal' },
-	// { id: 'plus', name: 'Plus', icon: 'plus-circle' },
-	// { id: 'advanced', name: 'Advanced', icon: 'wrench' },
+
 ];
 
 export class ZettelkastenSettingTab extends PluginSettingTab {
 	plugin: ZettelkastenPlugin;
+	private logger: Logger = Logger.createLogger('ZettelkastenSettingTab'); // Initialize logger for this class
 	private activeSection: string; // State to keep track of the active section
+	private integrationManager: IntegrationManager; // Placeholder for integration manager, adjust as needed
+	private factory: NoteFactory; // Placeholder for note factory, adjust as needed
 
-	constructor(app: App, plugin: ZettelkastenPlugin) {
+	constructor(app: App, plugin: ZettelkastenPlugin, factory: NoteFactory) {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.activeSection = SETTINGS_SECTIONS[0].id; // Set initial active section
+		this.integrationManager = IntegrationManager.getInstance(app); // Initialize integration manager
+		this.factory = factory; // Initialize note factory
 	}
 
 	display(): void {
@@ -207,50 +210,122 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 		// Loop for existing note type settings
 		this.plugin.settings.createNoteOptions.forEach((option: INoteOption, index: number) => {
 			const noteTypeSetting = new Setting(containerEl)
-				.setName(`${option.label} Note Type`)
-				.setDesc(`Enable or disable the "${option.label}" note type in the creation dashboard.`);
+				.setName(option.label)
+			noteTypeSetting.nameEl.addClass('setting-new-note-record-name')
 
+			// --- Enable/Disable Toggle ---
 			noteTypeSetting.addToggle(toggle => toggle
+				.setTooltip("Enable or disable this note type in the creation menu.")
 				.setValue(option.enabled)
 				.onChange(async (value) => {
 					option.enabled = value;
 					await this.plugin.saveSettings();
-					this.display(); // Re-render to reflect changes if an option is disabled/enabled
+					this.display(); // Re-render to show/hide detailed settings
 				}));
+			// Only show detailed settings if the type is enabled
+			if (option.enabled) {
+				noteTypeSetting.addDropdown(dropdown => {
+					Object.keys(NoteType).forEach(key => {
+						// @ts-ignore
+						dropdown.addOption(NoteType[key], key); // Use the enum key for both value and text
+					});
+					dropdown
+						.setValue(option.type)
+						.onChange(async (value) => {
+							option.type = value as NoteType;
+							option.label = value; // Update the label to match the selected type
+							await this.plugin.saveSettings();
+							this.display(); // Re-render to update the setting title
+						});
+				});
 
-			if (option.enabled) { // Only show detailed settings if the type is enabled
-				noteTypeSetting.addText(text => text
-					.setPlaceholder('Label')
-					.setValue(option.label)
-					.onChange(async (value) => {
-						option.label = value;
-						await this.plugin.saveSettings();
-					}));
-				noteTypeSetting.addText(text => text
-					.setPlaceholder('Emoji')
-					.setValue(option.emoji || '')
-					.onChange(async (value) => {
-						option.emoji = value;
-						await this.plugin.saveSettings();
-					}));
-				noteTypeSetting.addText(text => text
-					.setPlaceholder('Template Name (e.g., "default")')
-					.setValue(option.template || 'default')
-					.onChange(async (value) => {
-						option.template = value;
-						await this.plugin.saveSettings();
-					}));
-				noteTypeSetting.addText(text => text
-					.setPlaceholder('Custom Path (optional, overrides global path)')
-					.setValue(option.path || '')
-					.onChange(async (value) => {
-						option.path = value;
-						await this.plugin.saveSettings();
-					}));
+				// --- Emoji Text Input ---
+				noteTypeSetting.addText(text => {
+					text.inputEl.addClass('setting-new-note-record-emoji')
+					text
+						.setPlaceholder('Emoji')
+						.setValue(option.emoji || '')
+						.onChange(debounce(async (value) => {
+							option.emoji = value;
+							await this.plugin.saveSettings();
+						}, 500))
+
+				});
+
+				// --- Template Path Text Input ---
+				noteTypeSetting.addDropdown(dropdown => {
+					const mapOfTemplates = this.factory.getTemplatesForType(option.type)
+					if (mapOfTemplates) {
+						for (const [key, value] of mapOfTemplates) {
+							dropdown.addOption(key, key); // Add each template to the dropdown
+						}
+					}
+					if (option.template != null) {
+						dropdown
+							.setValue(option.template)
+							.onChange(async (value) => {
+								option.type = value as NoteType;
+								option.label = value; // Update the label to match the selected type
+								await this.plugin.saveSettings();
+								this.display(); // Re-render to update the setting title
+							});
+					}
+				});
+
+				// --- Folder Path Text Input ---
+				noteTypeSetting.addText(text => {
+					text.inputEl.addClass('setting-new-note-record-path')
+					text
+						.setPlaceholder('Creation Path (optional)')
+						.setValue(option.path || '')
+						.onChange(debounce(async (value) => {
+							option.path = value;
+							await this.plugin.saveSettings();
+						}, 500))
+				});
 			}
+
+			// --- Remove Button ---
+			noteTypeSetting.addButton(button => button
+				.setIcon('cross')
+				.setTooltip('Remove this note type')
+				.setWarning()
+				.onClick(async () => {
+					this.plugin.settings.createNoteOptions.splice(index, 1);
+					await this.plugin.saveSettings();
+					this.display(); // Re-render the list
+				}));
 		});
 
-		// Existing reset button
+		new Setting(containerEl)
+			.setName("Add New Record")
+			.setDesc("Click the button to add a new record configuration.")
+			.addButton(button => {
+				button
+					.setButtonText("Add")
+					.setCta() // Prominent Call To Action style
+					.onClick(async (evt) => {
+						const noteTypeName = await this.integrationManager.getTemplater().getPrompt("Input New Note Type Name")
+						if (!noteTypeName) {
+							new Notice('Note type name cannot be empty.', 3000);
+							return;
+						}
+						// Create a new INoteOption object with default values
+						const newOption: INoteOption = {
+							enabled: true,
+							type: NoteType.FLEETING, // Default to Fleeting as a starting point
+							label: noteTypeName,
+							emoji: '🌱',
+							path: '', // Leave empty for user to define
+							template: 'default',
+						};
+
+						this.plugin.settings.createNoteOptions.push(newOption);
+						await this.plugin.saveSettings();
+						this.display(); // Re-render the settings to show the new entry
+					});
+			});
+
 		new Setting(containerEl)
 			.addButton(button => button
 				.setButtonText('Reset Note Types to Default')

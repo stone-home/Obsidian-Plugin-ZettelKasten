@@ -65,7 +65,8 @@ export class ZettelKastenModal extends Modal {
 	}
 
 	private loadNewNoteOptions(): INoteOption[] {
-		const createNotes = this.newNoteOptions
+		// [Mandatory] shallow copy of new note options
+		const createNotes = [...this.newNoteOptions];
 		if (this.settings?.createNoteOptions !==undefined && this.settings.createNoteOptions.length > 0) {
 			createNotes.push(...this.settings.createNoteOptions);
 		}

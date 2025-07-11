@@ -750,3 +750,34 @@ Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
 		border-bottom-color: var(--background-modifier-border);
 	}
 }
+
+.setting-new-note-record-name {
+	max-width: 100px; /* Adjust this value as needed */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis; /* This adds "..." if the text is too long */
+}
+
+
+.setting-new-note-record-emoji {
+	/*
+	 * You can use max-width to keep it from getting too large,
+	 * or a fixed width if you want it to be a specific size.
+	 */
+	max-width: 50px; /* Adjust this value as needed */
+
+	/* Centering the emoji inside the small box looks good */
+	text-align: center;
+}
+
+
+.setting-new-note-record-path {
+	/*
+	 * You can use max-width to keep it from getting too large,
+	 * or a fixed width if you want it to be a specific size.
+	 */
+	max-width: 400px; /* Adjust this value as needed */
+	min-width: 300px; /* Ensures it has a minimum width */
+	text-align: center;
+
+}

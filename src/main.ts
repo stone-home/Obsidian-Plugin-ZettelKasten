@@ -22,13 +22,16 @@ export default class ZettelkastenPlugin extends Plugin {
 
 	async onload() {
 		this.logger.info('Zettelkasten Plugin loaded');
-		await this.loadSettings();
-		this.addSettingTab(new ZettelkastenSettingTab(this.app, this))
 
 		// Initialize factory
 		this.factory = new NoteFactory(this.app);
 		this.factory.initializeDefaultNoteClasses()
 		await this.factory.initializeDefaultTemplates();
+
+		// Load Settings
+		await this.loadSettings();
+		this.addSettingTab(new ZettelkastenSettingTab(this.app, this, this.factory))
+
 
 		// load integration manager
 		this.integrationManager = IntegrationManager.getInstance(this.app);
