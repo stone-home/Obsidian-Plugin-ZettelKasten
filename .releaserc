@@ -1,14 +1,11 @@
-branches:
-  - trunk
-repositoryUrl: "https://github.com/stone-home/Template-Easy-Setup-DevOps"
 plugins:
   - "@semantic-release/commit-analyzer"
   - "@semantic-release/release-notes-generator"
-  - - '@semantic-release/github'
-      - assets:
-          - path: main.js
-            label: main.js
-          - path: manifest.json
-            label: manifest.json
-          - path: styles.css
-            label: styles.css
+  - - '@semantic-release/github' # First element: plugin name
+    - assets: # Second element: options object
+        - path: main.js
+          label: main.js
+        - path: manifest.json
+          label: manifest.json
+        - path: styles.css
+          label: styles.css
