@@ -1,5 +1,7 @@
 # Obsidian Sample Plugin
 
+> ![Important] This Readme has not been updated yet.
+
 This is a sample plugin for Obsidian (https://obsidian.md).
 
 This project uses TypeScript to provide type checking and documentation.
