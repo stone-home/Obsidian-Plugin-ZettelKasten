@@ -8,9 +8,7 @@ import {
 	INotificationConfig
 } from "./types";
 
-/*
- * Pre-defined Types of Notes
- */
+
 export enum NoteType {
 	FLEETING = 'fleeting',
 	LITERATURE = 'literature',

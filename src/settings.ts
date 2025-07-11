@@ -1,11 +1,12 @@
 import { App, PluginSettingTab, Setting, TFile, Notice, debounce, TextComponent } from 'obsidian';
 import ZettelkastenPlugin from './main';
-import { INoteOption, NoteTypeData, CreateNoteOptions, NoteType, ConfigHelper } from './notes'; // Import NoteType and ConfigHelper
+import { INoteOption, NoteType} from './notes'; // Import NoteType and ConfigHelper
 import { DEFAULT_SETTINGS } from './config'; //
 import { IntegrationManager} from "./3rd";
 import { Logger } from './logger'; // Import Logger for logging
 import { NoteFactory } from './notes';
-import {Obj} from "tern"; // Import NoteFactory for note creation
+
+
 
 // Define your sections for horizontal navigation
 interface SettingsSection {

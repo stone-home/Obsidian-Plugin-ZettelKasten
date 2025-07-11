@@ -1,7 +1,7 @@
 // Example integration in your main.ts file
-import { App, Plugin, Notice, addIcon } from 'obsidian';
+import { Plugin, Notice } from 'obsidian';
 import { Logger } from './logger';
-import { NoteType, NoteFactory, ZettelkastenCommand } from './notes';
+import { NoteFactory, ZettelkastenCommand } from './notes';
 import { IntegrationManager} from "./3rd";
 import { ZettelkastenSettings} from "./types";
 import { ZettelkastenSettingTab } from './settings';

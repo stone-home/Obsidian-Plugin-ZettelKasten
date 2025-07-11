@@ -1,4 +1,4 @@
-import { App, Command, Notice } from 'obsidian';
+import { App } from 'obsidian';
 import { NoteFactory } from './factory';
 import { Logger } from '../logger';
 import {ZettelKastenModal} from "./modal";

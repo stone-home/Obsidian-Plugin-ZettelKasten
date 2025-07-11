@@ -1,5 +1,5 @@
 import { ZettelkastenSettings } from "./types";
-import {CreateNoteOptions, NoteTypeData} from "./notes";
+
 
 export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	// Paths for different types of notes
