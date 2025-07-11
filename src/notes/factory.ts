@@ -1,7 +1,7 @@
 import {App, TFile} from "obsidian";
 import {Logger} from "../logger";
 import {Utils} from "../utils";
-import {BaseNote, Body} from "./note";
+import {BaseDefault, BaseNote, Body} from "./note";
 import {
 	AtomicDefaultTemplate,
 	BaseTemplate,
@@ -32,6 +32,14 @@ export class NoteFactory {
 	constructor(app: App) {
 		this.app = app;
 		this.noteTypeMap = new Map();
+	}
+
+	public initializeDefaultNoteClasses(): void {
+		this.logger.info('Initializing default note classes');
+		this.registerNoteClass(NoteType.FLEETING, BaseDefault);
+		this.registerNoteClass(NoteType.LITERATURE, BaseDefault);
+		this.registerNoteClass(NoteType.ATOMIC, BaseDefault);
+		this.registerNoteClass(NoteType.PERMANENT, BaseDefault);
 	}
 
 	public async initializeDefaultTemplates(): Promise<void> {

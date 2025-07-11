@@ -18,3 +18,5 @@ export {
 
 export { NoteFactory } from './factory';
 
+export { ZettelkastenCommand} from './command';
+

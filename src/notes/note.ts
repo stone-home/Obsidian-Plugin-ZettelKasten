@@ -468,7 +468,7 @@ export abstract class BaseNote {
 		}
 
 		// Check whether title is empty
-		if (!this.getTitle()) {
+		if (!this.getTitle() || this.getTitle().trim() === "") {
 			let title: string| null = await this.integrations.getTemplater().getPrompt("Typing title for the note")
 			this.logger.info("The note title is empty, chaneging to user input: " + title);
 			if (title === null){
@@ -598,6 +598,12 @@ export class BaseDefault extends BaseNote {
 
 	public addSourceNote(sourceNote: string): void {
 		if (!this.properties.getSources().includes(sourceNote)) {
+			if (!sourceNote.startsWith('"')) {
+				sourceNote = '"' + sourceNote; // Ensure the source note is quoted
+			}
+			if (!sourceNote.endsWith('"')) {
+				sourceNote += '"'; // Ensure the source note ends with a quote
+			}
 			this.properties.addSources(sourceNote);
 		}
 	}

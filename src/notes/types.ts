@@ -47,16 +47,36 @@ export interface ITemplateMetadata {
 	"path": string,
 }
 
-
-export interface INoteMetadata {
+/**
+ * The Data is used to store metadata for each note type
+ * all basic metadata is stored here
+ */
+export interface INoteTemplateMetadata {
 	label: string;
 	emoji: string;
 	description: string;
-	enabled: boolean;
 	path: string;
 	upgradePath: Array<NoteType>;
 }
 
+
+/**
+ * INoteOption interface defines the structure for options available in the 'New Note' modal
+ */
+export interface INoteOption {
+	enabled: boolean;
+	type: NoteType;
+	label: string;
+	emoji?: string;
+	path?: string;
+	template?: string;
+	metadata?: INoteTemplateMetadata;
+}
+
+
+/**
+ * Feature Toggles is used to control the availability of features in the plugin
+ */
 export interface IFeatureFlags {
 	AUTO_SUGGEST_UPGRADES: boolean;
 	SHOW_STATUS_BAR: boolean;
@@ -66,6 +86,7 @@ export interface IFeatureFlags {
 	ENABLE_QUICK_CREATE: boolean;
 	DEBUG_MODE: boolean;
 }
+
 
 /**
  * File naming patterns and rules
@@ -92,6 +113,18 @@ export interface IDebugConfig {
 
 
 /**
+ * Notification settings
+ */
+export interface INotificationConfig {
+	SUCCESS_DURATION: number;
+	ERROR_DURATION: number;
+	WARNING_DURATION: number;
+	INFO_DURATION: number;
+	SUGGESTION_COOLDOWN: number;
+}
+
+
+/**
  * Complete configuration object
  */
 export interface IZettelkastenConfig {
@@ -101,7 +134,7 @@ export interface IZettelkastenConfig {
 	// UI: UIConfig;
 	FEATURES: IFeatureFlags;
 	// TEMPLATES: TemplateConfig;
-	// NOTIFICATIONS: NotificationConfig;
+	NOTIFICATIONS: INotificationConfig;
 	// SHORTCUTS: Shortcuts;
 	NAMING: INamingPatterns;
 	// PERFORMANCE: PerformanceConfig;
