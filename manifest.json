@@ -1,12 +1,9 @@
 {
-	"id": "zettelkasten-debug",
-	"name": "Zettelkasten Debug Plugin",
-	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Debug plugin for testing note factory and note functionality",
-	"author": "Debug Helper",
-	"authorUrl": "",
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://www.buymeacoffee.com"
-	}
+	"id": "zettelkasten-manager",
+	"name": "Zettelkasten Manager",
+	"version": "0.0.0",
+	"minAppVersion": "0.0.0",
+	"description": "The Plugin is used for managing Zettelkasten notes in Obsidian.",
+	"author": "Stone",
+	"authorUrl": "https://stonebo.github.io/stone-journey.github.io/",
 }

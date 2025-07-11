@@ -1,0 +1,15 @@
+name: Super Linter
+
+on:
+  push:
+    branches-ignore:
+      - trunk
+  pull_request:
+
+jobs:
+  superLint:
+    uses: stone-home/Action-Stone-DevOps/.github/workflows/linter.yaml@trunk
+    with:
+      python: false
+    secrets:
+      onepass_token: ${{ secrets.ORG_OP_ACCOUNT_TOKEN }}

@@ -1,0 +1,17 @@
+name: Publish Release Blog
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  blog-creating:
+    uses: stone-home/Action-Stone-DevOps/.github/workflows/create_release_blog.yaml@trunk # Action to create release blog post
+    with:
+      release-subject: ${{ github.event.release.name }} # Subject of the release
+      release-body: ${{ github.event.release.body }} # Body of the release
+      release-url: ${{ github.event.release.html_url }} # URL of the release
+      python-version: "3.11" # Python version to use
+      project-name: "Obsidian Zettelkasten Plugin" # Name of the project
+    secrets:
+      onepass_token: ${{ secrets.ORG_OP_ACCOUNT_TOKEN }} # 1Password service account token
