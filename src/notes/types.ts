@@ -1,7 +1,5 @@
 // [TS] KeyValue is a generic class that can hold any type of value
 import {NoteType} from "./config";
-import {Note} from "esbuild";
-import {FeatureFlags} from "../zettelkasten";
 
 export interface IKeyValue<T> {
 	getValue(): T;

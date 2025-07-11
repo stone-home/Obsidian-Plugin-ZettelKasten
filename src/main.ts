@@ -3,6 +3,9 @@ import { App, Plugin, Notice, addIcon } from 'obsidian';
 import { Logger } from './logger';
 import { NoteType, NoteFactory, ZettelkastenCommand } from './notes';
 import { IntegrationManager} from "./3rd";
+import { ZettelkastenSettings} from "./types";
+import { ZettelkastenSettingTab } from './settings';
+import { DEFAULT_SETTINGS } from "./config";
 
 
 export default class ZettelkastenPlugin extends Plugin {
@@ -14,8 +17,13 @@ export default class ZettelkastenPlugin extends Plugin {
 	private integrationManager: IntegrationManager;
 	private logger = Logger.createLogger('ZettelkastenPlugin');
 
+	// @ts-ignore
+	settings: ZettelkastenSettings;
+
 	async onload() {
-		console.log('Zettelkasten Plugin loaded');
+		this.logger.info('Zettelkasten Plugin loaded');
+		await this.loadSettings();
+		this.addSettingTab(new ZettelkastenSettingTab(this.app, this))
 
 		// Initialize factory
 		this.factory = new NoteFactory(this.app);
@@ -35,7 +43,7 @@ export default class ZettelkastenPlugin extends Plugin {
 
 	private async initializeZettelkastenFeatures() {
 		// Initialize Zettelkasten command
-		this.zettelkastenCommand = new ZettelkastenCommand(this.app, this.factory);
+		this.zettelkastenCommand = new ZettelkastenCommand(this.app, this.factory, this.settings);
 		this.zettelkastenCommand.registerCommand(this);
 		// this.zettelkastenCommand.registerMenuItems(this);
 		// this.zettelkastenCommand.registerRibbonIcon(this);
@@ -43,8 +51,14 @@ export default class ZettelkastenPlugin extends Plugin {
 		this.logger.info('Zettelkasten features initialized');
 	}
 
-	private IntegrationInitialization() {
+	// Method to load settings
+	async loadSettings() {
+		// Load existing settings or use default ones
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
 
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 
 	onunload() {

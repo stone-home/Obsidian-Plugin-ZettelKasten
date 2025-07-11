@@ -2,11 +2,9 @@ import {Modal, App, Notice} from "obsidian";
 import {NoteFactory} from "./factory";
 import {BaseDefault, BaseNote} from "./note";
 import {Logger} from "../logger";
-import {Utils} from "../utils";
 import {NoteType, ConfigHelper, CreateNoteOptions, CONFIG} from "./config";
 import {INoteOption} from "./types";
-import Config from "../zettelkasten/config";
-
+import { ZettelkastenSettings } from "../types";
 
 
 export class ZettelKastenModal extends Modal {
@@ -15,10 +13,12 @@ export class ZettelKastenModal extends Modal {
 	private currentNoteType: NoteType = NoteType.FLEETING;
 	private logger = Logger.createLogger('ZettelkastenModal');
 	private newNoteOptions: typeof CreateNoteOptions;
+	private settings: ZettelkastenSettings | undefined;
 
-	constructor(app: App, factory: NoteFactory) {
+	constructor(app: App, factory: NoteFactory, settings?: ZettelkastenSettings) {
 		super(app);
 		this.factory = factory;
+		this.settings = settings;
 		this.newNoteOptions = this.supplementNoteOptions(CreateNoteOptions)
 	}
 
@@ -64,6 +64,14 @@ export class ZettelKastenModal extends Modal {
 		}
 	}
 
+	private loadNewNoteOptions(): INoteOption[] {
+		const createNotes = this.newNoteOptions
+		if (this.settings?.createNoteOptions !==undefined && this.settings.createNoteOptions.length > 0) {
+			createNotes.push(...this.settings.createNoteOptions);
+		}
+		return createNotes;
+	}
+
 	private renderNewNoteSection(container: HTMLElement): void {
 		const section = container.createDiv('zettel-section');
 		const header = section.createDiv('section-header');
@@ -73,7 +81,7 @@ export class ZettelKastenModal extends Modal {
 			cls: 'section-subtitle'
 		});
 
-		this.createOptionCards(section, this.newNoteOptions, (noteMeta) => this.createNewNote(noteMeta));
+		this.createOptionCards(section, this.loadNewNoteOptions(), (noteMeta) => this.createNewNote(noteMeta));
 	}
 
 	private createOptionCards(container: HTMLElement, options: INoteOption[], callback: (noteMeta: INoteOption) => Promise<void>): void {
@@ -162,9 +170,18 @@ export class ZettelKastenModal extends Modal {
 	private supplementNoteOptions(noteOptions: INoteOption[]): INoteOption[] {
 		noteOptions.forEach(note => {
 			note.metadata = ConfigHelper.getNoteTypeConfig(note.type)
+			// fetch default path
+			const defaultPathMap = {
+				[NoteType.FLEETING]: this.settings?.fleetingPath,
+				[NoteType.LITERATURE]: this.settings?.literaturePath,
+				[NoteType.PERMANENT]: this.settings?.permanentPath,
+				[NoteType.ATOMIC]: this.settings?.atomicPath,
+			}
+			const defaultPath = defaultPathMap[note.type] || note.metadata.path;
+
 			// Set default values if not provided
 			note.emoji = note.emoji || note.metadata.emoji
-			note.path = note.path || note.metadata.path
+			note.path = note.path || defaultPath
 			note.template = note.template || 'default';
 		})
 		return noteOptions;

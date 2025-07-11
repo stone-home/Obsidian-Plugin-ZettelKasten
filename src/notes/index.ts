@@ -1,4 +1,9 @@
-export { NoteType } from "./config"
+export {
+	NoteType,
+	NoteTypeData,
+	CreateNoteOptions,
+	ConfigHelper
+} from "./config"
 
 export {
 	BaseTemplate,
@@ -8,7 +13,12 @@ export {
 	PermanentDefaultTemplate
 } from './default';
 
-export type { IKeyValue, IProperties, INoteLink, IZettelkastenProperties} from './types';
+export type {
+	IProperties,
+	INoteLink,
+	IZettelkastenProperties,
+	INoteOption,
+} from './types';
 
 export {
 	Body,
@@ -19,4 +29,6 @@ export {
 export { NoteFactory } from './factory';
 
 export { ZettelkastenCommand} from './command';
+
+export { ZettelKastenModal } from './modal';
 
