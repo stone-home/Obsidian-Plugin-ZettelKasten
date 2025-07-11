@@ -36,7 +36,7 @@ export class NoteFactory {
 		this.noteTypeMap = new Map();
 	}
 
-	public async updateSettings(settings: ZettelkastenSettings): void {
+	public async updateSettings(settings: ZettelkastenSettings): Promise<void> {
 		this.defaultTemplatesDir = settings.templateDirPath
 	}
 

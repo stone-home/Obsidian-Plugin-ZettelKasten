@@ -224,8 +224,8 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					await this.factory.initializeDefaultTemplates();
 					new Notice("Template directory path updated successfully.", 3000);
 				})
-
 			)
+	}
 
 
 	private renderNoteCreationSettings(containerEl: HTMLElement): void {
