@@ -293,7 +293,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 
 				});
 
-				// --- Template Path Text Input ---
+				// --- Template Name Dropdown ---
 				noteTypeSetting.addDropdown(dropdown => {
 					const mapOfTemplates = this.factory.getTemplatesForType(option.type)
 					if (mapOfTemplates) {
@@ -305,8 +305,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						dropdown
 							.setValue(option.template)
 							.onChange(async (value) => {
-								option.type = value as NoteType;
-								option.label = value; // Update the label to match the selected type
+								option.template = value;
 								await this.plugin.saveSettings();
 								this.display(); // Re-render to update the setting title
 							});
@@ -357,7 +356,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 							type: NoteType.FLEETING, // Default to Fleeting as a starting point
 							label: noteTypeName,
 							emoji: '🌱',
-							path: '', // Leave empty for user to define
+							path: undefined, // Leave empty for user to define
 							template: 'default',
 						};
 

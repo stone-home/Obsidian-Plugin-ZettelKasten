@@ -66,11 +66,12 @@ export class ZettelKastenModal extends Modal {
 
 	private loadNewNoteOptions(): INoteOption[] {
 		// [Mandatory] shallow copy of new note options
-		const createNotes = [...this.newNoteOptions];
+		const createNotes: INoteOption[] = JSON.parse(JSON.stringify(this.newNoteOptions));
 		if (this.settings?.createNoteOptions !==undefined && this.settings.createNoteOptions.length > 0) {
-			createNotes.push(...this.settings.createNoteOptions);
+			const optionsInSetting: INoteOption[] = JSON.parse(JSON.stringify(this.settings.createNoteOptions));
+			createNotes.push(...optionsInSetting);
 		}
-		return createNotes;
+		return this.supplementNoteOptions(createNotes);
 	}
 
 	private renderNewNoteSection(container: HTMLElement): void {
@@ -223,7 +224,7 @@ export class ZettelKastenModal extends Modal {
 
 			// Open the new note if feature is enabled
 			if (CONFIG.FEATURES.AUTO_OPEN_CREATED_NOTES) {
-				await this.app.workspace.openLinkText(note.getTitle(), '');
+				await this.app.workspace.openLinkText(file.path, '');
 			}
 
 			// Close modal
