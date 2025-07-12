@@ -35,7 +35,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 		this.factory = factory; // Initialize note factory
 	}
 
-	display(): void {
+	async display(): Promise<void> {
 		const { containerEl } = this;
 		containerEl.empty(); // Clear existing content
 		containerEl.addClass('zettelkasten-settings-container-modern'); // Add a main container class
@@ -53,6 +53,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 
 
 		// Render content based on the active section
+		await this.factory.refreshAllTemplates()
 		switch (this.activeSection) {
 			case 'general':
 				this.renderGeneralSettings(contentArea);
@@ -263,6 +264,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.display(); // Re-render to show/hide detailed settings
 				}));
+
 			// Only show detailed settings if the type is enabled
 			if (option.enabled) {
 				noteTypeSetting.addDropdown(dropdown => {
@@ -274,7 +276,6 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						.setValue(option.type)
 						.onChange(async (value) => {
 							option.type = value as NoteType;
-							option.label = value; // Update the label to match the selected type
 							await this.plugin.saveSettings();
 							this.display(); // Re-render to update the setting title
 						});
