@@ -55,7 +55,7 @@ export class Property {
 	}
 
 	public update(updates: Partial<IProperties>, force: boolean = false): void {
-		this.logger.info(`Starting property update...`);
+		this.logger.debug(`Starting property update...`);
 
 		for (const key in updates) {
 			// Check if the key exists in the provided updates object
@@ -73,7 +73,7 @@ export class Property {
 				}
 			}
 		}
-		this.logger.info(`Property update finished.`);
+		this.logger.debug(`Property update finished.`);
 	}
 
 	public getProperties(): IProperties {
@@ -82,14 +82,14 @@ export class Property {
 	}
 
 	public add(key: string, value: any = ""): void {
-		this.logger.info(`property ${key}:${value} is added`);
+		this.logger.debug(`property ${key}:${value} is added`);
 		this.setPropertyValue(key, value);
 	}
 
 	public remove(key: string): void {
 		if (this._properties.hasOwnProperty(key)) {
 			delete this._properties[key];
-			this.logger.info(`property ${key} is removed`);
+			this.logger.debug(`property ${key} is removed`);
 		} else {
 			this.logger.warn(`Attempted to remove non-existing property: ${key}`);
 		}
@@ -103,12 +103,12 @@ export class Property {
 	public setPropertyValue(key: string, value: any, cleanup: boolean = false): void {
 		if (!this._properties.hasOwnProperty(key)) {
 			this._properties[key] = new KeyValue(key, value);
-			this.logger.info(`property ${key}:${value} is added`);
+			this.logger.debug(`property ${key}:${value} is added`);
 		} else {
 			const currentValue = this._properties[key].getValue();
 			if (Array.isArray(currentValue)) {
 				if (cleanup) {
-					this.logger.info(`property ${key} is cleaned up`);
+					this.logger.debug(`property ${key} is cleaned up`);
 					currentValue.length = 0;
 				}
 				const valuesToAdd = Array.isArray(value) ? value : [value];
@@ -116,7 +116,7 @@ export class Property {
 			} else {
 				this._properties[key].setValue(value);
 			}
-			this.logger.info(`property ${key}:${value} is changed`);
+			this.logger.debug(`property ${key}:${value} is changed`);
 		}
 	}
 
@@ -127,7 +127,7 @@ export class Property {
 	}
 
 	public setTitle(title: string): void {
-		this.logger.info(`Set Property: title:${title}`);
+		this.logger.debug(`Set Property: title:${title}`);
 		this.setPropertyValue("title", title);
 	}
 
@@ -137,7 +137,7 @@ export class Property {
 	}
 
 	public setType(type: string): void {
-		this.logger.info(`Set Property: type:${type}`);
+		this.logger.debug(`Set Property: type:${type}`);
 		this.setPropertyValue("type", type);
 	}
 
@@ -147,7 +147,7 @@ export class Property {
 	}
 
 	public addTag(tag: string | string[]): void {
-		this.logger.info(`Add Property: tags:${tag}`);
+		this.logger.debug(`Add Property: tags:${tag}`);
 		this.setPropertyValue("tags", tag);
 	}
 
@@ -157,7 +157,7 @@ export class Property {
 	}
 
 	public addAlias(alias: string | string[]): void {
-		this.logger.info(`Add Property: aliases:${alias}`);
+		this.logger.debug(`Add Property: aliases:${alias}`);
 		this.setPropertyValue("aliases", alias);
 	}
 
@@ -361,7 +361,7 @@ export abstract class BaseNote {
 	}
 
 	public setPath(obDirPath: string): void {
-		this.logger.info(`The save path is changed to ${this.savePath}`);
+		this.logger.debug(`The save path is changed to ${this.savePath}`);
 		this.savePath = obDirPath;
 	}
 
@@ -421,19 +421,19 @@ export abstract class BaseNote {
 	}
 
 	public pre_process(): void {
-		this.logger.info("Pre-process before generating content");
+		this.logger.debug("Pre-process before generating content");
 		// This method can be overridden in subclasses for specific pre-processing
 	}
 
 	async post_process(s_note: string): Promise<string> {
-		this.logger.info("Post-process after generating content");
+		this.logger.debug("Post-process after generating content");
 		// This method can be overridden in subclasses for specific post-processing
 		return s_note;
 	}
 
 	// Generate string-form content
 	public async toString(): Promise<string> {
-		this.logger.info("Generate string-form content");
+		this.logger.debug("Generate string-form content");
 		this.pre_process();
 		let note: string = this.properties.toString();
 		note += this.body.toString();
@@ -470,7 +470,7 @@ export abstract class BaseNote {
 		// Check whether title is empty
 		if (!this.getTitle() || this.getTitle().trim() === "") {
 			let title: string| null = await this.integrations.getTemplater().getPrompt("Typing title for the note")
-			this.logger.info("The note title is empty, chaneging to user input: " + title);
+			this.logger.debug("The note title is empty, chaneging to user input: " + title);
 			if (title === null){
 				// @ts-ignore
 				title = "Untitled Note";
@@ -493,23 +493,23 @@ export abstract class BaseNote {
 
 	public async save(): Promise<TFile> {
 		await this.checkBeforeSave();
-		this.logger.info(`Start saving note to ${this.getObPath()}`);
+		this.logger.debug(`Start saving note to ${this.getObPath()}`);
 		const s_note = await this.toString();
 		const file = await this.app.vault.create(this.getObPath(true), s_note);
 
 		// Execute linking operations
 		await this.linkingPages();
 
-		this.logger.info(`Note saved: ${this.getObPath(false)}`);
+		this.logger.debug(`Note saved: ${this.getObPath(false)}`);
 		return file;
 	}
 
 	protected async linkingPages(): Promise<void> {
-		this.logger.info("Start linking pages");
+		this.logger.debug("Start linking pages");
 		for (const link of this.linkedPages) {
 			await link.link(this.getTitle());
 		}
-		this.logger.info("Linking pages finished");
+		this.logger.debug("Linking pages finished");
 	}
 
 }
@@ -541,12 +541,12 @@ export class ZettelkastenProperty extends Property {
 	}
 
 	public setUrl(url: string): void {
-		this.logger.info(`Set Property: url:${url}`);
+		this.logger.debug(`Set Property: url:${url}`);
 		this.setPropertyValue("url", url);
 	}
 
 	public addSources(sourceNote: string| string[]): void {
-		this.logger.info(`Add Property: source_notes:${sourceNote}`);
+		this.logger.debug(`Add Property: source_notes:${sourceNote}`);
 		this.setPropertyValue("sources", sourceNote);
 	}
 

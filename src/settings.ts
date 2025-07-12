@@ -1,11 +1,9 @@
-import { App, PluginSettingTab, Setting, TFile, Notice, debounce, TextComponent } from 'obsidian';
+import {App, debounce, Notice, PluginSettingTab, Setting, TextComponent} from 'obsidian';
 import ZettelkastenPlugin from './main';
-import { INoteOption, NoteType} from './notes'; // Import NoteType and ConfigHelper
-import { DEFAULT_SETTINGS } from './config'; //
-import { IntegrationManager} from "./3rd";
-import { Logger } from './logger'; // Import Logger for logging
-import { NoteFactory } from './notes';
-
+import {INoteOption, NoteFactory, NoteType} from './notes'; // Import NoteType and ConfigHelper
+import {DEFAULT_SETTINGS} from './config'; //
+import {IntegrationManager} from "./3rd";
+import {Logger} from './logger'; // Import Logger for logging
 
 
 // Define your sections for horizontal navigation
@@ -120,16 +118,6 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Use Templater')
-			.setDesc('Enable integration with the Templater plugin for advanced template features.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.useTemplater)
-				.onChange(async (value) => {
-					this.plugin.settings.useTemplater = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
 			.setName('Maximum Recent Notes')
 			.setDesc('The maximum number of recent notes to display in certain interfaces.')
 			.addText(text => text
@@ -154,6 +142,34 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableAutoLinking = value;
 					await this.plugin.saveSettings();
 				}));
+
+		// Render default template settings for each note type
+		this.renderDefaultTemplateSettings(containerEl, 'Fleeting Default Template', NoteType.FLEETING);
+		this.renderDefaultTemplateSettings(containerEl, 'Literature Default Template', NoteType.LITERATURE);
+		this.renderDefaultTemplateSettings(containerEl, 'Permanent Default Template', NoteType.PERMANENT);
+		this.renderDefaultTemplateSettings(containerEl, 'Atomic Default Template', NoteType.ATOMIC);
+
+	}
+
+	private renderDefaultTemplateSettings(containerEl: HTMLElement, name: string, noteType: NoteType): void {
+		new Setting(containerEl)
+			.setName(name)
+			.addDropdown(async (dropdown) => {
+				const mapOfTemplates = this.factory.getTemplatesForType(noteType)
+				if (mapOfTemplates) {
+					for (const [key, value] of mapOfTemplates) {
+						dropdown.addOption(key, key); // Add each template to the dropdown
+					}
+				}
+				dropdown
+					.setValue(this.plugin.settings.default[noteType])
+					.onChange(async (value) => {
+						this.plugin.settings.default[noteType] = value;
+						await this.plugin.saveSettings();
+						this.display(); // Re-render to update the setting title
+					});
+			})
+
 	}
 
 	private renderPathsSettings(containerEl: HTMLElement): void {

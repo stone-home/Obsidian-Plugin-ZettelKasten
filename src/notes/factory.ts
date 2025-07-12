@@ -9,9 +9,9 @@ import {
 	LiteratureDefaultTemplate,
 	PermanentDefaultTemplate,
 } from "./default";
-import {ITemplateMetadata } from "./types";
-import { NoteType } from "./config"
-import { ZettelkastenSettings} from "../types";
+import {ITemplateMetadata} from "./types";
+import {NoteType} from "./config"
+import {ZettelkastenSettings} from "../types";
 
 
 /**
@@ -29,7 +29,6 @@ export class NoteFactory {
 	private templates: Map<NoteType, Map<string, ITemplateMetadata>> = new Map();
 	// Default templates for each note type
 	private defaultTemplates: Map<NoteType, string> = new Map();
-	// The settings for the plugin
 
 	constructor(app: App) {
 		this.app = app;
@@ -38,43 +37,57 @@ export class NoteFactory {
 
 	public async updateSettings(settings: ZettelkastenSettings): Promise<void> {
 		this.defaultTemplatesDir = settings.templateDirPath
+		this.setDefaultTemplate(NoteType.FLEETING, settings.default[NoteType.FLEETING]);
+		this.setDefaultTemplate(NoteType.LITERATURE, settings.default[NoteType.LITERATURE]);
+		this.setDefaultTemplate(NoteType.ATOMIC, settings.default[NoteType.ATOMIC]);
+		this.setDefaultTemplate(NoteType.PERMANENT, settings.default[NoteType.PERMANENT]);
 	}
 
-	public initializeDefaultNoteClasses(): void {
+	public async initialize(settings: ZettelkastenSettings): Promise<void> {
+		this.logger.info('Update default templates directory from settings');
+		this.defaultTemplatesDir = settings.templateDirPath
+
 		this.logger.info('Initializing default note classes');
 		this.registerNoteClass(NoteType.FLEETING, BaseDefault);
 		this.registerNoteClass(NoteType.LITERATURE, BaseDefault);
 		this.registerNoteClass(NoteType.ATOMIC, BaseDefault);
 		this.registerNoteClass(NoteType.PERMANENT, BaseDefault);
+
+		this.logger.info("Loading all templates from the filesystem");
+		await this.refreshAllTemplates()
+
+		this.logger.info('Initializing default templates');
+		await this.initializeDefaultTemplates(NoteType.FLEETING, settings);
+		await this.initializeDefaultTemplates(NoteType.LITERATURE, settings);
+		await this.initializeDefaultTemplates(NoteType.ATOMIC, settings);
+		await this.initializeDefaultTemplates(NoteType.PERMANENT, settings);
 	}
 
-	public async initializeDefaultTemplates(): Promise<void> {
-		this.logger.info('Initializing default templates');
-		await this.registerTemplate(
-			NoteType.FLEETING,
-			this.defaultTemplateName,
-			new FleetingDefaultTemplate(this.app, NoteType.FLEETING)
-		);
-		await this.registerTemplate(
-			NoteType.LITERATURE,
-			this.defaultTemplateName,
-			new LiteratureDefaultTemplate(this.app, NoteType.FLEETING)
-		);
-		await this.registerTemplate(
-			NoteType.ATOMIC,
-			this.defaultTemplateName,
-			new AtomicDefaultTemplate(this.app, NoteType.FLEETING)
-		);
-		await this.registerTemplate(
-			NoteType.PERMANENT,
-			this.defaultTemplateName,
-			new PermanentDefaultTemplate(this.app, NoteType.FLEETING)
-		);
-		this.setDefaultTemplate(NoteType.FLEETING, this.defaultTemplateName);
-		this.setDefaultTemplate(NoteType.LITERATURE, this.defaultTemplateName);
-		this.setDefaultTemplate(NoteType.ATOMIC, this.defaultTemplateName);
-		this.setDefaultTemplate(NoteType.PERMANENT, this.defaultTemplateName);
-		await this.refreshAllTemplates()
+	private async initializeDefaultTemplates(noteType: NoteType, settings: ZettelkastenSettings): Promise<void> {
+		let defaultTemplateName: string = settings.default[noteType]
+		const isTemplateExist = await this.getTemplate(noteType, defaultTemplateName);
+		if (!isTemplateExist) {
+			defaultTemplateName = this.defaultTemplateName
+			const isTemplateExist = await this.getTemplate(noteType, defaultTemplateName);
+			if (!isTemplateExist) {
+				const defaultTemplates = this.defaultTemplatesClass()
+				await this.registerTemplate(
+					noteType,
+					defaultTemplateName,
+					new defaultTemplates[noteType](this.app, noteType)
+				);
+			}
+		}
+		this.setDefaultTemplate(noteType, defaultTemplateName);
+	}
+
+	private defaultTemplatesClass(): Record<NoteType, new (app: App, noteType: NoteType) => BaseTemplate> {
+		return {
+			[NoteType.FLEETING]: FleetingDefaultTemplate,
+			[NoteType.LITERATURE]: LiteratureDefaultTemplate,
+			[NoteType.ATOMIC]: AtomicDefaultTemplate,
+			[NoteType.PERMANENT]: PermanentDefaultTemplate
+		}
 	}
 
 	/**
@@ -303,7 +316,7 @@ export class NoteFactory {
 	public async getTemplate(noteType: NoteType, templateName: string): Promise<BaseNote | undefined> {
 		const templatePath = this.templates.get(noteType)?.get(templateName)?.path;
 		if (!templatePath) {
-			this.logger.warn(`Template '${templateName}' not found for type: ${noteType}`);
+			this.logger.info(`Template '${templateName}' not found for type: ${noteType}`);
 			return undefined;
 		}
 		return this.loadFromFile(templatePath);
@@ -323,16 +336,17 @@ export class NoteFactory {
 	 */
 	public async refreshTemplates(noteType: NoteType): Promise<void> {
 		const templates = await this.loadFromDirectory(this.templateDir(noteType));
-		templates.forEach((template) => {
+		for (const template of templates) {
 			if (!this.isTemplate(template)) {
 				this.logger.warn(`Skipping non-template note: ${template.getTitle()}`);
 				return;
 			}
-			const isTemplateExist = this.getTemplate(noteType, template.getTitle())
+			const isTemplateExist = await this.getTemplate(noteType, template.getTitle())
 			if (isTemplateExist === undefined) {
 				this.registerTemplate(noteType, template.getTitle(), template);
 			}
-		})
+
+		}
 	}
 
 	/**

@@ -1,3 +1,4 @@
+import { NoteType } from "./notes";
 import { ZettelkastenSettings } from "./types";
 
 
@@ -17,6 +18,13 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	includeTimestamp: true,
 	defaultTags: [],
 	templateDirPath: "templates",
+	default: {
+		[NoteType.FLEETING]: "default",
+		[NoteType.LITERATURE]: "default",
+		[NoteType.PERMANENT]: "default",
+		[NoteType.ATOMIC]: "default",
+	},
+
 	// Initialize createNoteOptions with the default values from config.ts
 	createNoteOptions: [],
 

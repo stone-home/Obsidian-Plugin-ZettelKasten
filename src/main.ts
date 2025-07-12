@@ -28,9 +28,7 @@ export default class ZettelkastenPlugin extends Plugin {
 
 		// Initialize factory
 		this.factory = new NoteFactory(this.app);
-		this.factory.updateSettings(this.settings)
-		this.factory.initializeDefaultNoteClasses()
-		await this.factory.initializeDefaultTemplates();
+		await this.factory.initialize(this.settings)
 
 		// Load Settings Tab
 		this.addSettingTab(new ZettelkastenSettingTab(this.app, this, this.factory))
