@@ -35,13 +35,20 @@ export class NoteFactory {
 		this.noteTypeMap = new Map();
 	}
 
-	public async updateSettings(settings: ZettelkastenSettings): Promise<void> {
+	public updateSettings(settings: ZettelkastenSettings): void {
 		this.defaultTemplatesDir = settings.templateDirPath
-		this.setDefaultTemplate(NoteType.FLEETING, settings.default[NoteType.FLEETING]);
-		this.setDefaultTemplate(NoteType.LITERATURE, settings.default[NoteType.LITERATURE]);
-		this.setDefaultTemplate(NoteType.ATOMIC, settings.default[NoteType.ATOMIC]);
-		this.setDefaultTemplate(NoteType.PERMANENT, settings.default[NoteType.PERMANENT]);
 	}
+
+	public factorReset(): void {
+		this.defaultTemplateName = 'default';
+		this.defaultTemplatesDir = '900-templates'; // todo: make this configurable in settings
+		this.noteTypeMap = new Map();
+			// The templates are stored in a Map where the key is the NoteType
+		this.templates = new Map();
+			// Default templates for each note type
+		this.defaultTemplates = new Map();
+	}
+
 
 	public async initialize(settings: ZettelkastenSettings): Promise<void> {
 		this.logger.info('Update default templates directory from settings');
@@ -378,20 +385,6 @@ export class NoteFactory {
 		return note.getProperties().getPropertyValue('template') === true;
 	}
 
-	/**
-	 * Remove a list of properties from a note, which are not necessary for a template but it is necessary for a note
-	 * @param note - The note to clean
-	 */
-	private cleanTemplate(note: BaseNote): void {
-		const propertiesToRemove = [
-			'id', 'create', 'new'
-		];
-
-		for (const prop of propertiesToRemove) {
-			note.getProperties().remove(prop)
-		}
-		this.logger.debug(`Cleaned template note: ${note.getTitle()}`);
-	}
 
 	/**
 	 * Set default template for a note type

@@ -146,8 +146,8 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 		// Render default template settings for each note type
 		this.renderDefaultTemplateSettings(containerEl, 'Fleeting Default Template', NoteType.FLEETING);
 		this.renderDefaultTemplateSettings(containerEl, 'Literature Default Template', NoteType.LITERATURE);
-		this.renderDefaultTemplateSettings(containerEl, 'Permanent Default Template', NoteType.PERMANENT);
 		this.renderDefaultTemplateSettings(containerEl, 'Atomic Default Template', NoteType.ATOMIC);
+		this.renderDefaultTemplateSettings(containerEl, 'Permanent Default Template', NoteType.PERMANENT);
 
 	}
 
@@ -234,11 +234,11 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Confirm')
 				.onClick(async () => {
-					const pathValue = templateDirPathTextComponent.getValue().trim();
-					this.plugin.settings.templateDirPath = pathValue;
+					this.plugin.settings.templateDirPath = templateDirPathTextComponent.getValue().trim();
 					await this.plugin.saveSettings();
+					this.factory.factorReset()
 					this.factory.updateSettings(this.plugin.settings);
-					await this.factory.initializeDefaultTemplates();
+					await this.factory.initialize(this.plugin.settings);
 					new Notice("Template directory path updated successfully.", 3000);
 				})
 			)
