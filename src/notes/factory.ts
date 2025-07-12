@@ -74,6 +74,7 @@ export class NoteFactory {
 		this.setDefaultTemplate(NoteType.LITERATURE, this.defaultTemplateName);
 		this.setDefaultTemplate(NoteType.ATOMIC, this.defaultTemplateName);
 		this.setDefaultTemplate(NoteType.PERMANENT, this.defaultTemplateName);
+		await this.refreshAllTemplates()
 	}
 
 	/**
@@ -124,7 +125,7 @@ export class NoteFactory {
 			throw new Error(`File not found or is not a valid file: ${path}`);
 		}
 		// fetch the file name
-		const fileName = file.name;
+		const fileName = file.basename;
 
 		// Parse and populate the note
 		let note = await this.populateNoteFromContent(file);
@@ -302,10 +303,36 @@ export class NoteFactory {
 	public async getTemplate(noteType: NoteType, templateName: string): Promise<BaseNote | undefined> {
 		const templatePath = this.templates.get(noteType)?.get(templateName)?.path;
 		if (!templatePath) {
-			this.logger.error(`Template '${templateName}' not found for type: ${noteType}`);
+			this.logger.warn(`Template '${templateName}' not found for type: ${noteType}`);
 			return undefined;
 		}
 		return this.loadFromFile(templatePath);
+	}
+
+	/**
+	 * Refresh all types of templates from the filesystem
+	 */
+	public async refreshAllTemplates(): Promise<void> {
+		for (const noteType of Object.keys(NoteType)) {
+			await this.refreshTemplates(NoteType[noteType as keyof typeof NoteType] as NoteType);
+		}
+	}
+
+	/**
+	 * Refresh templates from the filesystem
+	 */
+	public async refreshTemplates(noteType: NoteType): Promise<void> {
+		const templates = await this.loadFromDirectory(this.templateDir(noteType));
+		templates.forEach((template) => {
+			if (!this.isTemplate(template)) {
+				this.logger.warn(`Skipping non-template note: ${template.getTitle()}`);
+				return;
+			}
+			const isTemplateExist = this.getTemplate(noteType, template.getTitle())
+			if (isTemplateExist === undefined) {
+				this.registerTemplate(noteType, template.getTitle(), template);
+			}
+		})
 	}
 
 	/**
