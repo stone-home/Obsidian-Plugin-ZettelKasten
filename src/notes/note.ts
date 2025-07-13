@@ -4,6 +4,8 @@ import {Utils} from "../utils";
 import {IntegrationManager} from "../3rd";
 import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
 import {NoteType} from "./config";
+import {Obj} from "tern";
+import {isTupleType} from "tsutils";
 
 export class KeyValue<T> implements IKeyValue<T>{
 	private key: string;
@@ -43,7 +45,7 @@ export class KeyValue<T> implements IKeyValue<T>{
 export class Property {
 	protected _properties: IProperties;
 	protected logger = Logger.createLogger('Property');
-	protected static readonly protectedKeys: string[] = [];
+	protected static readonly protectedKeys: string[] = ["id", "create"];
 
 	constructor() {
 		this._properties = {
@@ -58,18 +60,25 @@ export class Property {
 		this.logger.debug(`Starting property update...`);
 		updates = Utils.deepClone(updates);
 
+		const isTemplate = this.getPropertyValue("template") as boolean | undefined;
+		const isUpdateTemplate = updates.hasOwnProperty("template") && updates.template as boolean| undefined;
+
+
 		for (const key in updates) {
 			// Check if the key exists in the provided updates object
 			if (Object.prototype.hasOwnProperty.call(updates, key)) {
-				const isTemplate = this.getPropertyValue("template")
-				if (Property.protectedKeys.includes(key)) {
-					if (isTemplate) {
-						this.setPropertyValue(key, updates[key]);
-					}
-					continue; // This skips the update
-				}
-
 				const incomingKeyValue = updates[key];
+				if (Property.protectedKeys.includes(key)) {
+					if (isTemplate && !isUpdateTemplate) {
+						if (incomingKeyValue) {
+							this.setPropertyValue(key, incomingKeyValue.getValue(), true);
+						}
+						continue
+					} else {
+						this.logger.warn(`Attempted to update protected property: ${key}. This will be ignored.`);
+						continue
+					}
+				}
 				if (incomingKeyValue) {
 					const valueToSet = incomingKeyValue.getValue();
 					this.setPropertyValue(key, valueToSet, force);
@@ -318,6 +327,7 @@ export abstract class BaseNote {
 
 			this.properties = template.getProperties();
 			this.body = template.getBody();
+
 		} else {
 			this.properties.update(template.getProperties().getProperties())
 			this.body.update(this.getBody())
@@ -583,8 +593,11 @@ export class BaseDefault extends BaseNote {
 	protected properties: ZettelkastenProperty;
 
 	constructor(app: App, noteType: NoteType, template?: BaseNote) {
-		super(app, noteType, template);
+		super(app, noteType);
 		this.properties = this.defaultProperty()
+		if (template) {
+			this.updateByTemplate(template, true);
+		}
 	}
 
 	defaultBody(): Body {

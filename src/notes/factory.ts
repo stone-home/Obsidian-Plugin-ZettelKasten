@@ -1,5 +1,5 @@
 import {App, TFile} from "obsidian";
-import {logger, Logger} from "../logger";
+import {Logger} from "../logger";
 import {Utils} from "../utils";
 import {BaseDefault, BaseNote, Body} from "./note";
 import {
@@ -24,7 +24,7 @@ export class NoteFactory {
 	// The value should be fetch from settings, but for now we use a default value
 	private defaultTemplateName: string = 'default';
 	private defaultTemplatesDir: string = '900-templates'; // todo: make this configurable in settings
-	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseTemplate) => BaseNote>;
+	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseNote) => BaseNote>;
 	// The templates are stored in a Map where the key is the NoteType
 	private templates: Map<NoteType, Map<string, ITemplateMetadata>> = new Map();
 	// Default templates for each note type
@@ -120,9 +120,7 @@ export class NoteFactory {
 			this.logger.error(`No note class registered for type: ${noteType}`);
 			throw new Error(`Unknown note type: ${noteType}`);
 		}
-		const note = new NoteClass(this.app, noteType, template);
-		this.logger.info(`Created new ${noteType} note`);
-		return note;
+		return new NoteClass(this.app, noteType, template);
 	}
 
 
@@ -419,10 +417,10 @@ export class NoteFactory {
 	 */
 	public async createFromTemplate(noteType: NoteType, templateName?: string): Promise<BaseNote> {
 		let template: BaseNote | undefined;
-
 		if (!templateName) {
 			templateName = this.getDefaultTemplate(noteType);
 		}
+		this.logger.info(`Creating new note of type: ${noteType} from template: ${templateName || undefined}`);
 		template = await this.getTemplate(noteType, templateName);
 		if (!template) {
 			this.logger.error(`Template '${templateName}' not found for type: ${noteType}`);

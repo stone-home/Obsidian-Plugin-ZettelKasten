@@ -59,7 +59,7 @@ export class ZettelKastenModal extends Modal {
 
 		// Active Note Section (if available)
 		if (this.currentNote) {
-			this.renderActiveNoteSection(contentEl);
+			// this.renderActiveNoteSection(contentEl);
 			this.renderUpgradeSection(contentEl);
 		}
 	}
@@ -207,6 +207,7 @@ export class ZettelKastenModal extends Modal {
 			this.logger.info(`Creating new ${noteType} note`);
 
 			// Create note using factory
+			this.logger.info(`Creating new ${noteType} note with template ${noteMetadata.template}`);
 			const note = await this.factory.createFromTemplate(noteType, noteMetadata.template);
 			note.setPath(notePath)
 			if (!note) {
@@ -214,6 +215,7 @@ export class ZettelKastenModal extends Modal {
 				new Notice(`Failed to create note of type ${noteType}`, ConfigHelper.getNotificationDuration('error'));
 				return;
 			}
+
 			// Save the note
 			const file = await note.save();
 
