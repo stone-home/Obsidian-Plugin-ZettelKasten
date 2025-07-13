@@ -1,5 +1,5 @@
 import {App, TFile} from "obsidian";
-import {Logger} from "../logger";
+import {logger, Logger} from "../logger";
 import {Utils} from "../utils";
 import {BaseDefault, BaseNote, Body} from "./note";
 import {
@@ -24,7 +24,7 @@ export class NoteFactory {
 	// The value should be fetch from settings, but for now we use a default value
 	private defaultTemplateName: string = 'default';
 	private defaultTemplatesDir: string = '900-templates'; // todo: make this configurable in settings
-	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseNote) => BaseNote>;
+	private noteTypeMap: Map<NoteType, new (app: App, noteType: NoteType, template?: BaseTemplate) => BaseNote>;
 	// The templates are stored in a Map where the key is the NoteType
 	private templates: Map<NoteType, Map<string, ITemplateMetadata>> = new Map();
 	// Default templates for each note type
@@ -112,17 +112,19 @@ export class NoteFactory {
 	/**
 	 * Create a new note of the specified type
 	 */
-	public createNote(noteType: NoteType, template?: BaseNote): BaseNote {
-		const NoteClass = this.noteTypeMap.get(noteType);
+	public createNote(noteType: NoteType, createTemplate?: boolean, template?: BaseNote): BaseNote {
+		this.logger.info(`Creating new note of type: ${noteType}, createTemplate: ${createTemplate} with template: ${template?.getTitle() || 'none'}`);
+		const NoteClass = createTemplate ? BaseTemplate : this.noteTypeMap.get(noteType);
+
 		if (!NoteClass) {
 			this.logger.error(`No note class registered for type: ${noteType}`);
 			throw new Error(`Unknown note type: ${noteType}`);
 		}
-
 		const note = new NoteClass(this.app, noteType, template);
 		this.logger.info(`Created new ${noteType} note`);
 		return note;
 	}
+
 
 	/**
 	 * Create a new template note of the specified type
@@ -190,7 +192,8 @@ export class NoteFactory {
 	/**
 	 * Populate a note instance with content from a file
 	 */
-	private async populateNoteFromContent(note: TFile): Promise<BaseNote> {
+	private async populateNoteFromContent(note: TFile): Promise<BaseTemplate> {
+		this.logger.info(`Loading notes from file: ${note} and populate it`);
 		// Load frontmatter and content
 		const cache = this.app.metadataCache.getFileCache(note);
 		const frontmatter = cache!.frontmatter
@@ -200,7 +203,7 @@ export class NoteFactory {
 		if (!enumKey){
 			enumKey = "FLEETING";
 		}
-		let newNote: BaseNote = this.createNote(NoteType[enumKey]);
+		let newNote: BaseTemplate = this.createNote(NoteType[enumKey], true);
 		const properties = newNote.getProperties();
 
 		if (frontmatter) {
@@ -208,7 +211,6 @@ export class NoteFactory {
 				properties.setPropertyValue(key, propValue, true)
 			}
 		}
-
 		const body: Body = await this.parseBody(note);
 		newNote.getBody().update(body);
 		return newNote;
@@ -427,6 +429,7 @@ export class NoteFactory {
 			throw new Error(`Template '${templateName}' not found for type: ${noteType}`);
 		}
 
-		return this.createNote(noteType, template);
+		this.logger.info(`Creating new ${noteType} from template: ${templateName}`);
+		return this.createNote(noteType, false, template);
 	}
 }

@@ -193,7 +193,7 @@ export class Utils {
 			Object.keys(obj).forEach(key => {
 				cloned[key] = Utils.deepClone((obj as any)[key]);
 			});
-			return cloned as T;
+			return Object.assign(cloned, obj);
 		}
 
 		return obj;

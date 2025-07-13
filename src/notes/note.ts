@@ -1,8 +1,8 @@
 import {App, TFile, TFolder} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
-import { IntegrationManager} from "../3rd";
-import {INoteLink, IKeyValue, IProperties, IZettelkastenProperties} from "./types";
+import {IntegrationManager} from "../3rd";
+import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
 import {NoteType} from "./config";
 
 export class KeyValue<T> implements IKeyValue<T>{
@@ -43,7 +43,7 @@ export class KeyValue<T> implements IKeyValue<T>{
 export class Property {
 	protected _properties: IProperties;
 	protected logger = Logger.createLogger('Property');
-	private static readonly protectedKeys: string[] = ['id', 'create'];
+	protected static readonly protectedKeys: string[] = [];
 
 	constructor() {
 		this._properties = {
@@ -56,20 +56,23 @@ export class Property {
 
 	public update(updates: Partial<IProperties>, force: boolean = false): void {
 		this.logger.debug(`Starting property update...`);
+		updates = Utils.deepClone(updates);
 
 		for (const key in updates) {
 			// Check if the key exists in the provided updates object
 			if (Object.prototype.hasOwnProperty.call(updates, key)) {
-
-				if (Property.protectedKeys.includes(key) && !force) {
-					this.logger.warn(`Attempted to update protected property '${key}' without 'force=true'. Skipping.`);
-					continue;
+				const isTemplate = this.getPropertyValue("template")
+				if (Property.protectedKeys.includes(key)) {
+					if (isTemplate) {
+						this.setPropertyValue(key, updates[key]);
+					}
+					continue; // This skips the update
 				}
 
 				const incomingKeyValue = updates[key];
 				if (incomingKeyValue) {
 					const valueToSet = incomingKeyValue.getValue();
-					this.setPropertyValue(key, valueToSet, false);
+					this.setPropertyValue(key, valueToSet, force);
 				}
 			}
 		}
@@ -310,7 +313,7 @@ export abstract class BaseNote {
 
 	public updateByTemplate(template: BaseNote, keepNoteOrder: boolean = true): void {
 		if (keepNoteOrder) {
-			template.getProperties().update(this.properties.getProperties(), true);
+			template.getProperties().update(this.properties.getProperties(), false);
 			template.getBody().update(this.getBody())
 
 			this.properties = template.getProperties();
@@ -562,7 +565,9 @@ export class ZettelkastenProperty extends Property {
 
 	public toString(): string {
 		this.logger.debug("Generate string-form content");
-		this.addAlias(this.getId());
+		if (!this.getAliases().includes(this.getId())) {
+			this.addAlias(this.getId());
+		}
 		let propString = "---\n";
 		for (const key in this._properties) {
 			propString += this._properties[key].toString();
