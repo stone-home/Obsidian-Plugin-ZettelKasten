@@ -199,6 +199,7 @@ class BodySection {
 
 export class Body {
 	private sections: Map<string, BodySection> = new Map();
+	private logger = Logger.createLogger('Body');
 
 	public newSection(name: string, head_level: number): void {
 		this.sections.set(name, new BodySection(head_level));
@@ -219,19 +220,29 @@ export class Body {
 	 * @param body The Body instance to update from.
 	 */
 	public update(body: Body): void {
-		for (const [name, content] of this.sections) {
-			if (body.sections.has(name) && body.sections.get(name)?.head_level == content.head_level) {
-				for (const text of content.content) {
-					body.sections.get(name)!.addContent(text);
-				}
+		for (const [name, content] of body.sections) {
+			if (this.sections.has(name) && this.sections.get(name)?.head_level === content.head_level) {
+				this.sections.get(name)?.addContent(content);
 			} else {
-				body.newSection(name, content.head_level);
-				for (const text of content.content) {
-					body.sections.get(name)!.addContent(text);
-				}
+				this.newSection(name, content.head_level);
+				this.sections.get(name)!.addContent(content.content);
 			}
 		}
-		this.sections = body.sections;
+
+
+		// for (const [name, content] of this.sections) {
+		// 	if (body.sections.has(name) && body.sections.get(name)?.head_level == content.head_level) {
+		// 		for (const text of content.content) {
+		// 			body.sections.get(name)!.addContent(text);
+		// 		}
+		// 	} else {
+		// 		body.newSection(name, content.head_level);
+		// 		for (const text of content.content) {
+		// 			body.sections.get(name)!.addContent(text);
+		// 		}
+		// 	}
+		// }
+		// this.sections = body.sections;
 	}
 
 	public toString(): string {
@@ -322,15 +333,15 @@ export abstract class BaseNote {
 
 	public updateByTemplate(template: BaseNote, keepNoteOrder: boolean = true): void {
 		if (keepNoteOrder) {
+			this.properties.update(template.getProperties().getProperties(), false)
+			this.body.update(template.getBody())
+			this.setTitle("") // Clear the title to ensure the template title is not used
+		} else {
 			template.getProperties().update(this.properties.getProperties(), false);
 			template.getBody().update(this.getBody())
 
 			this.properties = template.getProperties();
 			this.body = template.getBody();
-
-		} else {
-			this.properties.update(template.getProperties().getProperties())
-			this.body.update(this.getBody())
 		}
 		// Due to each template exists a field, call 'template'
 		// must remove it before saving
