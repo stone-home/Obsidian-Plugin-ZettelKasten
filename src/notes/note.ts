@@ -222,10 +222,15 @@ export class Body {
 	public update(body: Body): void {
 		for (const [name, content] of body.sections) {
 			if (this.sections.has(name) && this.sections.get(name)?.head_level === content.head_level) {
-				this.sections.get(name)?.addContent(content);
+				for (const text of content.content) {
+					this.sections.get(name)!.addContent(text);
+				}
 			} else {
 				this.newSection(name, content.head_level);
-				this.sections.get(name)!.addContent(content.content);
+				// Add the content to the new section
+				for (const text of content.content) {
+					this.sections.get(name)!.addContent(text);
+				}
 			}
 		}
 
