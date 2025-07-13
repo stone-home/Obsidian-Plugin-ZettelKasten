@@ -59,7 +59,7 @@ export class ZettelKastenModal extends Modal {
 
 		// Active Note Section (if available)
 		if (this.currentNote) {
-			// this.renderActiveNoteSection(contentEl);
+			this.renderActiveNoteSection(contentEl);
 			this.renderUpgradeSection(contentEl);
 		}
 	}
