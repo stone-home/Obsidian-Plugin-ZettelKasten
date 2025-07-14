@@ -521,8 +521,8 @@ export abstract class BaseNote {
 	}
 
 	public async save(): Promise<TFile> {
-		await this.checkBeforeSave();
 		this.logger.debug(`Start saving note to ${this.getObPath()}`);
+		await this.checkBeforeSave();
 		const s_note = await this.toString();
 		const file = await this.app.vault.create(this.getObPath(true), s_note);
 

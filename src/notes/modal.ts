@@ -267,7 +267,7 @@ export class ZettelKastenModal extends Modal {
 
 			// Open the new note if feature is enabled
 			if (CONFIG.FEATURES.AUTO_OPEN_CREATED_NOTES) {
-				await this.app.workspace.openLinkText(note.getTitle(), '');
+				await this.app.workspace.openLinkText(note.getTitle(), '', false, { state: { mode: 'source' } });
 			}
 
 			// Close modal

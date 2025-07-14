@@ -1,4 +1,4 @@
-import {App, TFile} from "obsidian";
+import {App, TFile, TFolder} from "obsidian";
 import {Logger} from "../logger";
 import {Utils} from "../utils";
 import {BaseDefault, BaseNote, Body} from "./note";
@@ -342,6 +342,7 @@ export class NoteFactory {
 	 * Refresh templates from the filesystem
 	 */
 	public async refreshTemplates(noteType: NoteType): Promise<void> {
+		this.logger.info(`Refereshing templates for note type: ${noteType}`);
 		const templates = await this.loadFromDirectory(this.templateDir(noteType));
 		for (const template of templates) {
 			if (!this.isTemplate(template)) {
@@ -370,7 +371,8 @@ export class NoteFactory {
 	 */
 	private templateDir(noteType: NoteType): string {
 		const dir = this.defaultTemplatesDir + '/' + noteType;
-		if (!this.app.vault.getAbstractFileByPath(dir)) {
+		const file = this.app.vault.getAbstractFileByPath(dir);
+		if (!(file instanceof TFolder)) {
 			this.app.vault.createFolder(dir);
 		}
 		return dir;
