@@ -26,22 +26,26 @@ export default class ZettelkastenPlugin extends Plugin {
 		// Load Settings
 		await this.loadSettings();
 
-		// Initialize factory
-		this.factory = new NoteFactory(this.app);
-		await this.factory.initialize(this.settings)
+		this.app.workspace.onLayoutReady( async () => {
+			// Initialize factory
+			this.factory = new NoteFactory(this.app);
+			await this.factory.initialize(this.settings) // The function onLayoutReady ensures that all file index are loaded and is able to retrieve the file for templates from file system.
+			// Load Settings Tab
+			this.addSettingTab(new ZettelkastenSettingTab(this.app, this, this.factory))
+			// this.factory.updateSettings(this.settings)
 
-		// Load Settings Tab
-		this.addSettingTab(new ZettelkastenSettingTab(this.app, this, this.factory))
-		// this.factory.updateSettings(this.settings)
+			// Initialize Zettelkasten features
+			await this.initializeZettelkastenFeatures();
+
+
+		});
+
 
 
 		// load integration manager
 		this.integrationManager = IntegrationManager.getInstance(this.app);
 		await this.integrationManager.initialize()
 
-
-		// Initialize Zettelkasten features
-		await this.initializeZettelkastenFeatures();
 
 		new Notice('Zettelkasten Plugin loaded with dashboard!');
 	}
