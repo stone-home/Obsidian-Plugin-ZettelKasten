@@ -2,7 +2,6 @@ export {
 	NoteType,
 	NoteTypeData,
 	CreateNoteOptions,
-	ConfigHelper
 } from "./config"
 
 export {
@@ -18,6 +17,7 @@ export type {
 	INoteLink,
 	IZettelkastenProperties,
 	INoteOption,
+	INoteTemplateMetadata
 } from './types';
 
 export {

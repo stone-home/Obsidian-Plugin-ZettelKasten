@@ -1,11 +1,9 @@
-import {App, Notice, TFile, TFolder, TAbstractFile} from "obsidian";
+import {App, Notice, TFile, TAbstractFile} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
 import {IntegrationManager} from "../3rd";
 import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
 import {NoteType} from "./config";
-import {Obj} from "tern";
-import {isTupleType} from "tsutils";
 
 export class KeyValue<T> implements IKeyValue<T>{
 	private key: string;
@@ -476,7 +474,8 @@ export abstract class BaseNote {
 
 	// Check if the note exists in the vault
 	public async exist(dir: boolean = false): Promise<boolean> {
-		return Utils.fileExists(this.app, await this.getTfile(dir), dir);
+		const path = await this.getTfile(dir) as TAbstractFile;
+		return Utils.fileExists(this.app, path, dir);
 	}
 
 	protected async checkBeforeSave(): Promise<void> {
