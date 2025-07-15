@@ -108,6 +108,7 @@ export class GroupNoteCards extends Modal {
 					indexNote.setProperty("ZT_folder_note", true);
 					indexNote.addTag(selectedTag)
 					indexNote.addTag(`📍tagNode`);
+					indexNote.addAlias(`#${selectedTag}`)
 					const dataviewSectionName = "Index Notes";
 					indexNote.getBody().newSection(dataviewSectionName, 1);
 					indexNote.getBody().addContent(
