@@ -1,4 +1,6 @@
+import {App, TAbstractFile} from 'obsidian';
 import { Logger } from '../logger';
+import {TFile, TFolder} from "obsidian";
 
 /**
  * A class containing general utility methods.
@@ -218,5 +220,31 @@ export class Utils {
 	 */
 	static makeMutable<T>(obj: T): { -readonly [K in keyof T]: T[K] } {
 		return { ...obj } as { -readonly [K in keyof T]: T[K] };
+	}
+
+	/**
+	 * Checks if a file or folder exists in the vault.
+	 * @param app - The Obsidian app instance
+	 * @param path - The path to check
+	 * @param dir - If true, checks for a folder; if false, checks for a file
+	 * @returns {boolean} True if the file/folder exists, false otherwise
+	 */
+	static fileExists(app: App, path: string|TAbstractFile, dir: boolean): boolean {
+		try {
+			let tfile: TAbstractFile | null;
+			if (String.isString(path)){
+				tfile = app.vault.getAbstractFileByPath(path) as TFile | TFolder | null;
+			} else {
+				tfile = path as TFile | TFolder;
+			}
+
+			if (dir) {
+				return tfile instanceof TFolder;
+			} else {
+				return tfile instanceof TFile;
+			}
+		} catch (error) {
+			return false;
+		}
 	}
 }

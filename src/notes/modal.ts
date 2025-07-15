@@ -108,7 +108,12 @@ export class ZettelKastenModal extends Modal {
 
 			// Make card clickable
 			card.addEventListener('click', async () => {
-				const gCards = new GroupNoteCards(this.app, `All ${NoteTypeData[noteType].label} Cards`, typeTemplates, callback )
+				const gCards = new GroupNoteCards(
+					this.app,
+					`All ${NoteTypeData[noteType].label} Cards`,
+					this.factory,
+					typeTemplates, callback
+				);
 				gCards.open()
 				this.close()
 			})
@@ -135,7 +140,7 @@ export class ZettelKastenModal extends Modal {
 			let defaultPath = dirEntry ? this.settings?.[`${dirEntry}Path`] : undefined;
 			let defaultPathFile: TFolder | null = this.app.vault.getAbstractFileByPath(defaultPath || '') as TFolder | null
 
-			new StepByStepFolderModal(this.app, defaultPathFile, async (selectedFolder) => {
+			new StepByStepFolderModal(this.app, defaultPathFile, false, async (selectedFolder) => {
 				await this.currentNote?.move(selectedFolder.path)
 				new Notice(`Moved ${this.currentNote?.getTitle()} to ${selectedFolder.path}`);
 			}).open();
@@ -231,11 +236,16 @@ export class ZettelKastenModal extends Modal {
 			const filename = await this.integrations.getTemplater().getPrompt("Please enter the file name")
 			if (filename) {
 				this.logger.info(`Note title set to: ${filename}`);
-				note.setTitle(`${Utils.generateDate()} - ${filename}`);
+				const prefix = noteMetadata.prefix || Utils.generateDate();
+				note.setTitle(`${prefix} - ${filename}`);
 			}
 
 
 			// Save the note
+			const extraTags = noteMetadata.tags || [];
+			extraTags.forEach((tag) => {
+				note.addTag(tag);
+			})
 			const file = await note.save();
 
 			// Show success notification

@@ -3,11 +3,15 @@ import { App, Modal, TFolder } from 'obsidian';
 export class StepByStepFolderModal extends Modal {
 	private onChoose: (result: TFolder) => void;
 	private currentFolder: TFolder;
+	private singeLayer: boolean;
+	private entryPath: string;
 
-	constructor(app: App, startFolder: TFolder | null , onChoose: (result: TFolder) => void) {
+	constructor(app: App, startFolder: TFolder | null , singleLayer: boolean = false, onChoose: (result: TFolder) => void, ) {
 		super(app);
 		this.onChoose = onChoose;
 		this.currentFolder = startFolder || this.app.vault.getRoot();
+		this.singeLayer = singleLayer;
+		this.entryPath = this.currentFolder.path;
 	}
 
 	onOpen() {
@@ -37,8 +41,12 @@ export class StepByStepFolderModal extends Modal {
 			children.forEach(folder => {
 				const folderItemEl = folderListEl.createDiv({ text: `📁 ${folder.name}`, cls: 'folder-item' });
 				folderItemEl.addEventListener('click', () => {
-					this.currentFolder = folder;
-					this.display(); // Navigate into the clicked folder
+					if (this.singeLayer) {
+						this.choose(folder);
+					} else {
+						this.currentFolder = folder;
+						this.display(); // Navigate into the clicked folder
+					}
 				});
 			});
 		}
@@ -47,22 +55,26 @@ export class StepByStepFolderModal extends Modal {
 		const footerEl = contentEl.createDiv('modal-footer');
 
 		// Back Button (now at the end, as requested)
-		const backButton = footerEl.createEl('button', { text: 'Back', cls: 'back-btn' });
-		if (this.currentFolder.isRoot()) {
-			backButton.disabled = true; // Disable if in root
-		}
-		backButton.addEventListener('click', () => {
-			if (this.currentFolder.parent) {
-				this.currentFolder = this.currentFolder.parent;
-				this.display();
+		if (!this.singeLayer && this.currentFolder.path !== this.entryPath){
+			const backButton = footerEl.createEl('button', { text: 'Back', cls: 'back-btn' });
+			if (this.currentFolder.isRoot()) {
+				backButton.disabled = true; // Disable if in root
 			}
-		});
+			backButton.addEventListener('click', () => {
+				if (this.currentFolder.parent) {
+					this.currentFolder = this.currentFolder.parent;
+					this.display();
+				}
+			});
+		}
 
 		// The single confirm button
-		const confirmButton = footerEl.createEl('button', { text: 'Select this folder', cls: 'confirm-btn' });
-		confirmButton.addEventListener('click', () => {
-			this.choose(this.currentFolder);
-		});
+		if (!this.singeLayer) {
+			const confirmButton = footerEl.createEl('button', { text: 'Select this folder', cls: 'confirm-btn' });
+			confirmButton.addEventListener('click', () => {
+				this.choose(this.currentFolder);
+			});
+		}
 	}
 
 	private choose(folder: TFolder) {

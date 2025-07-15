@@ -1,5 +1,9 @@
 /*
 Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
+A quick table for searching the start of each section of this file:
+📝: Zettelkasten Modal -> ./main.ts & ./notes/modal.ts
+🔩: Setting CSS -> ./settings
+🔘: Utility CSS -> ./utils
 */
 
 /*
@@ -625,7 +629,40 @@ Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
 }
 
 
+/* 🔩From this point, we will add styles for the settings tabs and other UI elements */
 /* --- CHROME-LIKE SETTINGS TABS --- */
+
+/* The main container is now a CSS Grid */
+.note-settings-container {
+	display: grid;
+	/* Defines the column widths. This is the key part! */
+	grid-template-columns: minmax(50px, 1.5fr) auto auto auto minmax(150px, 2fr) 1fr;
+	grid-column-gap: 15px; /* Space between columns */
+	grid-row-gap: 12px;   /* Space between rows */
+	align-items: center; /* Vertically align content in each cell */
+}
+
+/* --- The Magic: display: contents --- */
+/* This tells the header and setting rows to act as "ghost" containers.
+   Their direct children will become items in the main CSS Grid,
+   allowing them to align perfectly in the columns we defined above. */
+.note-settings-header,
+.setting-item.note-setting-row {
+	display: contents;
+}
+
+/* When a setting is disabled, we need a placeholder to fill the empty columns */
+.setting-item-placeholder {
+	/* Start at the 2nd grid line and span to the very end */
+	grid-column: 2 / -1;
+	height: 30px; /* Give it a height to maintain row spacing */
+}
+
+/* Minor tweak to ensure dropdowns and text inputs fill their grid cell */
+.setting-item-control .dropdown,
+.setting-item-control .text-input {
+	width: 100%;
+}
 
 .zettelkasten-settings-container-modern {
 	/* No specific flex styling here, assumes it's within Obsidian's modal structure */
@@ -796,7 +833,7 @@ Enhanced styles for Zettelkasten Workflow Plugin with Improved Template Editor
 	margin: 0;
 }
 
-/* --- Style for your small button --- */
+/* --- 🔘Style for your small button --- */
 .btn-small {
 	/* Variables for easy theming */
 	--btn-bg-color: #007bff;

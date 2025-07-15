@@ -3,7 +3,8 @@ import ZettelkastenPlugin from './main';
 import {INoteOption, NoteFactory, NoteType} from './notes'; // Import NoteType and ConfigHelper
 import {DEFAULT_SETTINGS} from './config'; //
 import {IntegrationManager} from "./3rd";
-import {Logger} from './logger'; // Import Logger for logging
+import {Logger} from './logger';
+import {StepByStepFolderModal, Utils} from "./utils"; // Import Logger for logging
 
 
 // Define your sections for horizontal navigation
@@ -247,12 +248,25 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 
 
 	private renderNoteCreationSettings(containerEl: HTMLElement): void {
-		containerEl.createEl('p', { text: 'Configure the available note types and their default properties when creating a new note.' });
+		containerEl.createEl('p', { text: 'Configure the available note types and their default properties when creating a new note. 📝 presents a single note template; 🗂️ present a folder type notes' });
+
+
+		// Create a main container for our flex layout
+		// const settingsContainer = containerEl.createDiv({ cls: 'note-settings-container' });
+		// --- 1. RENDER THE HEADER ROW ---
+		// const headerEl = settingsContainer.createDiv({ cls: 'note-settings-header' });
+		// headerEl.createDiv({ text: 'Name'});
+		// headerEl.createDiv({ text: 'Enabled'});
+		// // Add placeholders for columns that only show when enabled
+		// headerEl.createDiv({ text: 'Type'})
+		// headerEl.createDiv({ text: 'Emoji'});
+		// headerEl.createDiv({ text: 'Template'});
+		// headerEl.createDiv({ text: 'Creation Path'});
 
 		// Loop for existing note type settings
 		this.plugin.settings.createNoteOptions.forEach((option: INoteOption, index: number) => {
 			const noteTypeSetting = new Setting(containerEl)
-				.setName(option.label)
+				.setName(`${option.folderNote?'🗂️':'📝'}${option.label}`)
 			noteTypeSetting.nameEl.addClass('setting-new-note-record-name')
 
 			// --- Enable/Disable Toggle ---
@@ -262,7 +276,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					option.enabled = value;
 					await this.plugin.saveSettings();
-					this.display(); // Re-render to show/hide detailed settings
+					await this.display(); // Re-render to show/hide detailed settings
 				}));
 
 			// Only show detailed settings if the type is enabled
@@ -277,7 +291,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							option.type = value as NoteType;
 							await this.plugin.saveSettings();
-							this.display(); // Re-render to update the setting title
+							await this.display(); // Re-render to update the setting title
 						});
 				});
 
@@ -308,22 +322,32 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 							.onChange(async (value) => {
 								option.template = value;
 								await this.plugin.saveSettings();
-								this.display(); // Re-render to update the setting title
+								await this.display(); // Re-render to update the setting title
 							});
 					}
 				});
 
 				// --- Folder Path Text Input ---
-				noteTypeSetting.addText(text => {
-					text.inputEl.addClass('setting-new-note-record-path')
-					text
-						.setPlaceholder('Creation Path (optional)')
-						.setValue(option.path || '')
-						.onChange(debounce(async (value) => {
-							option.path = value;
-							await this.plugin.saveSettings();
-						}, 500))
-				});
+				if (option.folderNote) {
+					noteTypeSetting.controlEl.createEl('div', {
+						text: option.path,
+						cls: 'setting-new-note-record-path'
+					})
+				} else {
+					noteTypeSetting.addText(text => {
+						text.inputEl.addClass('setting-new-note-record-path')
+						text
+							.setPlaceholder('Creation Path (optional)')
+							.setValue(option.path || '')
+							.onChange(debounce(async (value) => {
+								if (Utils.fileExists(this.app, value, true)) {
+									option.path = value;
+									await this.plugin.saveSettings();
+								}
+							}, 500))
+					});
+
+				}
 			}
 
 			// --- Remove Button ---
@@ -351,19 +375,39 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 							new Notice('Note type name cannot be empty.', 3000);
 							return;
 						}
-						// Create a new INoteOption object with default values
-						const newOption: INoteOption = {
-							enabled: true,
-							type: NoteType.FLEETING, // Default to Fleeting as a starting point
-							label: noteTypeName,
-							emoji: '🌱',
-							path: undefined, // Leave empty for user to define
-							template: 'default',
-						};
-
-						this.plugin.settings.createNoteOptions.push(newOption);
+						this.plugin.settings.createNoteOptions.push(this.addNoteOption(noteTypeName, false));
 						await this.plugin.saveSettings();
-						this.display(); // Re-render the settings to show the new entry
+						await this.display(); // Re-render the settings to show the new entry
+					});
+			})
+			.addButton(button => {
+				button
+					.setButtonText("Add Folder Notes")
+					.setCta() // Prominent Call To Action style
+					.onClick(async () => {
+						new StepByStepFolderModal(this.app, null, false, async (selectedFolder) => {
+							const folderName = await this.integrationManager.getTemplater().getPrompt(`Please enter a folder name on ${selectedFolder.path}`)
+							if (!folderName) {
+								new Notice('Folder name cannot be empty.', 3000);
+								return;
+							}
+							const targetDirPath = `${selectedFolder.path}/${folderName}`;
+							if (!(Utils.fileExists(this.app, targetDirPath, true))) {
+								await this.app.vault.createFolder(targetDirPath);
+							}
+							// Create a configuration note in the target directory
+							const confNote = this.factory.createNote(NoteType.PERMANENT)
+							confNote.setTitle("_config")
+							confNote.setPath(targetDirPath)
+							confNote.addTag("config")
+							confNote.setProperty("ZT_root_tag", `Zettelkasten/${folderName}`)
+							await confNote.save();
+
+							// Save changed settings
+							this.plugin.settings.createNoteOptions.push(this.addNoteOption(folderName, true, targetDirPath));
+							await this.plugin.saveSettings();
+							await this.display(); // Re-render the settings to show the new entry
+						}).open();
 					});
 			});
 
@@ -374,7 +418,21 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				.onClick(async () => {
 					this.plugin.settings.createNoteOptions = DEFAULT_SETTINGS.createNoteOptions.map(option => ({ ...option }));
 					await this.plugin.saveSettings();
-					this.display(); // Re-render to show reset state
+					await this.display(); // Re-render to show reset state
 				}));
+	}
+
+	private addNoteOption(name: string, folderDir: boolean = false, path?: string): INoteOption {
+
+		// Create a new INoteOption object with default values
+		return {
+			enabled: true,
+			type: NoteType.FLEETING, // Default to Fleeting as a starting point
+			label: name,
+			emoji: '🌱',
+			path: path || undefined, // Leave empty for user to define
+			template: 'default',
+			folderNote: folderDir
+		};
 	}
 }

@@ -1,17 +1,29 @@
-import { App, Modal } from 'obsidian';
+import { App, Modal, Notice, TFolder } from 'obsidian';
 import { INoteOption } from "../../notes";
+import { StepByStepFolderModal } from "./folderSuggestion";
+import { Utils } from "../utils";
+import { NoteFactory } from "../../notes";
+import { Logger } from "../../logger";
 
 
 export class GroupNoteCards extends Modal {
 	private modalTitle: string = 'Select Note Type';
 	private options: INoteOption[];
 	private callback: (noteMeta: INoteOption) => Promise<void>;
+	private factory: NoteFactory;
+	private logger: Logger = Logger.createLogger("GroupNoteCards");
 
-	constructor(app: App, name: string, options: INoteOption[],  callback: (noteMeta: INoteOption) => Promise<void>) {
+	constructor(
+		app: App,
+		name: string,
+		factory: NoteFactory,
+		options: INoteOption[],  callback: (noteMeta: INoteOption) => Promise<void>
+	) {
 		super(app);
 		this.modalTitle = name;
 		this.options = options;
 		this.callback = callback;
+		this.factory = factory;
 	}
 
 	onOpen() {
@@ -33,19 +45,91 @@ export class GroupNoteCards extends Modal {
 		const cardsContainer = contentEl.createDiv('note-cards-container');
 		this.options.forEach(option => {
 			if (option.enabled) {
-				const card = cardsContainer.createDiv('note-card clickable-card');
-				const iconDiv = card.createDiv('note-card-icon');
-				iconDiv.createEl('span', { text: option.emoji, cls: 'card-emoji' });
-
-				// Title only (no description for compact design)
-				card.createEl('div', { text: option.label, cls: 'note-card-title' });
-
-				// Make card clickable
-				card.addEventListener('click', async () => {
-					await this.callback(option);
-					this.close()
-				});
+				if (option.folderNote){
+					this.folderCards(cardsContainer, option);
+				} else {
+					this.singleNoteCard(cardsContainer, option);
+				}
 			}
 		});
+	}
+
+	private singleNoteCard(contentElemnt: HTMLElement, option: INoteOption) {
+		const card = contentElemnt.createDiv('note-card clickable-card');
+		const iconDiv = card.createDiv('note-card-icon');
+		iconDiv.createEl('span', { text: option.emoji, cls: 'card-emoji' });
+
+		// Title only (no description for compact design)
+		card.createEl('div', { text: option.label, cls: 'note-card-title' });
+
+		// Make card clickable
+		card.addEventListener('click', async () => {
+			await this.callback(option);
+			this.close()
+		});
+	}
+
+	private folderCards(contentElemnt: HTMLElement, option: INoteOption) {
+		const card = contentElemnt.createDiv('note-card clickable-card');
+		const iconDiv = card.createDiv('note-card-icon');
+		iconDiv.createEl('span', { text: option.emoji, cls: 'card-emoji' });
+
+		// Title only (no description for compact design)
+		card.createEl('div', { text: option.label, cls: 'note-card-title' });
+
+		// Make card clickable
+		const targetPath = option.path || '';
+		card.addEventListener('click', async () => {
+			let defaultPathFile: TFolder | null = this.app.vault.getAbstractFileByPath(targetPath) as TFolder | null
+			new StepByStepFolderModal(this.app, defaultPathFile, true, async (selectedFolder) => {
+				// load _config.md file from the selected folder
+				const configPath = `${targetPath}/_config.md`
+				if (!(Utils.fileExists(this.app, configPath, false))) {
+					new Notice(`The folder ${defaultPathFile} does not contain a _config.md file. Please create one to proceed.`);
+					this.close()
+				}
+				const configNote = await this.factory.loadFromFile(configPath);
+				const defaultNoteTag = configNote.getProperty("ZT_root_tag") || "";
+				const selectedTag = `${defaultNoteTag}/${selectedFolder.name}`;
+
+				option = Utils.deepClone(option);
+				option.path = selectedFolder.path;
+				option.prefix = `${Utils.generateDate()} - ${selectedFolder.name}`;
+				option.tags = [selectedTag]
+
+				// check whether the index.md file exists in the selected folder
+				const indexPrefix = selectedFolder.name;
+				const indexNoteName = `${indexPrefix} - index`;
+				const indexNote = `${option.path}/${indexNoteName}.md`;
+				if (!(Utils.fileExists(this.app, indexNote, false))) {
+					const indexNote = this.factory.createNote(option.type);
+					indexNote.setTitle(indexNoteName);
+					indexNote.setPath(option.path);
+					indexNote.setProperty("ZT_folder_note", true);
+					indexNote.addTag(selectedTag)
+					indexNote.addTag(`📍tagNode`);
+					const dataviewSectionName = "Index Notes";
+					indexNote.getBody().newSection(dataviewSectionName, 1);
+					indexNote.getBody().addContent(
+						'```dataview',
+						dataviewSectionName
+					)
+					indexNote.getBody().addContent(
+						`Table from "${option.path}" AND !(#📍tagNode) `,
+						dataviewSectionName
+					)
+					indexNote.getBody().addContent(
+						'```',
+						dataviewSectionName
+					)
+					await indexNote.save();
+
+				}
+				await this.callback(option);
+			}).open();
+			this.close()
+
+		});
+
 	}
 }

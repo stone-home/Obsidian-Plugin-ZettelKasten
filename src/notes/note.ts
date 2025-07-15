@@ -476,18 +476,7 @@ export abstract class BaseNote {
 
 	// Check if the note exists in the vault
 	public async exist(dir: boolean = false): Promise<boolean> {
-		try {
-			const file = await this.getTfile(dir)
-
-			if (dir) {
-				return file instanceof TFolder; // 确保检查的是文件夹
-			} else {
-				return file instanceof TFile;   // 确保检查的是文件
-			}
-		} catch (error) {
-			this.logger.error(`Error checking existence: ${error}`);
-			return false;
-		}
+		return Utils.fileExists(this.app, await this.getTfile(dir), dir);
 	}
 
 	protected async checkBeforeSave(): Promise<void> {

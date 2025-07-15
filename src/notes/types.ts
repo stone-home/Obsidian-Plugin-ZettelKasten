@@ -69,6 +69,9 @@ export interface INoteOption {
 	path?: string;
 	template?: string;
 	metadata?: INoteTemplateMetadata;
+	folderNote?: boolean;
+	prefix?: string;
+	tags?: string[];
 }
 
 
