@@ -2,11 +2,12 @@ import {Modal, App, Notice, TAbstractFile, TFolder, TFile} from "obsidian";
 import {NoteFactory} from "./factory";
 import {BaseDefault, BaseNote} from "./note";
 import {Logger} from "../logger";
-import {NoteType, ConfigHelper, CreateNoteOptions, CONFIG} from "./config";
+import {NoteType, ConfigHelper, CreateNoteOptions, CONFIG, NoteTypeData} from "./config";
 import {INoteOption} from "./types";
 import { ZettelkastenSettings } from "../types";
 import { IntegrationManager } from "../3rd";
-import { Utils, StepByStepFolderModal } from "../utils";
+import { Utils, StepByStepFolderModal, GroupNoteCards } from "../utils";
+import {Variable} from "@typescript-eslint/scope-manager";
 
 
 export class ZettelKastenModal extends Modal {
@@ -87,26 +88,31 @@ export class ZettelKastenModal extends Modal {
 			cls: 'section-subtitle'
 		});
 
-		this.createOptionCards(section, this.loadNewNoteOptions(), (noteMeta) => this.createNewNote(noteMeta));
+		this.createOptionCards(section, [], (noteMeta) => this.createNewNote(noteMeta));
 	}
 
-	private createOptionCards(container: HTMLElement, options: INoteOption[], callback: (noteMeta: INoteOption) => Promise<void>): void {
+	private createOptionCards(container: HTMLElement, noteTypes: NoteType[], callback: (noteMeta: INoteOption) => Promise<void>): void {
 		const cardsContainer = container.createDiv('note-cards-container');
-		options.forEach(option => {
-			if (option.enabled) {
-				const card = cardsContainer.createDiv('note-card clickable-card');
-				const iconDiv = card.createDiv('note-card-icon');
-				iconDiv.createEl('span', { text: option.emoji, cls: 'card-emoji' });
+		const allNoteTemplates = this.loadNewNoteOptions()
+		const selectedNoteTypes = noteTypes.length > 0 ? noteTypes : Object.values(NoteType);
+		selectedNoteTypes.forEach((noteType) => {
+			const typeTemplates = allNoteTemplates.filter((template) => {
+				return template.type === noteType;
+			})
+			const card = cardsContainer.createDiv('note-card clickable-card');
+			const iconDiv = card.createDiv('note-card-icon');
+			iconDiv.createEl('span', { text: NoteTypeData[noteType].emoji, cls: 'card-emoji' });
 
-				// Title only (no description for compact design)
-				card.createEl('div', { text: option.label, cls: 'note-card-title' });
+			// Title only (no description for compact design)
+			card.createEl('div', { text: NoteTypeData[noteType].label, cls: 'note-card-title' });
 
-				// Make card clickable
-				card.addEventListener('click', async () => {
-					await callback(option);
-				});
-			}
-		});
+			// Make card clickable
+			card.addEventListener('click', async () => {
+				const gCards = new GroupNoteCards(this.app, `All ${NoteTypeData[noteType].label} Cards`, typeTemplates, callback )
+				gCards.open()
+				this.close()
+			})
+		})
 	}
 
 	private renderActiveNoteSection(container: HTMLElement): void {
@@ -171,33 +177,7 @@ export class ZettelKastenModal extends Modal {
 		const section = container.createDiv('zettel-section');
 		section.createEl('h3', { text: 'Upgrade' });
 
-		const upgradeOptions = this.getUpgradeOptions();
-
-		if (upgradeOptions.length === 0) {
-			section.createEl('p', {
-				text: 'No upgrade options available for this note type.',
-				cls: 'no-options'
-			});
-			return;
-		}
-
-		this.createOptionCards(section, upgradeOptions, (noteMeta) => this.noteUpgrade(noteMeta));
-	}
-
-	private getUpgradeOptions(): INoteOption[] {
-		const upgradePath = ConfigHelper.getNoteTypeConfig(this.currentNoteType).upgradePath;
-		const upgradeOptions: INoteOption[] = [];
-		upgradePath.forEach((option) => {
-			const noteMetadata = ConfigHelper.getNoteTypeConfig(option);
-			if (noteMetadata) {
-				upgradeOptions.push({
-					enabled: true,
-					type: option,
-					label: noteMetadata.label,
-				})
-			}
-		})
-		return this.supplementNoteOptions(upgradeOptions);
+		this.createOptionCards(section, ConfigHelper.getNoteTypeConfig(this.currentNoteType).upgradePath, (noteMeta) => this.noteUpgrade(noteMeta));
 	}
 
 	private supplementNoteOptions(noteOptions: INoteOption[]): INoteOption[] {
