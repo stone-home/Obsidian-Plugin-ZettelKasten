@@ -119,32 +119,6 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		new Setting(containerEl)
-			.setName('Maximum Recent Notes')
-			.setDesc('The maximum number of recent notes to display in certain interfaces.')
-			.addText(text => text
-				.setPlaceholder('e.g., 10')
-				.setValue(this.plugin.settings.maxRecentNotes.toString())
-				.onChange(async (value) => {
-					const num = parseInt(value);
-					if (!isNaN(num) && num >= 0) {
-						this.plugin.settings.maxRecentNotes = num;
-						await this.plugin.saveSettings();
-					} else {
-						new Notice('Invalid input: Please enter a non-negative number.', 3000);
-					}
-				}));
-
-		new Setting(containerEl)
-			.setName('Enable Auto-Linking')
-			.setDesc('Automatically create backlinks when upgrading or relating notes.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.enableAutoLinking)
-				.onChange(async (value) => {
-					this.plugin.settings.enableAutoLinking = value;
-					await this.plugin.saveSettings();
-				}));
-
 		// Render default template settings for each note type
 		this.renderDefaultTemplateSettings(containerEl, 'Fleeting Default Template', NoteType.FLEETING);
 		this.renderDefaultTemplateSettings(containerEl, 'Literature Default Template', NoteType.LITERATURE);
@@ -362,7 +336,8 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				}));
 		});
 
-		new Setting(containerEl)
+		const noteCreationAddButton = new Setting(containerEl)
+		noteCreationAddButton
 			.setName("Add New Record")
 			.setDesc("Click the button to add a new record configuration.")
 			.addButton(button => {
@@ -380,36 +355,39 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						await this.display(); // Re-render the settings to show the new entry
 					});
 			})
-			.addButton(button => {
-				button
-					.setButtonText("Add Folder Notes")
-					.setCta() // Prominent Call To Action style
-					.onClick(async () => {
-						new StepByStepFolderModal(this.app, null, false, async (selectedFolder) => {
-							const folderName = await this.integrationManager.getTemplater().getPrompt(`Please enter a folder name on ${selectedFolder.path}`)
-							if (!folderName) {
-								new Notice('Folder name cannot be empty.', 3000);
-								return;
-							}
-							const targetDirPath = `${selectedFolder.path}/${folderName}`;
-							if (!(Utils.fileExists(this.app, targetDirPath, true))) {
-								await this.app.vault.createFolder(targetDirPath);
-							}
-							// Create a configuration note in the target directory
-							const confNote = this.factory.createNote(NoteType.PERMANENT)
-							confNote.setTitle("_config")
-							confNote.setPath(targetDirPath)
-							confNote.addTag("config")
-							confNote.setProperty("ZT_root_tag", `Zettelkasten/${folderName}`)
-							await confNote.save();
+		if (this.plugin.settings.systemSettings.FEATURES.FOLDER_NOTES){
+			noteCreationAddButton
+				.addButton(button => {
+					button
+						.setButtonText("Add Folder Notes")
+						.setCta() // Prominent Call To Action style
+						.onClick(async () => {
+							new StepByStepFolderModal(this.app, null, false, async (selectedFolder) => {
+								const folderName = await this.integrationManager.getTemplater().getPrompt(`Please enter a folder name on ${selectedFolder.path}`)
+								if (!folderName) {
+									new Notice('Folder name cannot be empty.', 3000);
+									return;
+								}
+								const targetDirPath = `${selectedFolder.path}/${folderName}`;
+								if (!(Utils.fileExists(this.app, targetDirPath, true))) {
+									await this.app.vault.createFolder(targetDirPath);
+								}
+								// Create a configuration note in the target directory
+								const confNote = this.factory.createNote(NoteType.PERMANENT)
+								confNote.setTitle("_config")
+								confNote.setPath(targetDirPath)
+								confNote.addTag("config")
+								confNote.setProperty("ZT_root_tag", `Zettelkasten/${folderName}`)
+								await confNote.save();
 
-							// Save changed settings
-							this.plugin.settings.createNoteOptions.push(this.addNoteOption(folderName, true, targetDirPath));
-							await this.plugin.saveSettings();
-							await this.display(); // Re-render the settings to show the new entry
-						}).open();
-					});
-			});
+								// Save changed settings
+								this.plugin.settings.createNoteOptions.push(this.addNoteOption(folderName, true, targetDirPath));
+								await this.plugin.saveSettings();
+								await this.display(); // Re-render the settings to show the new entry
+							}).open();
+						});
+				});
+		}
 
 		new Setting(containerEl)
 			.addButton(button => button

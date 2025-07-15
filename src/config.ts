@@ -17,7 +17,7 @@ export const FEATURES: IFeatureFlags = {
 	AUTO_OPEN_CREATED_NOTES: true,
 	SHOW_UPGRADE_NOTIFICATIONS: true,
 	DEBUG_MODE: false,
-	FOLDER_NOTES: true
+	FOLDER_NOTES:true
 } as const;
 
 
