@@ -1,4 +1,4 @@
-import { App, Modal, TFolder } from 'obsidian';
+import { App, Modal } from 'obsidian';
 import { INoteOption } from "../../notes";
 
 
