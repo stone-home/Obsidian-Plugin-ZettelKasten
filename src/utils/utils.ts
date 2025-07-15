@@ -1,4 +1,4 @@
-import { Logger } from './logger';
+import { Logger } from '../logger';
 
 /**
  * A class containing general utility methods.

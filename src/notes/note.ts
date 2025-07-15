@@ -1,4 +1,4 @@
-import {App, TFile, TFolder} from "obsidian";
+import {App, Notice, TFile, TFolder, TAbstractFile} from "obsidian";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
 import {IntegrationManager} from "../3rd";
@@ -469,11 +469,15 @@ export abstract class BaseNote {
 		return this.post_process(note)
 	}
 
+	private async getTfile(dir: boolean = false): Promise<TAbstractFile | null> {
+		const path = dir ? this.getPath() : this.getObPath(true); // 确保文件路径包含扩展名
+		return this.app.vault.getAbstractFileByPath(path);
+	}
+
 	// Check if the note exists in the vault
 	public async exist(dir: boolean = false): Promise<boolean> {
 		try {
-			const path = dir ? this.getPath() : this.getObPath(true); // 确保文件路径包含扩展名
-			const file = this.app.vault.getAbstractFileByPath(path);
+			const file = await this.getTfile(dir)
 
 			if (dir) {
 				return file instanceof TFolder; // 确保检查的是文件夹
@@ -521,7 +525,7 @@ export abstract class BaseNote {
 	}
 
 	public async save(): Promise<TFile> {
-		this.logger.debug(`Start saving note to ${this.getObPath()}`);
+		this.logger.info(`Start saving note to ${this.getObPath()}`);
 		await this.checkBeforeSave();
 		const s_note = await this.toString();
 		const file = await this.app.vault.create(this.getObPath(true), s_note);
@@ -531,6 +535,49 @@ export abstract class BaseNote {
 
 		this.logger.debug(`Note saved: ${this.getObPath(false)}`);
 		return file;
+	}
+
+	/**
+	 * Moves an existing note to a new folder.
+	 *
+	 * @param {App} app The current application instance.
+	 * @param {TFile} file The file of the note to move.
+	 * @param {string} newFolderPath The path of the destination folder.
+	 */
+	async move(newFolderPath: string): Promise<void> {
+		// Ensure the destination folder path doesn't end with a slash
+		if (newFolderPath.endsWith('/')) {
+			newFolderPath = newFolderPath.slice(0, -1);
+		}
+
+		// Check if the destination is the same as the current folder
+		if (this.getPath() === newFolderPath) {
+			this.logger.warn(`The destination folder is the same as the current folder: ${newFolderPath}`);
+			new Notice(`The destination folder is the same as the current folder: ${newFolderPath}`);
+			return;
+		}
+
+		const file = await this.getTfile();
+		// Check if the destination folder has the same name as the current file
+		this.setPath(newFolderPath);
+		const targetFileExist = await this.exist(false)
+		if (targetFileExist) {
+			this.logger.warn(`A file with the same name already exists in the destination folder: ${newFolderPath}`);
+			new Notice(`A file with the same name already exists in the destination folder: ${newFolderPath}`);
+			return;
+		}
+		try {
+			// The renameFile method moves the file by changing its path
+			if (file){
+				await this.app.fileManager.renameFile(file, this.getObPath(true));
+				this.logger.info(`Moving file '${file.name}' to '${this.getPath()}'`);
+			} else {
+				this.logger.warn(`File not found: ${this.getObPath(true)}`);
+				new Notice(`File not found: ${this.getObPath(true)}`);
+			}
+		} catch (error) {
+			this.logger.logError(`Error moving file: ${error}`, error);
+		}
 	}
 
 	protected async linkingPages(): Promise<void> {

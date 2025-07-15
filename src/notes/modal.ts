@@ -1,10 +1,12 @@
-import {Modal, App, Notice} from "obsidian";
+import {Modal, App, Notice, TAbstractFile, TFolder, TFile} from "obsidian";
 import {NoteFactory} from "./factory";
 import {BaseDefault, BaseNote} from "./note";
 import {Logger} from "../logger";
 import {NoteType, ConfigHelper, CreateNoteOptions, CONFIG} from "./config";
 import {INoteOption} from "./types";
 import { ZettelkastenSettings } from "../types";
+import { IntegrationManager } from "../3rd";
+import { Utils, StepByStepFolderModal } from "../utils";
 
 
 export class ZettelKastenModal extends Modal {
@@ -14,12 +16,14 @@ export class ZettelKastenModal extends Modal {
 	private logger = Logger.createLogger('ZettelkastenModal');
 	private newNoteOptions: typeof CreateNoteOptions;
 	private settings: ZettelkastenSettings | undefined;
+	private integrations: IntegrationManager;
 
 	constructor(app: App, factory: NoteFactory, settings?: ZettelkastenSettings) {
 		super(app);
 		this.factory = factory;
 		this.settings = settings;
 		this.newNoteOptions = this.supplementNoteOptions(CreateNoteOptions)
+		this.integrations = IntegrationManager.getInstance(this.app)
 	}
 
 	async onOpen() {
@@ -107,7 +111,31 @@ export class ZettelKastenModal extends Modal {
 
 	private renderActiveNoteSection(container: HTMLElement): void {
 		const section = container.createDiv('zettel-section active-note-section');
-		section.createEl('h3', { text: 'Active Note' });
+
+		// 1. Create a container for the header elements
+		const headerContainer = section.createDiv('header-container');
+
+		// 2. Create the H3 inside the new container
+		headerContainer.createEl('h3', { text: 'Active Note' });
+
+		// 3. Create the button, add your classes, and also place it inside
+		const moveButton = headerContainer.createEl('button', { text: 'Move' });
+		moveButton.addClasses(['btn-small', 'your-plugin-move-button']); // Add a specific class
+
+		moveButton.addEventListener('click', async () => {
+			const dirEntry = this.currentNote?.getType()
+
+			// recently, let's use date from settings, which may be stalls.
+			let defaultPath = dirEntry ? this.settings?.[`${dirEntry}Path`] : undefined;
+			let defaultPathFile: TFolder | null = this.app.vault.getAbstractFileByPath(defaultPath || '') as TFolder | null
+
+			new StepByStepFolderModal(this.app, defaultPathFile, async (selectedFolder) => {
+				await this.currentNote?.move(selectedFolder.path)
+				new Notice(`Moved ${this.currentNote?.getTitle()} to ${selectedFolder.path}`);
+			}).open();
+			this.close()
+		});
+
 
 		const noteInfoCard = section.createDiv('active-note-card');
 
@@ -117,7 +145,10 @@ export class ZettelKastenModal extends Modal {
 		// Name row
 		const nameRow = infoGrid.createDiv('info-row');
 		nameRow.createEl('span', { text: 'name:', cls: 'info-label' });
-		nameRow.createEl('span', { text: this.currentNote!.getTitle(), cls: 'info-value' });
+		nameRow.createEl('span', {
+			text: `${this.currentNote!.getTitle()}(${this.currentNote?.getPath()})`,
+			cls: 'info-value'
+		});
 
 		// Type row
 		const typicalNoteEmoji = ConfigHelper.getNoteTypeConfig(this.currentNoteType).emoji
@@ -215,6 +246,14 @@ export class ZettelKastenModal extends Modal {
 				new Notice(`Failed to create note of type ${noteType}`, ConfigHelper.getNotificationDuration('error'));
 				return;
 			}
+
+			// Ensure the node has a right suffix
+			const filename = await this.integrations.getTemplater().getPrompt("Please enter the file name")
+			if (filename) {
+				this.logger.info(`Note title set to: ${filename}`);
+				note.setTitle(`${Utils.generateDate()} - ${filename}`);
+			}
+
 
 			// Save the note
 			const file = await note.save();
