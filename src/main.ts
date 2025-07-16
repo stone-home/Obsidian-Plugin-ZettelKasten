@@ -6,6 +6,7 @@ import { IntegrationManager} from "./3rd";
 import { ZettelkastenSettings} from "./types";
 import { ZettelkastenSettingTab } from './settings';
 import { DEFAULT_SETTINGS } from "./config";
+import { WeeklyKanbanCommand } from "./task";
 
 
 export default class ZettelkastenPlugin extends Plugin {
@@ -36,15 +37,15 @@ export default class ZettelkastenPlugin extends Plugin {
 
 			// Initialize Zettelkasten features
 			await this.initializeZettelkastenFeatures();
-
-
 		});
-
-
 
 		// load integration manager
 		this.integrationManager = IntegrationManager.getInstance(this.app);
 		await this.integrationManager.initialize()
+
+		// Initialize Weekly Kanban Command
+		const weeklyKanbanCommand = new WeeklyKanbanCommand(this.app, this.settings);
+		weeklyKanbanCommand.registerCommand(this);
 
 
 		new Notice('Zettelkasten Plugin loaded with dashboard!');
@@ -74,4 +75,7 @@ export default class ZettelkastenPlugin extends Plugin {
 		console.log('Zettelkasten Plugin unloaded');
 	}
 }
+
+export { ZettelkastenPlugin };
+
 

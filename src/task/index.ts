@@ -1,0 +1,1 @@
+export { WeeklyKanbanCommand } from './command';

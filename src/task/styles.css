@@ -1,0 +1,112 @@
+/* Main content area of the modal */
+.cc-modal-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 1rem;
+	background-color: var(--background-primary);
+}
+
+/* Header text styling */
+.cc-header-title {
+	font-size: 1.2rem;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+	color: var(--text-normal);
+}
+
+.cc-header-subtitle {
+	font-size: 0.85rem;
+	color: var(--text-muted);
+	margin-bottom: 1.5rem;
+}
+
+/* Main container for the buttons - 改为水平排列 */
+.cc-button-container {
+	display: flex;
+	justify-content: center;
+	gap: 1rem; /* 减少间距 */
+	width: 100%;
+	margin-bottom: 1.5rem;
+}
+
+/* Individual button styling - 改为卡片样式 */
+.cc-button {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 1rem 0.75rem;
+	width: 80px; /* 稍微减小宽度 */
+	height: 80px; /* 稍微减小高度 */
+	cursor: pointer;
+	transition: all 0.2s ease-in-out;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加阴影 */
+}
+
+/* Hover effect for buttons */
+.cc-button:hover {
+	background-color: var(--background-modifier-hover);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* 悬停时增强阴影 */
+}
+
+/* Active/Selected state */
+.cc-button:active {
+	transform: translateY(0);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling for the icon */
+.cc-button-icon {
+	font-size: 1.8rem; /* 稍微减小图标大小 */
+	line-height: 1;
+	margin-bottom: 0.4rem;
+}
+
+/* Styling for the text label */
+.cc-button-label {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--text-normal);
+	text-align: center;
+}
+
+/* Container for the quick-add input and button */
+.cc-quick-add-container {
+	display: flex;
+	width: 100%;
+	max-width: 400px; /* 限制最大宽度 */
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Input field styling */
+.cc-quick-add-container input {
+	flex: 1;
+	padding: 0.5rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+}
+
+/* Add button styling */
+.cc-quick-add-container button {
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: background-color 0.2s ease-in-out;
+}
+
+.cc-quick-add-container button:hover {
+	background-color: var(--background-modifier-hover);
+}
