@@ -378,6 +378,8 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 								confNote.setPath(targetDirPath)
 								confNote.addTag("config")
 								confNote.setProperty("ZT_root_tag", `Zettelkasten/${folderName}`)
+								confNote.setProperty("ZT_name_regex", '');
+								confNote.setProperty("ZT_nested_tag", false);
 								await confNote.save();
 
 								// Save changed settings

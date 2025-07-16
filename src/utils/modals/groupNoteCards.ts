@@ -90,15 +90,19 @@ export class GroupNoteCards extends Modal {
 				}
 				const configNote = await this.factory.loadFromFile(configPath);
 				const defaultNoteTag = configNote.getProperty("ZT_root_tag") || "";
-				const selectedTag = `${defaultNoteTag}/${selectedFolder.name}`;
+				const isNestedTag = configNote.getProperty("ZT_nested_tag") || false;
+				const tagNameRegex = configNote.getProperty("ZT_name_regex") || '';
+				const expectedTagName = tagNameRegex.length > 0 ? this.transformString(selectedFolder.name, tagNameRegex, isNestedTag): '';
+				const indexFileName =  tagNameRegex.length > 0 ? this.transformString(selectedFolder.name, tagNameRegex, false): selectedFolder.name;
+				const selectedTag = `${defaultNoteTag}/${expectedTagName}`;
 
 				option = Utils.deepClone(option);
 				option.path = selectedFolder.path;
-				option.prefix = `${Utils.generateDate()} - ${selectedFolder.name}`;
+				option.prefix = `${Utils.generateDate()} - ${indexFileName}`;
 				option.tags = [selectedTag]
 
 				// check whether the index.md file exists in the selected folder
-				const indexPrefix = selectedFolder.name;
+				const indexPrefix = indexFileName || "unknown"
 				const indexNoteName = `${indexPrefix} - index`;
 				const indexNote = `${option.path}/${indexNoteName}.md`;
 				if (!(Utils.fileExists(this.app, indexNote, false))) {
@@ -131,6 +135,27 @@ export class GroupNoteCards extends Modal {
 			this.close()
 
 		});
+	}
 
+	private transformString(input: string, expression: string, isNested: boolean = false): string | null {
+		// Step 1: Use regex to capture everything after the first hyphen
+		const match = input.match(expression);
+
+		if (!match || !match[1]) {
+			return null; // Return null if the pattern isn't found
+		}
+
+		// Get the captured part, which is e.g., "DataFrame" or " Python Ansible"
+		let result = match[1];
+
+		// Step 2: Trim leading/trailing whitespace
+		result = result.trim();
+
+		// Step 3: Replace all remaining spaces with a forward slash
+		if (isNested) {
+			result = result.replace(/ /g, '/');
+		}
+
+		return result;
 	}
 }
