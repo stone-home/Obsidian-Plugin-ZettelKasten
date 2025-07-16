@@ -1,98 +1,77 @@
-# Obsidian Sample Plugin
+# Zettelkasten Manager
 
-> ![Important] This Readme has not been updated yet.
+> [!warning] The Content of this README is auto-generated from Gemini AI. Will be updated soon.
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+The Zettelkasten Manager is a plugin for Obsidian that provides a comprehensive suite of tools for managing your Zettelkasten notes. It helps you create, organize, and link your notes with ease, following the principles of the Zettelkasten method.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+-----
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Zettelkasten Dashboard**: Access a dashboard to create new notes, view active notes, and upgrade notes to different types.
+- **Note Types**: The plugin supports four types of notes: Fleeting, Literature, Atomic, and Permanent.
+- **Templates**: Use default or custom templates for each note type to maintain consistency in your note-taking.
+- **Customizable Settings**: Configure note creation options, default paths, and other settings to tailor the plugin to your workflow.
+- **Templater Integration**: The plugin integrates with the Templater plugin for more advanced templating capabilities.
 
-## First time developing plugins?
+-----
 
-Quick starting guide for new plugin devs:
+## How to Use
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+1.  **Open the Zettelkasten Dashboard**: Use the command "Open Zettelkasten Dashboard" (default hotkey: `Mod+Shift+Z`) to access the main dashboard.
+2.  **Create a New Note**: From the dashboard, select the type of note you want to create. The plugin will guide you through the process of creating a new note based on your configured templates and settings.
+3.  **Manage Active Notes**: The dashboard displays information about the currently active note, including its title, type, and tags. You can also move the active note to a different folder from the dashboard.
+4.  **Upgrade Notes**: The dashboard allows you to upgrade a note from one type to another (e.g., from a Fleeting note to a Literature note).
 
-## Releasing new releases
+-----
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Installation
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+### From Obsidian
 
-## Adding your plugin to the community plugin list
+1.  Open **Settings** in Obsidian.
+2.  Go to **Community plugins**.
+3.  Make sure "Restricted mode" is turned off.
+4.  Click **Browse** and search for "Zettelkasten Manager".
+5.  Click **Install** and then **Enable**.
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+### Manual Installation
 
-## How to use
+1.  Download the latest release from the [GitHub releases page](https://www.google.com/search?q=https://github.com/stone-home/obsidian-plugin-zettelkasten/releases).
+2.  Extract the downloaded zip file.
+3.  Copy the extracted folder to your Obsidian vault's plugins folder: `<YourVault>/.obsidian/plugins/`.
+4.  Reload Obsidian.
+5.  Go to **Settings** \> **Community plugins**, and enable "Zettelkasten Manager".
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+-----
 
-## Manually installing the plugin
+## Configuration
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+The Zettelkasten Manager offers a variety of settings to customize your experience. You can access them by going to **Settings** \> **Zettelkasten Settings**.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+### Basic Settings
 
-## Funding URL
+- **Auto Open New Note**: Automatically open a newly created note in the editor.
+- **Show Upgrade Notifications**: Display notifications when a note can be upgraded.
+- **Default Templates**: Set the default template for each note type (Fleeting, Literature, Atomic, Permanent).
 
-You can include funding URLs where people who use your plugin can financially support it.
+### Paths
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+- **Note Paths**: Set the default folder paths for Fleeting, Literature, Permanent, and Atomic notes.
+- **Template Directory Path**: Specify the folder where your note templates are stored.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+### Note Creation
 
-If you have multiple URLs, you can also do:
+- **Configure Note Types**: Customize the available note types and their default properties when creating a new note. You can add, remove, and edit note creation options.
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+-----
 
-## API Documentation
+## Dependencies
 
-See https://github.com/obsidianmd/obsidian-api
+- [winston](https://www.npmjs.com/package/winston)
+
+-----
+
+## License
+
+This plugin is licensed under the MIT License.
