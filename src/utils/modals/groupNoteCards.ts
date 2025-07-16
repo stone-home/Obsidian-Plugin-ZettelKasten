@@ -103,8 +103,11 @@ export class GroupNoteCards extends Modal {
 
 				option = Utils.deepClone(option);
 				option.path = selectedFolder.path;
-				option.prefix = `${Utils.generateDate()} - ${indexFileName}`;
-				option.tags = [selectedTag]
+				if (!option.extraInfo) {
+					option.extraInfo = {};
+				}
+				option.extraInfo.prefix = `${Utils.generateDate()} - ${indexFileName}`;
+				option.extraInfo.tags = [selectedTag]
 
 				// check whether the index.md file exists in the selected folder
 				const indexPrefix = indexFileName || "unknown"

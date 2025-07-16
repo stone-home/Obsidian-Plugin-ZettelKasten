@@ -236,13 +236,13 @@ export class ZettelKastenModal extends Modal {
 			const filename = await this.integrations.getTemplater().getPrompt("Please enter the file name")
 			if (filename) {
 				this.logger.info(`Note title set to: ${filename}`);
-				const prefix = noteMetadata.prefix || Utils.generateDate();
+				const prefix = noteMetadata.extraInfo?.prefix || Utils.generateDate();
 				note.setTitle(`${prefix} - ${filename}`);
 			}
 
 
 			// Save the note
-			const extraTags = noteMetadata.tags || [];
+			const extraTags = noteMetadata.extraInfo?.tags || [];
 			extraTags.forEach((tag) => {
 				note.addTag(tag);
 			})
