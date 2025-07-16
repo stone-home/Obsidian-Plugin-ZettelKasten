@@ -127,25 +127,13 @@ export class GroupNoteCards extends Modal {
 					const dataviewSectionName = "Index Notes";
 					indexNote.getBody().newSection(dataviewSectionName, 1);
 					indexNote.getBody().addContent(
-						'```dataview',
-						dataviewSectionName
-					)
-					indexNote.getBody().addContent(
-						`Table category`,
-						dataviewSectionName
-					)
-
-					indexNote.getBody().addContent(
-						`FROM "${option.path}" AND !(#📍tagNode) `,
-						dataviewSectionName
-					)
-
-					indexNote.getBody().addContent(
-						`SORT category`,
-						dataviewSectionName
-					)
-					indexNote.getBody().addContent(
-						'```',
+						[
+							'```dataview',
+							`Table category`,
+							`FROM "${option.path}" AND !(#📍tagNode) `,
+							`SORT category`,
+							'```'
+						],
 						dataviewSectionName
 					)
 					await indexNote.save();
