@@ -24,6 +24,7 @@ export {
 	Body,
 	ZettelkastenProperty,
 	BaseDefault,
+	KeyValue
 } from './note'
 
 export { NoteFactory } from './factory';

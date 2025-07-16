@@ -1,5 +1,5 @@
 import { App, Modal, Notice, TFolder } from 'obsidian';
-import { INoteOption } from "../../notes";
+import { INoteOption, KeyValue} from "../../notes";
 import { StepByStepFolderModal } from "./folderSuggestion";
 import { Utils } from "../utils";
 import { NoteFactory } from "../../notes";
@@ -108,6 +108,7 @@ export class GroupNoteCards extends Modal {
 				}
 				option.extraInfo.prefix = `${Utils.generateDate()} - ${indexFileName}`;
 				option.extraInfo.tags = [selectedTag]
+				option.extraInfo.properties = [new KeyValue("category", "")]
 
 				// check whether the index.md file exists in the selected folder
 				const indexPrefix = indexFileName || "unknown"

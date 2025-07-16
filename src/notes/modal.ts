@@ -1,6 +1,6 @@
 import {Modal, App, Notice, TFolder} from "obsidian";
 import {NoteFactory} from "./factory";
-import {BaseDefault, BaseNote} from "./note";
+import {BaseDefault, BaseNote, KeyValue} from "./note";
 import {Logger} from "../logger";
 import {NoteType, CreateNoteOptions, NoteTypeData} from "./config";
 import {INoteOption} from "./types";
@@ -241,11 +241,19 @@ export class ZettelKastenModal extends Modal {
 			}
 
 
-			// Save the note
+			// Process extra properties and other metadata
 			const extraTags = noteMetadata.extraInfo?.tags || [];
 			extraTags.forEach((tag) => {
 				note.addTag(tag);
 			})
+			const extraProperties = noteMetadata.extraInfo?.properties || [];
+			extraProperties.forEach((property) => {
+				if (property instanceof KeyValue) {
+					note.setProperty(property.getKey(), property.getValue());
+				}
+			});
+
+			// save note
 			const file = await note.save();
 
 			// Show success notification

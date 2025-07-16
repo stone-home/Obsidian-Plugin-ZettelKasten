@@ -14,6 +14,10 @@ export class KeyValue<T> implements IKeyValue<T>{
 		this.value = value;
 	}
 
+	public getKey(): string {
+		return this.key;
+	}
+
 	public getValue(): T {
 		return this.value;
 	}
