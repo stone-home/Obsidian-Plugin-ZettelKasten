@@ -131,7 +131,17 @@ export class GroupNoteCards extends Modal {
 						dataviewSectionName
 					)
 					indexNote.getBody().addContent(
-						`Table from "${option.path}" AND !(#📍tagNode) `,
+						`Table category`,
+						dataviewSectionName
+					)
+
+					indexNote.getBody().addContent(
+						`FROM "${option.path}" AND !(#📍tagNode) `,
+						dataviewSectionName
+					)
+
+					indexNote.getBody().addContent(
+						`SORT category`,
 						dataviewSectionName
 					)
 					indexNote.getBody().addContent(
