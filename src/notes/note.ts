@@ -29,7 +29,11 @@ export class KeyValue<T> implements IKeyValue<T>{
 			if (this.value.length === 0){
 				output = `${this.key}: []\n`; // Return empty array format
 			} else {
-				const formattedArray = this.value.map(item => `  - ${item}`).join('\n');
+				const formattedArray = this.value
+					// prevent undefined or null values in the array
+					.filter(item => item !== undefined && item !== null)
+					.map(item =>`  - ${item}`)
+					.join('\n');
 				output = `${this.key}:\n${formattedArray}\n`;
 			}
 		} else {
@@ -404,7 +408,7 @@ export abstract class BaseNote {
 
 	public addAlias(alias: string | string[]): void {
 		const aliases = Array.isArray(alias) ? alias : [alias];
-		this.properties.addAlias(alias);
+		this.properties.addAlias(aliases);
 	}
 
 	public setProperty(key: string, value: any): void {
