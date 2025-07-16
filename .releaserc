@@ -6,19 +6,13 @@ plugins:
   - "@semantic-release/release-notes-generator"
   - ["@semantic-release/exec", { "prepareCmd": "npm run version" }]
   - - "@semantic-release/git"
-    # 'assets' and 'message' must be in the same options object
     - assets:
-        # Add CHANGELOG.md to the files that get committed
-        - "CHANGELOG.md"
         - "package.json"
         - "manifest.json"
         - "versions.json"
       message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
   - - "@semantic-release/github"
     - assets:
-        - path: main.js
-          label: main.js
-        - path: manifest.json
-          label: manifest.json
-        - path: styles.css
-          label: styles.css
+	    - { "path": "main.js", "label": "main.js" }
+        - { "path": "manifest.json", "label": "manifest.json" }
+        - { "path": "styles.css", "label": "styles.css" }
