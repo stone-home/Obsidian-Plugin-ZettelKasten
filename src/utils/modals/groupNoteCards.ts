@@ -92,9 +92,14 @@ export class GroupNoteCards extends Modal {
 				const defaultNoteTag = configNote.getProperty("ZT_root_tag") || "";
 				const isNestedTag = configNote.getProperty("ZT_nested_tag") || false;
 				const tagNameRegex = configNote.getProperty("ZT_name_regex") || '';
-				const expectedTagName = tagNameRegex.length > 0 ? this.transformString(selectedFolder.name, tagNameRegex, isNestedTag): '';
+				let expectedTagName = tagNameRegex.length > 0 ? this.transformString(selectedFolder.name, tagNameRegex, isNestedTag): '';
+				if (!expectedTagName) {
+					expectedTagName = selectedFolder.name
+				}
 				const indexFileName =  tagNameRegex.length > 0 ? this.transformString(selectedFolder.name, tagNameRegex, false): selectedFolder.name;
-				const selectedTag = `${defaultNoteTag}/${expectedTagName}`;
+				let selectedTag = `${defaultNoteTag}/${expectedTagName}`;
+				// Ensure all white spaces are removed from the tag, as tag in Obsidian cannot contain spaces
+				selectedTag = selectedTag.replace(/ /g, '');
 
 				option = Utils.deepClone(option);
 				option.path = selectedFolder.path;
