@@ -198,8 +198,11 @@ class BodySection {
 		this.head_level = head_level;
 	}
 
-	public addContent(content: string): void {
-		this.content.push(content);
+	public addContent(content: string[] | string): void {
+		if (String.isString(content)) {
+			content = [content]; // Convert single string to array
+		}
+		this.content.push(...content);
 	}
 }
 
@@ -211,7 +214,7 @@ export class Body {
 		this.sections.set(name, new BodySection(head_level));
 	}
 
-	public addContent(content: string, sectionName: string = "default", head_level: number = 1): void {
+	public addContent(content: string | string[], sectionName: string = "default", head_level: number = 1): void {
 		if (!this.sections.has(sectionName)) {
 			this.newSection(sectionName, head_level);
 		}

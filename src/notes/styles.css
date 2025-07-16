@@ -1,0 +1,322 @@
+/* 📝A CSS class for zettelkasten modal */
+.zettelkasten-modal {
+	max-width: 90vw;
+	min-width: 510px;
+	width: fit-content;
+}
+
+.modal-title {
+	text-align: center;
+	margin-bottom: 1.5rem;
+	color: var(--text-accent);
+	font-size: 1.3rem;
+}
+
+.zettel-section {
+	margin-bottom: 1.5rem;
+	padding: 1rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background: var(--background-secondary);
+}
+
+.zettel-section h3 {
+	margin: 0 0 0.5rem 0;
+	color: var(--text-normal);
+	font-size: 1rem;
+}
+
+.section-header {
+	margin-bottom: 0.75rem;
+}
+
+.section-subtitle {
+	color: var(--text-muted);
+	font-size: 0.8rem;
+	margin: 0;
+}
+
+/* Compact New Note Cards */
+.note-cards-container {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.5rem;
+}
+
+.note-card {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 0.5rem 0.25rem;
+	text-align: center;
+	background: var(--background-primary);
+	transition: all 0.2s ease;
+	min-height: 50px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.clickable-card {
+	cursor: pointer;
+}
+
+.clickable-card:hover {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.note-card-icon {
+	margin-bottom: 0.25rem;
+}
+
+.note-card-icon .card-emoji {
+	font-size: 1.2rem;
+	display: block;
+	line-height: 1;
+}
+
+.note-card-title {
+	font-size: 0.7rem;
+	font-weight: 500;
+	margin: 0;
+	color: var(--text-normal);
+	line-height: 1.2;
+}
+
+/* Active Note Section */
+.active-note-section {
+	background: var(--background-primary-alt);
+}
+
+.active-note-card {
+	background: var(--background-primary);
+	border-radius: 4px;
+	padding: 0.75rem;
+}
+
+.note-info-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.info-row {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.info-label {
+	font-weight: 500;
+	color: var(--text-muted);
+	min-width: 50px;
+	font-size: 0.85rem;
+}
+
+.info-value {
+	color: var(--text-normal);
+	word-break: break-word;
+	font-size: 0.85rem;
+}
+
+/* Compact Upgrade Cards */
+.upgrade-cards-container {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+	gap: 0.4rem;
+}
+
+.upgrade-card {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 0.4rem 0.2rem;
+	text-align: center;
+	background: var(--background-primary);
+	transition: all 0.2s ease;
+	min-height: 45px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.upgrade-card.disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.upgrade-card:not(.disabled).clickable-card:hover {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+	transform: translateY(-1px);
+}
+
+.upgrade-card.selected {
+	border-color: var(--interactive-accent);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.upgrade-card.selected .upgrade-card-title {
+	color: var(--text-on-accent);
+}
+
+.upgrade-card-icon {
+	margin-bottom: 0.2rem;
+}
+
+.upgrade-card-icon .card-emoji {
+	font-size: 1rem;
+	display: block;
+	line-height: 1;
+}
+
+.upgrade-card-title {
+	font-size: 0.65rem;
+	font-weight: 500;
+	margin: 0;
+	color: var(--text-normal);
+	line-height: 1.1;
+}
+
+.no-options {
+	color: var(--text-muted);
+	font-style: italic;
+	text-align: center;
+	padding: 0.75rem;
+	font-size: 0.85rem;
+}
+
+/* Action Buttons */
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 1rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+	padding: 0.4rem 0.8rem;
+	border-radius: 4px;
+	border: none;
+	cursor: pointer;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.mod-cancel {
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+}
+
+.mod-cta {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.mod-cancel:hover {
+	background-color: var(--background-secondary-alt);
+}
+
+.mod-cta:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+	.zettelkasten-modal {
+		width: 95vw;
+	}
+
+	.note-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.4rem;
+	}
+
+	.upgrade-cards-container {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.info-row {
+		grid-template-columns: 1fr;
+		gap: 0.2rem;
+	}
+
+	.info-label {
+		font-size: 0.75rem;
+	}
+
+	.info-value {
+		font-size: 0.8rem;
+	}
+}
+
+@media (max-width: 350px) {
+	.note-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.upgrade-cards-container {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.note-card {
+		min-height: 45px;
+		padding: 0.4rem 0.2rem;
+	}
+
+	.upgrade-card {
+		min-height: 40px;
+		padding: 0.3rem 0.1rem;
+	}
+
+	.card-emoji {
+		font-size: 1rem !important;
+	}
+
+	.note-card-title,
+	.upgrade-card-title {
+		font-size: 0.6rem;
+	}
+}
+
+
+/* Additional Styles for Plugin Integration */
+.zettelkasten-status {
+	color: var(--text-accent);
+	font-size: 0.9rem;
+	transition: background-color 0.2s;
+}
+
+.zettelkasten-status:hover {
+	background-color: var(--background-modifier-hover);
+	border-radius: 4px;
+	padding: 2px 6px;
+}
+
+.template-button {
+	display: block;
+	width: 100%;
+	margin: 0.4rem 0;
+	padding: 0.6rem;
+	background: var(--interactive-normal);
+	border: none;
+	border-radius: 4px;
+	color: var(--text-normal);
+	cursor: pointer;
+	text-align: left;
+	transition: background-color 0.2s;
+	font-size: 0.85rem;
+}
+
+.template-button:hover {
+	background: var(--interactive-hover);
+}
