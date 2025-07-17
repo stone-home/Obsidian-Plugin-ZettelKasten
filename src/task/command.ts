@@ -33,7 +33,7 @@ export class WeeklyKanbanCommand {
 			hotkeys: [
 				{
 					modifiers: ['Mod', 'Shift'],
-					key: 'p'
+					key: 'k'
 				}
 			]
 		});
