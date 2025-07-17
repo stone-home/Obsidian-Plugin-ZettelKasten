@@ -27,7 +27,7 @@ export class WeeklyKanbanCommand {
 		this.logger.debug('ZettelkastenPlugin registerCommand - Registering weekly kanban command');
 		plugin.addCommand({
 			id: 'open-weekly-kanban-dashboard',
-			name: 'Oepn Weekly Kanban Dashboard',
+			name: 'Open Weekly Kanban Dashboard',
 			icon: 'brain',
 			callback: () => new WeeklyKanbanModal(this.app, this.settings, this.factory).open(),
 			hotkeys: [
