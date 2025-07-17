@@ -110,3 +110,12 @@
 .cc-quick-add-container button:hover {
 	background-color: var(--background-modifier-hover);
 }
+
+/* In your styles.css file */
+
+.cc-action-row {
+	display: flex; /* Aligns items in a row */
+	align-items: center; /* Vertically centers the items in the row */
+	padding: 8px 0; /* Adds some space above and below each row */
+	gap: 8px; /* Adds space between items within the row */
+}

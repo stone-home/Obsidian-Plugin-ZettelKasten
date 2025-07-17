@@ -3,6 +3,7 @@ import { WeeklyKanban } from "./kanban";
 import { Logger } from '../logger';
 import { ZettelkastenSettings } from '../types';
 import { NoteFactory } from "../notes";
+import { Utils } from "../utils";
 
 
 export class WeeklyKanbanModal extends Modal {
@@ -27,8 +28,19 @@ export class WeeklyKanbanModal extends Modal {
 		const container = contentEl.createDiv({ cls: 'cc-modal-content' });
 
 		// Header
+		const kanbanePath = `${this.kanban.getKanbanDir()}/${this.kanban.getKanbanNoteName()}.md`
+		const summaryPath = `${this.kanban.getKanbanDir()}/${this.kanban.getSummaryNoteName()}.md`
 		container.createEl('h1', { text: 'Weekly Kanban ', cls: 'cc-header-title' });
-		container.createEl('p', { text: 'Your quick-access dashboard for notes and tasks.', cls: 'cc-header-subtitle' });
+		container.createEl('p', { text: 'Status and actions for your weekly notes.', cls: 'cc-header-subtitle' });
+		// Status Container
+		const actionsContainer = container.createDiv({ cls: 'cc-actions-container' });
+		const StatueRow = actionsContainer.createDiv({ cls: 'cc-action-row' });
+
+		const kanbanStatusIcon = Utils.fileExists(this.app, kanbanePath, false) ? '🟢' : '🔴';
+		const summaryStatusIcon = Utils.fileExists(this.app, summaryPath, false) ? '🟢' : '🔴';
+		StatueRow.createSpan({ text: `📅 Kanban: ${kanbanStatusIcon}`, cls: 'cc-action-label' });
+		StatueRow.createSpan({ text: `📝 Summary : ${summaryStatusIcon}`, cls: 'cc-action-label' });
+
 
 		// Button Container
 		const buttonContainer = container.createDiv({ cls: 'cc-button-container' });
@@ -44,7 +56,7 @@ export class WeeklyKanbanModal extends Modal {
 
 		// --- Button 3: Weekly Summary ---
 		const summaryBtn = buttonContainer.createDiv({ cls: 'cc-button' });
-		summaryBtn.createDiv({ text: '📊', cls: 'cc-button-icon' });
+		summaryBtn.createDiv({ text: '📝', cls: 'cc-button-icon' });
 		summaryBtn.createDiv({ text: 'Summary', cls: 'cc-button-label' });
 		summaryBtn.onclick = async () => {
 			await this.kanban.weeklyTaskSummary()

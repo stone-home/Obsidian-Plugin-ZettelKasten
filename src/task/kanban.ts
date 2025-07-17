@@ -38,33 +38,33 @@ export class WeeklyKanban {
 		return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 	}
 
-	private getCureentWeekNumber(): number {
+	public getCureentWeekNumber(): number {
 		const today = new Date();
 		return this.getWeekNumber(today);
 	}
 
-	private getPreviousWeekNumber(): number {
+	public getPreviousWeekNumber(): number {
 		const today = new Date();
 		today.setDate(today.getDate() - 7); // Subtract 7 days to get the previous week
 		return this.getWeekNumber(today);
 	}
 
-	private getNextWeekNumber(): number {
+	public getNextWeekNumber(): number {
 		const today = new Date();
 		today.setDate(today.getDate() + 7); // Add 7 days to get the next week
 		return this.getWeekNumber(today);
 	}
 
-	private getKanbanRoot(): string {
+	public getKanbanRoot(): string {
 		return this.settings.features.WEEKLY_KANBAN!.path || this.app.vault.getRoot() + '/Kanban';
 	}
 
-	private getKanbanDir(): string {
+	public getKanbanDir(): string {
 		const root = this.getKanbanRoot();
 		return`${root}/${new Date().getFullYear()}/Week ${this.getCureentWeekNumber()}`;
 	}
 
-	private getTaskDir(): string {
+	public getTaskDir(): string {
 		const kanbanDir = this.getKanbanDir();
 		return`${kanbanDir}/tasks`;
 	}
@@ -135,15 +135,15 @@ export class WeeklyKanban {
 		]
 	}
 
-	private getKanbanNoteName(): string {
+	public getKanbanNoteName(): string {
 		return `Kanban - ${new Date().getFullYear()}W${this.getCureentWeekNumber()}`
 	}
 
-	private getSummaryNoteName(): string {
+	public getSummaryNoteName(): string {
 		return `Weekly Summary - ${new Date().getFullYear()}W${this.getCureentWeekNumber()}`
 	}
 
-	private getTaskName(title: string): string {
+	public getTaskName(title: string): string {
 		return `Task - ${new Date().getFullYear()}W${this.getCureentWeekNumber()} - ${title}`
 	}
 
@@ -172,15 +172,15 @@ export class WeeklyKanban {
 		await kanban.save()
 		// Open the new note if feature is enabled
 		if (open) {
-			await this.app.workspace.openLinkText(kanban.getTitle(), '', false, { state: { mode: 'source' } });
+			await this.app.workspace.openLinkText(kanban.getObPath(true), '', false, { state: { mode: 'source' } });
 		}
 	}
 
 	public async openKanbanNote(): Promise<void> {
 		if (await this.kanbanExists()) {
-			await this.app.workspace.openLinkText(this.getKanbanNoteName(), '', false, {state: {mode: 'source'}});
+			await this.app.workspace.openLinkText(`${this.getKanbanNoteName()}.md`, '', false, {state: {mode: 'source'}});
 		} else {
-			await this.kanbanCreate(this.settings.features.AUTO_OPEN_CREATED_NOTES)
+			await this.kanbanCreate(true)
 		}
 	}
 
@@ -203,7 +203,7 @@ export class WeeklyKanban {
 		}
 		// Open the new note if feature is enabled
 		if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
-			await this.app.workspace.openLinkText(summary.getTitle(), '', false, { state: { mode: 'source' } });
+			await this.app.workspace.openLinkText(summary.getObPath(true), '', false, { state: { mode: 'source' } });
 		}
 	}
 
@@ -233,7 +233,7 @@ export class WeeklyKanban {
 		}
 		// Open the new note if feature is enabled
 		if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
-			await this.app.workspace.openLinkText(task.getTitle(), '', false, { state: { mode: 'source' } });
+			await this.app.workspace.openLinkText(task.getObPath(true), '', false, { state: { mode: 'source' } });
 		}
 
 	}
