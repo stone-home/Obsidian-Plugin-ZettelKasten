@@ -128,26 +128,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 
 	}
 
-	private renderDefaultTemplateSettings(containerEl: HTMLElement, name: string, noteType: NoteType): void {
-		new Setting(containerEl)
-			.setName(name)
-			.addDropdown(async (dropdown) => {
-				const mapOfTemplates = this.factory.getTemplatesForType(noteType)
-				if (mapOfTemplates) {
-					for (const [key, value] of mapOfTemplates) {
-						dropdown.addOption(key, key); // Add each template to the dropdown
-					}
-				}
-				dropdown
-					.setValue(this.plugin.settings.default[noteType])
-					.onChange(async (value) => {
-						this.plugin.settings.default[noteType] = value;
-						await this.plugin.saveSettings();
-						this.display(); // Re-render to update the setting title
-					});
-			})
 
-	}
 
 	private renderPathsSettings(containerEl: HTMLElement): void {
 		// No longer need to create h3 here
@@ -194,6 +175,17 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.atomicPath)
 				.onChange(async (value) => {
 					this.plugin.settings.atomicPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Weekly Kanban Root Path')
+			.setDesc('The path is used to store weekly kanban notes.')
+			.addText(text => text
+				.setPlaceholder('e.g., kanben')
+				.setValue(this.plugin.settings.features.WEEKLY_KANBAN!.path)
+				.onChange(async (value) => {
+					this.plugin.settings.features.WEEKLY_KANBAN!.path = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -415,5 +407,25 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			template: 'default',
 			folderNote: folderDir
 		};
+	}
+
+	private renderDefaultTemplateSettings(containerEl: HTMLElement, name: string, noteType: NoteType): void {
+		new Setting(containerEl)
+			.setName(name)
+			.addDropdown(async (dropdown) => {
+				const mapOfTemplates = this.factory.getTemplatesForType(noteType)
+				if (mapOfTemplates) {
+					for (const [key, value] of mapOfTemplates) {
+						dropdown.addOption(key, key); // Add each template to the dropdown
+					}
+				}
+				dropdown
+					.setValue(this.plugin.settings.default[noteType])
+					.onChange(async (value) => {
+						this.plugin.settings.default[noteType] = value;
+						await this.plugin.saveSettings();
+						this.display(); // Re-render to update the setting title
+					});
+			})
 	}
 }
