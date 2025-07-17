@@ -1,21 +1,19 @@
 // Example integration in your main.ts file
 import { Plugin, Notice } from 'obsidian';
 import { Logger } from './logger';
-import { NoteFactory, ZettelkastenCommand } from './notes';
+import { NoteFactory } from './notes';
 import { IntegrationManager} from "./3rd";
 import { ZettelkastenSettings} from "./types";
 import { ZettelkastenSettingTab } from './settings';
 import { DEFAULT_SETTINGS } from "./config";
 import { WeeklyKanbanCommand } from "./task";
+import { ZettelkastenCommand } from "./dashboard";
 
 
 export default class ZettelkastenPlugin extends Plugin {
-	// @ts-ignore
-	private factory: NoteFactory;
-	// @ts-ignore
-	private zettelkastenCommand: ZettelkastenCommand;
-	// @ts-ignore
-	private integrationManager: IntegrationManager;
+	private factory!: NoteFactory;
+	private zettelkastenCommand!: ZettelkastenCommand;
+	private integrationManager!: IntegrationManager;
 	private logger = Logger.createLogger('ZettelkastenPlugin');
 
 	// @ts-ignore
@@ -33,20 +31,20 @@ export default class ZettelkastenPlugin extends Plugin {
 			await this.factory.initialize(this.settings) // The function onLayoutReady ensures that all file index are loaded and is able to retrieve the file for templates from file system.
 			// Load Settings Tab
 			this.addSettingTab(new ZettelkastenSettingTab(this.app, this, this.factory))
-			// this.factory.updateSettings(this.settings)
 
 			// Initialize Zettelkasten features
 			await this.initializeZettelkastenFeatures();
+
+			// Initialize Weekly Kanban Command
+			if (this.settings.features.WEEKLY_KANBAN.enabled) {
+				const weeklyKanbanCommand = new WeeklyKanbanCommand(this.app, this.settings, this.factory);
+				weeklyKanbanCommand.registerCommand(this);
+			}
 		});
 
 		// load integration manager
 		this.integrationManager = IntegrationManager.getInstance(this.app);
 		await this.integrationManager.initialize()
-
-		// Initialize Weekly Kanban Command
-		const weeklyKanbanCommand = new WeeklyKanbanCommand(this.app, this.settings);
-		weeklyKanbanCommand.registerCommand(this);
-
 
 		new Notice('Zettelkasten Plugin loaded with dashboard!');
 	}
@@ -63,7 +61,6 @@ export default class ZettelkastenPlugin extends Plugin {
 
 	// Method to load settings
 	async loadSettings() {
-		// Load existing settings or use default ones
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
@@ -76,6 +73,5 @@ export default class ZettelkastenPlugin extends Plugin {
 	}
 }
 
-export { ZettelkastenPlugin };
 
 

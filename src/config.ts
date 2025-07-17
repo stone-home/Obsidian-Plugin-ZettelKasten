@@ -5,9 +5,36 @@ import {
 	INamingPatterns,
 	IDebugConfig,
 	INotificationConfig,
-	IZettelkastenConfig
+	INoteOption
 } from "./types";
 
+
+
+/**
+ * A list of all available note templates that can be created in 'New Note' modal
+ */
+export const CreateNoteOptions: INoteOption[] = [
+	{
+		enabled: true,
+		type: NoteType.FLEETING,
+		label: 'Fleeting',
+	},
+	{
+		enabled: true,
+		type: NoteType.LITERATURE,
+		label: 'Literature',
+	},
+	{
+		enabled: true,
+		type: NoteType.ATOMIC,
+		label: 'Atomic',
+	},
+	{
+		enabled: true,
+		type: NoteType.PERMANENT,
+		label: 'Permanent',
+	}
+]
 
 
 /**
@@ -17,7 +44,12 @@ export const FEATURES: IFeatureFlags = {
 	AUTO_OPEN_CREATED_NOTES: true,
 	SHOW_UPGRADE_NOTIFICATIONS: true,
 	DEBUG_MODE: false,
-	FOLDER_NOTES:true
+	FOLDER_NOTES:true,
+	WEEKLY_KANBAN: {
+		enabled: true,
+		description: 'Enable weekly kanban board for task management',
+		path: "kanban"
+	}
 } as const;
 
 
@@ -25,7 +57,7 @@ export const FEATURES: IFeatureFlags = {
  * File naming patterns
  */
 export const NAMING_PATTERNS: INamingPatterns = {
-	DATE_FORMAT: 'YYYY-MM-DD',
+	DATE_FORMAT: 'yyyy-MM-dd',
 	TIME_FORMAT: 'HH:mm:ss',
 	ID_LENGTH: 8,
 	TITLE_MAX_LENGTH: 100,
@@ -41,7 +73,6 @@ export const DEBUG_CONFIG: IDebugConfig = {
 	LOG_LEVEL: 'info' as const,
 	SHOW_PERFORMANCE_METRICS: false,
 	ENABLE_ERROR_BOUNDARIES: true,
-	MOCK_DATA: false
 } as const;
 
 
@@ -55,26 +86,6 @@ export const NOTIFICATION_CONFIG: INotificationConfig = {
 	INFO_DURATION: 3000,
 	SUGGESTION_COOLDOWN: 24 * 60 * 60 * 1000 // 24 hours
 } as const;
-
-
-/**
- * Export a central config object for easy access
- */
-export const CONFIG: IZettelkastenConfig = {
-	// PATHS: DEFAULT_PATHS,
-	// NOTE_TYPES: NOTE_TYPE_CONFIG,
-	// UPGRADES: UPGRADE_HIERARCHY,
-	// UI: UI_CONFIG,
-	FEATURES,
-	// TEMPLATES: TEMPLATE_CONFIG,
-	NOTIFICATIONS: NOTIFICATION_CONFIG,
-	// SHORTCUTS,
-	NAMING: NAMING_PATTERNS,
-	// PERFORMANCE,
-	DEBUG: DEBUG_CONFIG,
-	// INTEGRATIONS
-} as const;
-
 
 
 export class ConfigHelper {
@@ -124,7 +135,9 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	// Initialize createNoteOptions with the default values from config.ts
 	createNoteOptions: [],
 
-	// Advanced Plugin settings
-	systemSettings: CONFIG
-
+	// System settings
+	naming: NAMING_PATTERNS,
+	features: FEATURES,
+	debug: DEBUG_CONFIG,
 }
+

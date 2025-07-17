@@ -1,15 +1,21 @@
 import { App, Modal, Notice, TFile, TFolder } from 'obsidian';
+import { WeeklyKanban } from "./kanban";
 import { Logger } from '../logger';
 import { ZettelkastenSettings } from '../types';
+import { NoteFactory } from "../notes";
 
 
 export class WeeklyKanbanModal extends Modal {
 	private logger: Logger = Logger.createLogger('WeeklyKanbanModal');
 	private settings: ZettelkastenSettings;
+	private factory: NoteFactory;
+	private kanban: WeeklyKanban;
 
-	constructor(app: App, settings: ZettelkastenSettings) {
+	constructor(app: App, settings: ZettelkastenSettings, factory: NoteFactory) {
 		super(app);
 		this.settings = settings;
+		this.factory = factory;
+		this.kanban = new WeeklyKanban(app, settings, factory);
 	}
 
 
@@ -31,19 +37,19 @@ export class WeeklyKanbanModal extends Modal {
 		const weeklyBtn = buttonContainer.createDiv({ cls: 'cc-button' });
 		weeklyBtn.createDiv({ text: '📅', cls: 'cc-button-icon' });
 		weeklyBtn.createDiv({ text: 'Weekly', cls: 'cc-button-label' });
-		weeklyBtn.onclick = () => {};
-
-		// --- Button 2: Daily Note ---
-		const dailyBtn = buttonContainer.createDiv({ cls: 'cc-button' });
-		dailyBtn.createDiv({ text: '☀️', cls: 'cc-button-icon' });
-		dailyBtn.createDiv({ text: 'Daily', cls: 'cc-button-label' });
-		dailyBtn.onclick = () => {};
+		weeklyBtn.onclick = async () => {
+			await this.kanban.openKanbanNote();
+			this.close()
+		}
 
 		// --- Button 3: Weekly Summary ---
 		const summaryBtn = buttonContainer.createDiv({ cls: 'cc-button' });
 		summaryBtn.createDiv({ text: '📊', cls: 'cc-button-icon' });
 		summaryBtn.createDiv({ text: 'Summary', cls: 'cc-button-label' });
-		summaryBtn.onclick = () => {};
+		summaryBtn.onclick = async () => {
+			await this.kanban.weeklyTaskSummary()
+			this.close()
+		}
 
 		// --- Button 4: You can add another one here, e.g., for search ---
 		const searchBtn = buttonContainer.createDiv({ cls: 'cc-button' });
@@ -65,8 +71,10 @@ export class WeeklyKanbanModal extends Modal {
 		addButton.onclick = async () => {
 			const taskText = taskInput.value;
 			if (taskText) {
+				await this.kanban.taskCreate(taskText);
 				taskInput.value = ''; // Clear the input field
 			}
+			this.close()
 		};
 		taskInput.onkeydown = (e) => {
 			if (e.key === 'Enter') {

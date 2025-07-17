@@ -58,26 +58,7 @@ export interface INoteTemplateMetadata {
 }
 
 
-export interface INoteOptionExtraParams {
-	tags?: string[];
-	prefix?: string;
-	properties?: IKeyValue<any>[];
-}
 
-/**
- * INoteOption interface defines the structure for options available in the 'New Note' modal
- */
-export interface INoteOption {
-	enabled: boolean;
-	type: NoteType;
-	label: string;
-	emoji?: string;
-	path?: string;
-	template?: string;
-	metadata?: INoteTemplateMetadata;
-	folderNote?: boolean;
-	extraInfo?: INoteOptionExtraParams;
-}
 
 
 

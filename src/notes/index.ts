@@ -1,7 +1,6 @@
 export {
 	NoteType,
 	NoteTypeData,
-	CreateNoteOptions,
 } from "./config"
 
 export {
@@ -16,11 +15,11 @@ export type {
 	IProperties,
 	INoteLink,
 	IZettelkastenProperties,
-	INoteOption,
 	INoteTemplateMetadata
 } from './types';
 
 export {
+	BaseNote,
 	Body,
 	ZettelkastenProperty,
 	BaseDefault,
@@ -28,8 +27,3 @@ export {
 } from './note'
 
 export { NoteFactory } from './factory';
-
-export { ZettelkastenCommand} from './command';
-
-export { ZettelKastenModal } from './modal';
-

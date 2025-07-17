@@ -1,10 +1,11 @@
 import {App, debounce, Notice, PluginSettingTab, Setting, TextComponent} from 'obsidian';
 import ZettelkastenPlugin from './main';
-import {INoteOption, NoteFactory, NoteType} from './notes'; // Import NoteType and ConfigHelper
+import {NoteFactory, NoteType} from './notes'; // Import NoteType and ConfigHelper
 import {DEFAULT_SETTINGS} from './config'; //
+import { INoteOption } from "./types";
 import {IntegrationManager} from "./3rd";
-import {Logger} from './logger';
 import {StepByStepFolderModal, Utils} from "./utils"; // Import Logger for logging
+import {Logger} from './logger';
 
 
 // Define your sections for horizontal navigation
@@ -355,7 +356,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						await this.display(); // Re-render the settings to show the new entry
 					});
 			})
-		if (this.plugin.settings.systemSettings.FEATURES.FOLDER_NOTES){
+		if (this.plugin.settings.features.FOLDER_NOTES){
 			noteCreationAddButton
 				.addButton(button => {
 					button

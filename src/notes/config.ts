@@ -1,6 +1,5 @@
 import {
 	INoteTemplateMetadata,
-	INoteOption,
 } from "./types";
 
 
@@ -45,31 +44,7 @@ export const NoteTypeData: Record<NoteType, INoteTemplateMetadata> = {
 	},
 }
 
-/**
- * A list of all available note templates that can be created in 'New Note' modal
- */
-export const CreateNoteOptions: INoteOption[] = [
-	{
-		enabled: true,
-		type: NoteType.FLEETING,
-		label: 'Fleeting',
-	},
-	{
-		enabled: true,
-		type: NoteType.LITERATURE,
-		label: 'Literature',
-	},
-	{
-		enabled: true,
-		type: NoteType.ATOMIC,
-		label: 'Atomic',
-	},
-	{
-		enabled: true,
-		type: NoteType.PERMANENT,
-		label: 'Permanent',
-	}
-]
+
 
 
 

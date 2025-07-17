@@ -1,9 +1,8 @@
 import { App, Modal, Notice, TFolder } from 'obsidian';
-import { INoteOption, KeyValue} from "../../notes";
-import { StepByStepFolderModal } from "./folderSuggestion";
-import { Utils } from "../utils";
-import { NoteFactory } from "../../notes";
-import { Logger } from "../../logger";
+import { StepByStepFolderModal, Utils} from "../utils";
+import { NoteFactory, KeyValue } from "../notes";
+import { Logger } from "../logger";
+import { INoteOption } from "../types"
 
 
 export class GroupNoteCards extends Modal {

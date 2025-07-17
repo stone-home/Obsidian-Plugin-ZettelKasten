@@ -1,9 +1,9 @@
 import {App, Notice, TFile, TAbstractFile} from "obsidian";
+import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
+import {NoteType} from "./config";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
 import {IntegrationManager} from "../3rd";
-import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
-import {NoteType} from "./config";
 
 export class KeyValue<T> implements IKeyValue<T>{
 	private key: string;
@@ -279,12 +279,17 @@ export class NoteLink implements INoteLink {
 	public header?: string;
 	public form?: 'list' | 'checklist';
 	private app: App;
+	private property: boolean = false; // Indicates if this link is a property link
 
 	constructor(app: App, targetNote: string, header?: string, form?: 'list' | 'checklist') {
 		this.app = app;
 		this.targetNote = targetNote;
 		this.header = header;
 		this.form = form;
+	}
+
+	public enablePropertyLink(): void {
+		this.property = true;
 	}
 
 	public async link(sourceNote: string): Promise<void> {
@@ -444,16 +449,28 @@ export abstract class BaseNote {
 		return obPath;
 	}
 
-	public addBodyContent(content: string, section_name: string, head_level: number): void {
+	public addBodyContent(content: string | string[], section_name: string, head_level: number): void {
 		this.body.addContent(content, section_name, head_level);
+	}
+
+	/**
+	 * Empties the body of the note, resetting it to a new Body instance.
+	 * This method is useful for clearing the content of the note.
+	 */
+	public emptyBody(): void {
+		this.logger.debug("Empty the body of the note");
+		this.body = new Body()
 	}
 
 	public addLinkInstance(link: INoteLink): void {
 		this.linkedPages.push(link);
 	}
 
-	public addLinkedPage(targetNote: string, header?: string, form?: 'list' | 'checklist'): INoteLink {
+	public addLinkedPage(targetNote: string, header?: string, form?: 'list' | 'checklist', property: boolean = false): INoteLink {
 		const link = new NoteLink(this.app, targetNote, header, form);
+		if (property) {
+			link.enablePropertyLink()
+		}
 		this.addLinkInstance(link);
 		return link;
 	}

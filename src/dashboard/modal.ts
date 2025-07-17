@@ -1,9 +1,8 @@
 import {Modal, App, Notice, TFolder} from "obsidian";
-import {NoteFactory} from "./factory";
-import {BaseDefault, BaseNote, KeyValue} from "./note";
+import {BaseDefault, BaseNote, KeyValue, NoteFactory, NoteType, NoteTypeData} from "../notes";
 import {Logger} from "../logger";
-import {NoteType, CreateNoteOptions, NoteTypeData} from "./config";
-import {INoteOption} from "./types";
+import {CreateNoteOptions} from "../config";
+import {INoteOption} from "../types";
 import { ZettelkastenSettings } from "../types";
 import { IntegrationManager } from "../3rd";
 import { Utils, StepByStepFolderModal, GroupNoteCards } from "../utils";
@@ -262,7 +261,7 @@ export class ZettelKastenModal extends Modal {
 			this.logger.info(`Created note: ${file.path}`);
 
 			// Open the new note if feature is enabled
-			if (this.settings?.systemSettings.FEATURES.AUTO_OPEN_CREATED_NOTES) {
+			if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
 				await this.app.workspace.openLinkText(file.path, '');
 			}
 
@@ -303,7 +302,7 @@ export class ZettelKastenModal extends Modal {
 			this.logger.info(`Created note: ${file.path}`);
 
 			// Open the new note if feature is enabled
-			if (this.settings?.systemSettings.FEATURES.AUTO_OPEN_CREATED_NOTES) {
+			if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
 				await this.app.workspace.openLinkText(note.getTitle(), '', false, { state: { mode: 'source' } });
 			}
 

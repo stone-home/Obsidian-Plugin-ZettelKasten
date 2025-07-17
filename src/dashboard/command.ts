@@ -1,7 +1,7 @@
 import { App } from 'obsidian';
-import { NoteFactory } from './factory';
+import { NoteFactory } from '../notes';
 import { Logger } from '../logger';
-import {ZettelKastenModal} from "./modal";
+import { ZettelKastenModal } from "./modal";
 import { ZettelkastenSettings } from '../types';
 
 

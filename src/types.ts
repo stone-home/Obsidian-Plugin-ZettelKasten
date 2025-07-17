@@ -1,4 +1,28 @@
-import {INoteOption, NoteType} from "./notes";
+import { INoteTemplateMetadata, NoteType} from "./notes";
+import {IKeyValue} from "./notes/types";
+
+
+
+export interface INoteOptionExtraParams {
+	tags?: string[];
+	prefix?: string;
+	properties?: IKeyValue<any>[];
+}
+
+/**
+ * INoteOption interface defines the structure for options available in the 'New Note' modal
+ */
+export interface INoteOption {
+	enabled: boolean;
+	type: NoteType;
+	label: string;
+	emoji?: string;
+	path?: string;
+	template?: string;
+	metadata?: INoteTemplateMetadata;
+	folderNote?: boolean;
+	extraInfo?: INoteOptionExtraParams;
+}
 
 
 export interface DefaultTemplate {
@@ -6,6 +30,13 @@ export interface DefaultTemplate {
 	[NoteType.LITERATURE]: string
 	[NoteType.PERMANENT]: string
 	[NoteType.ATOMIC]: string
+}
+
+
+export interface ISubFeature {
+	enabled: boolean;
+	description: string;
+	[key: string]: any
 }
 
 /**
@@ -16,6 +47,7 @@ export interface IFeatureFlags {
 	SHOW_UPGRADE_NOTIFICATIONS: boolean;
 	DEBUG_MODE: boolean;
 	FOLDER_NOTES: boolean;
+	WEEKLY_KANBAN: ISubFeature
 }
 
 /**
@@ -25,7 +57,6 @@ export interface IDebugConfig {
 	LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
 	SHOW_PERFORMANCE_METRICS: boolean;
 	ENABLE_ERROR_BOUNDARIES: boolean;
-	MOCK_DATA: boolean;
 }
 
 
@@ -52,24 +83,6 @@ export interface INamingPatterns {
 	REPLACEMENT_CHAR: string;
 }
 
-/**
- * Export a central config object for easy access
- */
-export interface IZettelkastenConfig {
-	// PATHS: DEFAULT_PATHS,
-	// NOTE_TYPES: NOTE_TYPE_CONFIG,
-	// UPGRADES: UPGRADE_HIERARCHY,
-	// UI: UI_CONFIG,
-	FEATURES: IFeatureFlags,
-	// TEMPLATES: TEMPLATE_CONFIG,
-	NOTIFICATIONS: INotificationConfig,
-	// SHORTCUTS,
-	NAMING: INamingPatterns,
-	// PERFORMANCE,
-	DEBUG: IDebugConfig,
-	// INTEGRATIONS
-}
-
 
 export interface ZettelkastenSettings {
 	// Default paths for different types of notes
@@ -93,6 +106,8 @@ export interface ZettelkastenSettings {
 	createNoteOptions: INoteOption[];
 
 	// Advanced settings
-	systemSettings: IZettelkastenConfig
+	naming: INamingPatterns
+	features: IFeatureFlags
+	debug: IDebugConfig;
 }
 

@@ -1,4 +1,3 @@
-/* 📝A CSS class for zettelkasten modal */
 .zettelkasten-modal {
 	max-width: 90vw;
 	min-width: 510px;
@@ -185,50 +184,6 @@
 	line-height: 1.1;
 }
 
-.no-options {
-	color: var(--text-muted);
-	font-style: italic;
-	text-align: center;
-	padding: 0.75rem;
-	font-size: 0.85rem;
-}
-
-/* Action Buttons */
-.modal-button-container {
-	display: flex;
-	justify-content: flex-end;
-	gap: 0.5rem;
-	margin-top: 1rem;
-	padding-top: 0.75rem;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
-.modal-button-container button {
-	padding: 0.4rem 0.8rem;
-	border-radius: 4px;
-	border: none;
-	cursor: pointer;
-	font-size: 0.8rem;
-	font-weight: 500;
-}
-
-.mod-cancel {
-	background-color: var(--background-secondary);
-	color: var(--text-normal);
-}
-
-.mod-cta {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
-
-.mod-cancel:hover {
-	background-color: var(--background-secondary-alt);
-}
-
-.mod-cta:hover {
-	background-color: var(--interactive-accent-hover);
-}
 
 /* Responsive Design */
 @media (max-width: 500px) {
@@ -257,66 +212,4 @@
 	.info-value {
 		font-size: 0.8rem;
 	}
-}
-
-@media (max-width: 350px) {
-	.note-cards-container {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.upgrade-cards-container {
-		grid-template-columns: repeat(2, 1fr);
-	}
-
-	.note-card {
-		min-height: 45px;
-		padding: 0.4rem 0.2rem;
-	}
-
-	.upgrade-card {
-		min-height: 40px;
-		padding: 0.3rem 0.1rem;
-	}
-
-	.card-emoji {
-		font-size: 1rem !important;
-	}
-
-	.note-card-title,
-	.upgrade-card-title {
-		font-size: 0.6rem;
-	}
-}
-
-
-/* Additional Styles for Plugin Integration */
-.zettelkasten-status {
-	color: var(--text-accent);
-	font-size: 0.9rem;
-	transition: background-color 0.2s;
-}
-
-.zettelkasten-status:hover {
-	background-color: var(--background-modifier-hover);
-	border-radius: 4px;
-	padding: 2px 6px;
-}
-
-.template-button {
-	display: block;
-	width: 100%;
-	margin: 0.4rem 0;
-	padding: 0.6rem;
-	background: var(--interactive-normal);
-	border: none;
-	border-radius: 4px;
-	color: var(--text-normal);
-	cursor: pointer;
-	text-align: left;
-	transition: background-color 0.2s;
-	font-size: 0.85rem;
-}
-
-.template-button:hover {
-	background: var(--interactive-hover);
 }
