@@ -15,7 +15,8 @@ export type {
 	IProperties,
 	INoteLink,
 	IZettelkastenProperties,
-	INoteTemplateMetadata
+	INoteTemplateMetadata,
+	IBodySection
 } from './types';
 
 export {
@@ -23,7 +24,8 @@ export {
 	Body,
 	ZettelkastenProperty,
 	BaseDefault,
-	KeyValue
+	KeyValue,
+	BodySection,
 } from './note'
 
 export { NoteFactory } from './factory';

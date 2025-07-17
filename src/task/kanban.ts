@@ -1,7 +1,7 @@
-import { App } from 'obsidian';
+import {App, Notice} from 'obsidian';
 import { Logger } from '../logger';
 import { ZettelkastenSettings } from '../types';
-import {NoteFactory, NoteType, BaseDefault, BaseNote} from "../notes";
+import {NoteFactory, NoteType, BaseDefault, BodySection} from "../notes";
 import { format } from 'date-fns';
 
 
@@ -169,9 +169,7 @@ export class WeeklyKanban {
 
 	public async kanbanCreate(open: boolean = true) {
 		const kanban = this.createKanbanNote()
-		if (!(await kanban.exist())) {
-			await kanban.save()
-		}
+		await kanban.save()
 		// Open the new note if feature is enabled
 		if (open) {
 			await this.app.workspace.openLinkText(kanban.getTitle(), '', false, { state: { mode: 'source' } });
@@ -179,7 +177,11 @@ export class WeeklyKanban {
 	}
 
 	public async openKanbanNote(): Promise<void> {
-		await this.kanbanCreate(this.settings.features.AUTO_OPEN_CREATED_NOTES)
+		if (await this.kanbanExists()) {
+			await this.app.workspace.openLinkText(this.getKanbanNoteName(), '', false, {state: {mode: 'source'}});
+		} else {
+			await this.kanbanCreate(this.settings.features.AUTO_OPEN_CREATED_NOTES)
+		}
 	}
 
 	public async kanbanExists(): Promise<boolean> {
@@ -211,6 +213,9 @@ export class WeeklyKanban {
 			this.logger.warn("Weekly Kanban does not exist, creating it now.");
 			await this.kanbanCreate(false);
 		}
+		const kanbanFilePath = this.createKanbanNote().getObPath(true)
+		const kanbanNote = await this.factory.loadFromFile(kanbanFilePath)
+		const header = new BodySection('BackLogs', 2);
 		this.logger.info(`Creating weekly task for week ${this.getCureentWeekNumber()}`);
 		const task = this.factory.createNote(NoteType.FLEETING) as BaseDefault;
 		task.setTitle(this.getTaskName(title));
@@ -218,9 +223,13 @@ export class WeeklyKanban {
 		task.addBodyContent("", "📝Note", 1)
 		task.addTag('kanban/task')
 		task.setProperty("done", false)
-		task.addLinkedPage(this.getKanbanNoteName(), "## Backlogs", "checklist")
+		// insert current task note name into header
+		header.addContent(task.getTitle())
+		task.addLinkedPage(kanbanNote, header, "checklist")
 		if (!(await task.exist())) {
 			await task.save();
+		} else {
+			new Notice(`Task "${task.getTitle()}" already exists!`, 5000);
 		}
 		// Open the new note if feature is enabled
 		if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {

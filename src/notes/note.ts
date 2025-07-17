@@ -1,9 +1,10 @@
 import {App, Notice, TFile, TAbstractFile} from "obsidian";
-import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties} from "./types";
+import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties, IBodySection, IBody} from "./types";
 import {NoteType} from "./config";
 import {Logger} from '../logger';
 import {Utils} from "../utils";
 import {IntegrationManager} from "../3rd";
+
 
 export class KeyValue<T> implements IKeyValue<T>{
 	private key: string;
@@ -190,11 +191,13 @@ export class Property {
 	}
 }
 
-class BodySection {
+export class BodySection implements IBodySection {
+	public title: string;
 	public head_level: number = 1;
 	public content: Array<string> = [];
 
-	constructor(head_level: number = 1) {
+	constructor(title: string, head_level: number = 1) {
+		this.title = title;
 		this.head_level = head_level;
 	}
 
@@ -204,21 +207,52 @@ class BodySection {
 		}
 		this.content.push(...content);
 	}
+
+	public getId(): string {
+		return `${this.title.replace(/\s+/g, '-').toLowerCase()}-${this.head_level}`;
+	}
 }
 
-export class Body {
-	private sections: Map<string, BodySection> = new Map();
+export class Body implements IBody {
+	public sections: Map<string, IBodySection> = new Map();
 	private logger = Logger.createLogger('Body');
 
-	public newSection(name: string, head_level: number): void {
-		this.sections.set(name, new BodySection(head_level));
+	constructor() {
+		this.sections = new Map<string, IBodySection>();
+	}
+
+	public newSection(name: string, head_level: number): IBodySection {
+		this.logger.debug(`Create new section with name: ${name} and head level: ${head_level}`);
+		const section = new BodySection(name, head_level);
+		return this.addSection(section);
+	}
+
+	public addSection(section: IBodySection): IBodySection {
+		this.logger.debug(`Add section with id ${section.getId()}`);
+		this.sections.set(section.getId(), section);
+		return section;
+	}
+
+	public getSectionById(id: string): IBodySection | undefined {
+		this.logger.debug(`Get Section with id ${id}`);
+		return this.sections.get(id) || undefined;
+	}
+
+	public getSection(name: string, head_level: number): IBodySection | undefined {
+		this.logger.debug(`Get section by name: ${name} and head level: ${head_level}`);
+		const section = new BodySection(name, head_level);
+		return this.getSectionById(section.getId()) || undefined;
 	}
 
 	public addContent(content: string | string[], sectionName: string = "default", head_level: number = 1): void {
-		if (!this.sections.has(sectionName)) {
+		const sectionId = new BodySection(sectionName, head_level).getId();
+		if (!this.sections.has(sectionId)) {
 			this.newSection(sectionName, head_level);
 		}
-		this.sections.get(sectionName)!.addContent(content);
+		const section = this.getSectionById(sectionId);
+		if (section) {
+			section.addContent(content);
+		}
 	}
 
 	/* * Update the body with another Body instance.
@@ -229,45 +263,22 @@ export class Body {
 	 * @param body The Body instance to update from.
 	 */
 	public update(body: Body): void {
-		for (const [name, content] of body.sections) {
-			if (this.sections.has(name) && this.sections.get(name)?.head_level === content.head_level) {
-				for (const text of content.content) {
-					this.sections.get(name)!.addContent(text);
-				}
-			} else {
-				this.newSection(name, content.head_level);
-				// Add the content to the new section
-				for (const text of content.content) {
-					this.sections.get(name)!.addContent(text);
-				}
+		for (const [sectionId, content] of body.sections) {
+			if (!(this.getSectionById(sectionId))) {
+				this.newSection(content.title, content.head_level);
 			}
+			this.addContent(content.content, content.title, content.head_level);
 		}
-
-
-		// for (const [name, content] of this.sections) {
-		// 	if (body.sections.has(name) && body.sections.get(name)?.head_level == content.head_level) {
-		// 		for (const text of content.content) {
-		// 			body.sections.get(name)!.addContent(text);
-		// 		}
-		// 	} else {
-		// 		body.newSection(name, content.head_level);
-		// 		for (const text of content.content) {
-		// 			body.sections.get(name)!.addContent(text);
-		// 		}
-		// 	}
-		// }
-		// this.sections = body.sections;
 	}
 
 	public toString(): string {
 		let body: string = "";
-		for (const [name, content] of this.sections) {
+		for (const [id, content] of this.sections) {
 			if (content) {
-				body += `${'#'.repeat(content.head_level)} ${name}\n`;
+				body += `${'#'.repeat(content.head_level)} ${content.title}\n`;
 				body += content.content.join('\n') + '\n';
 			}
 		}
-
 		return body;
 	}
 }
@@ -275,13 +286,13 @@ export class Body {
 
 
 export class NoteLink implements INoteLink {
-	public targetNote: string;
-	public header?: string;
+	public targetNote: BaseNote;
+	public header: IBodySection;
 	public form?: 'list' | 'checklist';
 	private app: App;
-	private property: boolean = false; // Indicates if this link is a property link
+	public property: boolean = false; // Indicates if this link is a property link
 
-	constructor(app: App, targetNote: string, header?: string, form?: 'list' | 'checklist') {
+	constructor(app: App, targetNote: BaseNote, header: IBodySection, form?: 'list' | 'checklist') {
 		this.app = app;
 		this.targetNote = targetNote;
 		this.header = header;
@@ -292,19 +303,20 @@ export class NoteLink implements INoteLink {
 		this.property = true;
 	}
 
-	public async link(sourceNote: string): Promise<void> {
-		// implementing the linking logic, adding a backlink in the target note
-		const targetFile = this.app.vault.getAbstractFileByPath(`${this.targetNote}.md`);
-		if (targetFile instanceof TFile) {
-			const content = await this.app.vault.read(targetFile);
-			const linkText = this.formatLink(sourceNote);
-			const updatedContent = this.addLinkToContent(content, linkText);
-			await this.app.vault.modify(targetFile, updatedContent);
+	public async link(): Promise<void> {
+		if (await this.targetNote.exist()) {
+			const body = this.targetNote.getBody();
+			const section = body.getSectionById(this.header.getId())
+			this.header.content.forEach((content) => {
+				const linkText = this.formatLink(content)
+				section?.addContent(linkText);
+			})
+			await this.targetNote.update()
 		}
 	}
 
-	private formatLink(sourceNote: string): string {
-		const link = `[[${sourceNote}]]`;
+	private formatLink(content: string): string {
+		const link = `[[${content}]]`;
 
 		switch (this.form) {
 			case 'list':
@@ -466,7 +478,7 @@ export abstract class BaseNote {
 		this.linkedPages.push(link);
 	}
 
-	public addLinkedPage(targetNote: string, header?: string, form?: 'list' | 'checklist', property: boolean = false): INoteLink {
+	public addLinkedPage(targetNote: BaseNote, header: IBodySection, form?: 'list' | 'checklist', property: boolean = false): INoteLink {
 		const link = new NoteLink(this.app, targetNote, header, form);
 		if (property) {
 			link.enablePropertyLink()
@@ -544,12 +556,35 @@ export abstract class BaseNote {
 		this.logger.info(`Start saving note to ${this.getObPath()}`);
 		await this.checkBeforeSave();
 		const s_note = await this.toString();
-		const file = await this.app.vault.create(this.getObPath(true), s_note);
+		try {
+			const file = await this.app.vault.create(this.getObPath(true), s_note);
+			// Execute linking operations
+			await this.linkingPages();
+			this.logger.debug(`Note saved: ${this.getObPath(false)}`);
+			return file;
+		} catch (error) {
+			this.logger.logError(`Save ${this.getTitle()} failed: ${error}`, error);
+			throw error
+		}
+	}
 
-		// Execute linking operations
-		await this.linkingPages();
-
-		this.logger.debug(`Note saved: ${this.getObPath(false)}`);
+	public async update(): Promise<TFile> {
+		this.logger.info(`Start updating note at ${this.getObPath()}`);
+		const updated_note = await this.toString();
+		const file = await this.getTfile() as TFile;
+		try {
+			await this.app.vault.modify(file, updated_note)
+		} catch (error) {
+ 			this.logger.logError(`Update ${this.getTitle()} failed: ${error}`, error);
+			throw error
+		}
+		try {
+			this.logger.info(`Updating for linking phase for ${this.getTitle()}`);
+			await this.linkingPages();
+		} catch (error) {
+			this.logger.logError(`Update ${this.getTitle()} failed: ${error}`, error);
+			throw error
+		}
 		return file;
 	}
 
@@ -597,11 +632,10 @@ export abstract class BaseNote {
 	}
 
 	protected async linkingPages(): Promise<void> {
-		this.logger.debug("Start linking pages");
+		this.logger.info("Start linking pages");
 		for (const link of this.linkedPages) {
-			await link.link(this.getTitle());
+			await link.link(this);
 		}
-		this.logger.debug("Linking pages finished");
 	}
 
 }

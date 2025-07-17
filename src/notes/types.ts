@@ -1,5 +1,6 @@
 // [TS] KeyValue is a generic class that can hold any type of value
 import {NoteType} from "./config";
+import {BaseNote} from "./note";
 
 export interface IKeyValue<T> {
 	getValue(): T;
@@ -28,14 +29,34 @@ export interface IZettelkastenProperties extends IProperties {
 	new: IKeyValue<boolean>;
 }
 
+export interface IBodySection {
+	title: string;
+	head_level: number;
+	content: Array<string>;
+	getId(): string;
+	addContent(content: string | string[]): void;
+}
+
+export interface IBody {
+	sections: Map<string, IBodySection>;
+	newSection(name: string, head_level: number): IBodySection;
+	addSection(section: IBodySection): void;
+	getSectionById(id: string): IBodySection | undefined;
+	getSection(name: string, head_level: number): IBodySection | undefined;
+	addContent(content: string | string[], sectionName: string, head_level: number) : void;
+	update(body: IBody): void;
+	toString(): string;
+}
+
 /*
  * INoteLink interface defines the structure for linking notes
  */
 export interface INoteLink {
-	targetNote: string;
-	header?: string;
+	targetNote: BaseNote;
+	header?: IBodySection;
 	form?: 'list' | 'checklist';
-	link(sourceNote: string): Promise<void>;
+	property: boolean;
+	link(sourceNote: BaseNote): Promise<void>;
 }
 
 /*

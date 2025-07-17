@@ -27,7 +27,7 @@ export class WeeklyKanbanModal extends Modal {
 		const container = contentEl.createDiv({ cls: 'cc-modal-content' });
 
 		// Header
-		container.createEl('h1', { text: 'Control Center', cls: 'cc-header-title' });
+		container.createEl('h1', { text: 'Weekly Kanban ', cls: 'cc-header-title' });
 		container.createEl('p', { text: 'Your quick-access dashboard for notes and tasks.', cls: 'cc-header-subtitle' });
 
 		// Button Container
@@ -84,7 +84,6 @@ export class WeeklyKanbanModal extends Modal {
 		};
 	}
 
-	// Modal 关闭时执行
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
