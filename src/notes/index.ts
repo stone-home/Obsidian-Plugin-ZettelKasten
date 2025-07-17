@@ -16,7 +16,8 @@ export type {
 	INoteLink,
 	IZettelkastenProperties,
 	INoteTemplateMetadata,
-	IBodySection
+	IBodySection,
+	IKeyValue
 } from './types';
 
 export {

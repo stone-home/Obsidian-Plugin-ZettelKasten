@@ -1,5 +1,4 @@
-import { INoteTemplateMetadata, NoteType} from "./notes";
-import {IKeyValue} from "./notes/types";
+import { INoteTemplateMetadata, NoteType, IKeyValue} from "./notes";
 
 
 
