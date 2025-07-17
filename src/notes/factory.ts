@@ -191,7 +191,7 @@ export class NoteFactory {
 	 * Populate a note instance with content from a file
 	 */
 	private async populateNoteFromContent(note: TFile): Promise<BaseTemplate> {
-		this.logger.info(`Loading notes from file: ${note} and populate it`);
+		this.logger.info(`Loading notes from file: ${note.basename} and populate it`);
 		// Load frontmatter and content
 		const cache = this.app.metadataCache.getFileCache(note);
 		const frontmatter = cache!.frontmatter

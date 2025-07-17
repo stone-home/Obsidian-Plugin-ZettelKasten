@@ -3,6 +3,7 @@ import { Logger } from '../logger';
 import { ZettelkastenSettings } from '../types';
 import {NoteFactory, NoteType, BaseDefault, BodySection} from "../notes";
 import { format } from 'date-fns';
+import {Utils} from "../utils";
 
 
 export class WeeklyKanban {
@@ -59,9 +60,12 @@ export class WeeklyKanban {
 		return this.settings.features.WEEKLY_KANBAN!.path || this.app.vault.getRoot() + '/Kanban';
 	}
 
-	public getKanbanDir(): string {
+	public getKanbanDir(weekNumber?: number): string {
+		if (!weekNumber) {
+			weekNumber = this.getCureentWeekNumber();
+		}
 		const root = this.getKanbanRoot();
-		return`${root}/${new Date().getFullYear()}/Week ${this.getCureentWeekNumber()}`;
+		return`${root}/${new Date().getFullYear()}/Week ${weekNumber}`;
 	}
 
 	public getTaskDir(): string {
@@ -135,8 +139,11 @@ export class WeeklyKanban {
 		]
 	}
 
-	public getKanbanNoteName(): string {
-		return `Kanban - ${new Date().getFullYear()}W${this.getCureentWeekNumber()}`
+	public getKanbanNoteName(weekNumber?: number): string {
+		if (!weekNumber) {
+			weekNumber = this.getCureentWeekNumber();
+		}
+		return `Kanban - ${new Date().getFullYear()}W${weekNumber}`
 	}
 
 	public getSummaryNoteName(): string {
@@ -149,11 +156,11 @@ export class WeeklyKanban {
 
 	private createKanbanNote(): BaseDefault {
 		this.logger.info(`Creating weekly kanban for week ${this.getCureentWeekNumber()}`);
+
 		const kanban = this.factory.createNote(NoteType.FLEETING) as BaseDefault;
 		kanban.setTitle(this.getKanbanNoteName());
 		kanban.setPath(this.getKanbanDir())
 		kanban.emptyBody()
-		kanban.addBodyContent("", "Unfinished", 2)
 		kanban.addBodyContent("", "Backlogs", 2)
 		kanban.addBodyContent("", "In Progress", 2)
 		kanban.addBodyContent("\*\*Complete\*\*\n\n\n", "Done", 2)
@@ -169,6 +176,28 @@ export class WeeklyKanban {
 
 	public async kanbanCreate(open: boolean = true) {
 		const kanban = this.createKanbanNote()
+
+		// Insert tasks which are in backlog and progress from previous week
+		const previousWeekKanban = `${this.getKanbanDir(this.getPreviousWeekNumber())}/${this.getKanbanNoteName(this.getPreviousWeekNumber())}.md`;
+		console.error(previousWeekKanban)
+		if (Utils.fileExists(this.app, previousWeekKanban, false)) {
+			this.logger.info(`Loading previous week kanban note: ${previousWeekKanban}`);
+			const previousNote = await this.factory.loadFromFile(previousWeekKanban);
+			const backlogSection = previousNote.getBody().getSection("Backlogs", 2);
+			const inProgressSection = previousNote.getBody().getSection("In Progress", 2);
+			if (backlogSection) {
+				kanban.addBodyContent(backlogSection.content, "Backlogs", 2);
+				// remove the backlog section from the previous note
+				backlogSection.content = []
+			}
+			if (inProgressSection) {
+				kanban.addBodyContent(inProgressSection.content, "In Progress", 2);
+				// remove the in progress section from the previous note
+				inProgressSection.content = []
+			}
+			// Save the previous note to remove the backlog and in progress sections
+			await previousNote.update()
+		}
 		await kanban.save()
 		// Open the new note if feature is enabled
 		if (open) {
