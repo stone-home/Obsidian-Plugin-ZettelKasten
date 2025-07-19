@@ -1,4 +1,5 @@
 import {App, Modal, Notice, setIcon, Setting, TFile} from 'obsidian';
+import {SearchDashboardModal} from "./search";
 import {
 	IAnnotationSection,
 	IDashboardKeyTags,
@@ -9,9 +10,16 @@ import {
 } from "../types";
 import ZettelkastenPlugin from "../../main";
 import {BaseDefault, Body, NoteFactory, NoteType} from "../../notes";
-import {SearchDashboardModal} from "./search";
 import {Logger} from "../../logger";
 import {Utils} from "../../utils";
+import {
+	DataviewHelper,
+	ViewResearchDirectionTopic,
+	ViewResearchDirectionLiteratureReview,
+	ViewResearchTopicMyPapers,
+	ViewResearchTopicPapers,
+	ViewResearchTopicReference
+} from "../../dataview";
 
 
 export class ResearchDashboardModal extends Modal {
@@ -28,7 +36,7 @@ export class ResearchDashboardModal extends Modal {
 		this.modalEl.addClass('research-dashboard-modal');
 	}
 
-	onOpen() {
+	async onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
 
@@ -145,8 +153,9 @@ export class ResearchDashboardModal extends Modal {
 
 	private getKeyDirectionTag(): IDashboardKeyTags {
 		return {
-			zotero: '#software/Zooter',
+			zotero: '#software/Zotero',
 			direction: "#software/Zotero/direction",
+			topic: "#software/Zotero/topic",
 		}
 	}
 
@@ -171,20 +180,34 @@ export class ResearchDashboardModal extends Modal {
 				new Notice(`Failed to load note from path: ${selectedNote.path}`);
 				return;
 			}
-			const directionTag = this.getKeyDirectionTag().direction.toLowerCase();
-			const directions = selectedNote.tags.filter( tag => tag.contains(directionTag));
-			await this.createDirectionNote(zoteroItems, directions)
+			// Create all directions' notes based on the tags
+			await this.createDirectionNote(selectedNote, zoteroItems)
+
+			// Create all directions' notes based on the tags
+			await this.createTopicNote(selectedNote, zoteroItems)
+
+			// Create all annotations' notes based on the tags
+			await this.createAnnotationNote(selectedNote, zoteroItems)
 
 		})
 	}
 
-	private async createDirectionNote(zoteroItems: IZoteroNoteItems, directions: string[]): Promise<void> {
+	private formatDirectionName(direction: string): string {
+		return `Direction - ${direction}`;
+	}
+
+	private formatTopicName(direction: string): string {
+		return `Topic - ${direction}`;
+	}
+
+	private async createDirectionNote(selectedNote: ISearchResult, zoteroItems: IZoteroNoteItems): Promise<void> {
+		const directionTag = this.getKeyDirectionTag().direction.toLowerCase();
+		const directions = selectedNote.tags.filter( tag => tag.contains(directionTag));
 		const directionNotePromise = directions.map( async (direction) => {
-			const directionTag = this.getKeyDirectionTag().direction.toLowerCase();
 			const directionFullName = direction.replace(directionTag, '');
-			const directionList = directionFullName.split('/');
+			const directionList = directionFullName.split('/').map( part => part.trim()).filter(part => part.length > 0);
 			// Ensure the last element is the direction name
-			const directionName = directionList.pop();
+			let directionName = directionList.pop();
 			if (!directionName) {
 				this.logger.error(`Invalid direction name extracted from tag: ${direction}`);
 				new Notice(`Invalid direction name extracted from tag: ${direction}`);
@@ -195,6 +218,7 @@ export class ResearchDashboardModal extends Modal {
 				directionPath = directionPath + '/' + directionList.join('/');
 			}
 			const directionNote = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+			directionName = this.formatDirectionName(directionName);
 			directionNote.setTitle(directionName);
 			directionNote.setPath(directionPath);
 			if ((await directionNote.exist())) {
@@ -203,16 +227,11 @@ export class ResearchDashboardModal extends Modal {
 				return;
 			}
 			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
-			// const zoteroTags = Utils.deepClone(zoteroItems.note.getProperties().getTags())
-			// const tags = zoteroTags.map((tag) => {
-			// 	return tag.replace("#", "").replace(zoteroKeyTagPath, "research").trim();
-			// })
-			// directionNote.getProperties().setPropertyValue("tags", tags, true);
 			directionNote.addTag(["research/direction", "📍tagNode"])
-			directionNote.addAlias(`#${direction.replace(zoteroKeyTagPath, "research").trim()}`);
+			directionNote.addAlias(`"#${direction.replace(zoteroKeyTagPath, "research").trim()}"`);
 			directionNote.setProperty("new", false)
-			directionNote.addBodyContent([], "Topics in Direction", 1);
-			directionNote.addBodyContent([], "Literature Reviews", 1);
+			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchDirectionTopic)], "Topics in Direction", 1);
+			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchDirectionLiteratureReview)], "Literature Reviews", 1);
 			// add the zotero note as a source note
 			const sourceNote = zoteroItems.note.getProperty("id") || zoteroItems.note.getProperty("citekey") || zoteroItems.note.getTitle() || undefined;
 			if (sourceNote) {
@@ -226,6 +245,97 @@ export class ResearchDashboardModal extends Modal {
 		} catch (error) {
 			this.logger.error("An error occurred while processing directions:", error);
 		}
+	}
+
+	private async createTopicNote(selectedNote: ISearchResult, zoteroItems: IZoteroNoteItems): Promise<void> {
+		const topicTags = this.getKeyDirectionTag().topic.toLowerCase();
+		const topics = selectedNote.tags.filter( tag => tag.contains(topicTags));
+		const directionNotePromise = topics.map( async (topic) => {
+			const topicFullName = topic.replace(topicTags, '');
+			const topicList = topicFullName.split('/').map( part => part.trim()).filter(part => part.length > 0);
+			// Ensure the last element is the direction name
+			let topicName = topicList.pop();
+			if (!topicName) {
+				this.logger.error(`Invalid direction name extracted from tag: ${topic}`);
+				new Notice(`Invalid direction name extracted from tag: ${topic}`);
+				return;
+			}
+			let topicPath = this.getResearchPath().topics;
+			if (topicList.length >= 1) {
+				topicPath = topicPath + '/' + topicList.join('/');
+			}
+			const topicNote = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+			topicName = this.formatTopicName(topicName);
+			topicNote.setTitle(topicName);
+			topicNote.setPath(topicPath);
+			if ((await topicNote.exist())) {
+				this.logger.warn(`Note with title "${topicName}" already exists in path "${topicPath}". Skipping creation.`);
+				new Notice(`Note with title "${topicName}" already exists in path "${topicPath}". Skipping creation.`);
+				return;
+			}
+			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
+			topicNote.addTag(["research/topic", "📍tagNode"])
+			topicNote.setProperty("new", false)
+			topicNote.addAlias(`"#${topic.replace(zoteroKeyTagPath, "research").trim()}"`);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicPapers)], "Papers", 1);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicMyPapers)], "My Papers", 1);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicReference)], "References", 1);
+			topicNote.addBodyContent([], "Knowledges", 1);
+			topicNote.addBodyContent([], "Methods", 1);
+
+			// add the zotero note as a source note
+			const sourceNote = zoteroItems.note.getProperty("id") || zoteroItems.note.getProperty("citekey") || zoteroItems.note.getTitle() || undefined;
+			if (sourceNote) {
+				topicNote.addSourceNote(`[[${sourceNote}]]`)
+			}
+
+			await topicNote.save();
+		})
+		try {
+			await Promise.all(directionNotePromise);
+		} catch (error) {
+			this.logger.error("An error occurred while processing topics:", error);
+		}
+	}
+
+	private async createAnnotationNote(selectedNote: ISearchResult, zoteroItems: IZoteroNoteItems): Promise<void> {
+		const annotationPromises =  zoteroItems.annotations
+			// Filter annotations that have only one tag and do not include "vocabulary" in the tag
+			.filter((annotation => annotation.tags.length === 1 && annotation.tags.some((tag) => !tag.toLowerCase().includes("vocabulary"))))
+			.map(async (annotation) => {
+			const zoteroId = zoteroItems.note.getProperty("id") || zoteroItems.note.getProperty("citekey") || zoteroItems.note.getTitle() || undefined;
+			const name = `${zoteroId} - Annotation ${annotation.id}`;
+			const annotationNote = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+			annotationNote.setTitle(name);
+			annotationNote.setPath(this.getResearchPath().references);
+			annotationNote.setProperty("url", annotation.url)
+			annotationNote.addSourceNote(`[[${zoteroId}]]`)
+			annotationNote.addTag(annotation.tags)
+			annotationNote.addBodyContent([], "**🔗Source**", 4)
+			annotationNote.addBodyContent(
+				[
+					"> [!INFO] Annotation Metadata",
+					`> **Article**:: ${annotation.article}`,
+					`> **Year**:: ${annotation.year}`,
+					`> **Page**:: ${annotation.page}`,
+					`> **Note Date**:: ${annotation.date}`,
+					`> **Bibliography**:: ${annotation.bibliography}`,
+					'',
+					...annotation.content
+				],
+				"Qoute",
+				1);
+			if (annotation.comments && annotation.comments.length > 0) {
+				annotationNote.addBodyContent(annotation.comments, "Comments", 1);
+			}
+			await annotationNote.save()
+
+		})
+		try {
+			await Promise.all(annotationPromises);
+		} catch (error) {
+			this.logger.error("An error occurred while processing annotation:", error);
+		}const topicTags = this.getKeyDirectionTag().topic.toLowerCase();
 	}
 
 	private async loadZoteroFromFile(filePath: string): Promise<IZoteroNoteItems> {
@@ -259,6 +369,11 @@ export class ResearchDashboardModal extends Modal {
 		}
 		//parse the file content to extract the body
 		const annotations = await this.parseBody(file, zoteroNote);
+		//supplement the annotations with the properties from frontmatter
+		annotations.forEach((annotation) => {
+			annotation.bibliography = properties.getPropertyValue("bibliography") || '';
+			annotation.url = properties.getPropertyValue("url") || '';
+		})
 
 		// ensure the note has a right title and path
 		// the title name may be updated in parseBody method
@@ -345,7 +460,9 @@ export class ResearchDashboardModal extends Modal {
 			page: '',
 			date: '',
 			content: [],
-			comments: []
+			comments: [],
+			bibliography: '',
+			url: ''
 		}
 		let collectingComments = false;
 		for (const line of lines) {
@@ -383,7 +500,8 @@ export class ResearchDashboardModal extends Modal {
 					});
 				} else {
 					// Collect content lines
-					if (line.trim().length > 0) {
+					// Ignore empty lines and code blocks deviated by backticks
+					if (line.trim().length > 0 && !line.contains('```')) {
 						annotation.content.push(line.trim());
 					}
 				}

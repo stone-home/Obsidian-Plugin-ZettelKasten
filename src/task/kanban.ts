@@ -179,7 +179,6 @@ export class WeeklyKanban {
 
 		// Insert tasks which are in backlog and progress from previous week
 		const previousWeekKanban = `${this.getKanbanDir(this.getPreviousWeekNumber())}/${this.getKanbanNoteName(this.getPreviousWeekNumber())}.md`;
-		console.error(previousWeekKanban)
 		if (Utils.fileExists(this.app, previousWeekKanban, false)) {
 			this.logger.info(`Loading previous week kanban note: ${previousWeekKanban}`);
 			const previousNote = await this.factory.loadFromFile(previousWeekKanban);

@@ -1,0 +1,5 @@
+export { View as ViewResearchDirectionLiteratureReview } from "./researchDirectionLiteratureReview"
+export { View as ViewResearchDirectionTopic } from "./researchDirectionTopicView"
+export { View as ViewResearchTopicMyPapers } from "./researchTopicMyPapers"
+export { View as ViewResearchTopicPapers } from "./researchTopicPapers"
+export { View as ViewResearchTopicReference } from "./researchTopicReferences"

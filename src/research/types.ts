@@ -28,12 +28,15 @@ export interface IAnnotationSection {
 	date?: string;
 	content: string[],
 	comments?: string[];
+	bibliography?: string;
+	url?: string;
 }
 
 
 export interface IDashboardKeyTags {
 	zotero: string;
 	direction: string;
+	topic: string;
 }
 
 export interface IResearchPath {

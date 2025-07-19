@@ -2,6 +2,13 @@ import { App, Component, TFile, TFolder } from 'obsidian';
 import { IDataviewScript, IDataviewParameter, IDataviewExecution } from "./types";
 import { DataviewScriptBuilder } from "./builder";
 import { Logger } from "../logger";
+import {
+	ViewResearchDirectionLiteratureReview,
+	ViewResearchDirectionTopic,
+	ViewResearchTopicMyPapers,
+	ViewResearchTopicReference,
+	ViewResearchTopicPapers
+} from "./views";
 
 
 export class DataviewJSManager extends Component {
@@ -35,77 +42,12 @@ export class DataviewJSManager extends Component {
 	// Create some default example scripts
 	private async createDefaultScripts(): Promise<void> {
 		const defaultScripts = [
-			{
-				id: 'recent-notes-table',
-				name: 'Recent Notes Table',
-				description: 'Display recently modified notes in a table format',
-				script: `
-// Recent Notes Table View
-// Parameters: days (number, default: 7), limit (number, default: 10)
-
-const days = input?.days || 7;
-const limit = input?.limit || 10;
-
-const pages = dv.pages('')
-  .where(p => p.file.mtime >= dv.date('today') - dv.duration(\`\${days} days\`))
-  .sort(p => p.file.mtime, 'desc')
-  .limit(limit);
-
-dv.table(
-  ['Name', 'Modified', 'Size'],
-  pages.map(p => [
-    p.file.link,
-    p.file.mtime.toFormat('yyyy-MM-dd HH:mm'),
-    p.file.size + ' bytes'
-  ])
-);
-`,
-				parameters: [
-					{ name: 'days', type: 'number', required: false, default: 7, description: 'Number of days to look back' },
-					{ name: 'limit', type: 'number', required: false, default: 10, description: 'Maximum number of notes to show' }
-				]
-			},
-			{
-				id: 'task-progress-chart',
-				name: 'Task Progress Chart',
-				description: 'Visual chart showing task completion by project',
-				script: `
-// Task Progress Chart
-// Parameters: projectTag (string, default: 'project')
-
-const projectTag = input?.projectTag || 'project';
-
-const tasks = dv.pages(\`#\${projectTag}\`)
-  .file.tasks
-  .groupBy(t => t.path)
-  .map(group => ({
-    project: group.key.split('/').pop().replace('.md', ''),
-    completed: group.rows.filter(t => t.completed).length,
-    total: group.rows.length
-  }));
-
-// Create a simple progress visualization
-const container = dv.container;
-container.style.cssText = 'font-family: monospace;';
-
-tasks.forEach(project => {
-  const progress = project.total > 0 ? (project.completed / project.total) * 100 : 0;
-  const progressBar = '█'.repeat(Math.floor(progress / 5)) + '░'.repeat(20 - Math.floor(progress / 5));
-  
-  const div = container.createDiv();
-  div.innerHTML = \`
-    <div style="margin: 8px 0;">
-      <strong>\${project.project}</strong><br>
-      <code>\${progressBar}</code> \${progress.toFixed(1)}% (\${project.completed}/\${project.total})
-    </div>
-  \`;
-});
-`,
-				parameters: [
-					{ name: 'projectTag', type: 'string', required: false, default: 'project', description: 'Tag to identify project notes' }
-				]
-			}
-		] as const;
+			ViewResearchDirectionLiteratureReview,
+			ViewResearchDirectionTopic,
+			ViewResearchTopicReference,
+			ViewResearchTopicMyPapers,
+			ViewResearchTopicPapers
+		]
 
 		for (const script of defaultScripts) {
 			await this.createScript(script.id, script.name, script.script, {
@@ -263,54 +205,43 @@ tasks.forEach(project => {
 		return category ? allScripts.filter(s => s.category === category) : allScripts;
 	}
 
-	// Execute a script with parameters
-	async executeScript(
-		scriptId: string,
-		container: HTMLElement,
-		parameters: Record<string, any> = {},
-		context: any = {}
-	): Promise<void> {
+	async executeScript(scriptId: string, container: HTMLElement, parameters: Record<string, any> = {}): Promise<void> {
 		const script = this.getScript(scriptId);
 		if (!script) {
-			throw new Error(`Script '${scriptId}' not found`);
+			container.setText(`Error: Script '${scriptId}' not found`);
+			this.logger.error(`Script '${scriptId}' not found`);
+			return;
 		}
 
 		const dataviewApi = (this.app as any).plugins.plugins.dataview?.api;
 		if (!dataviewApi) {
-			throw new Error('Dataview plugin not found or not enabled');
+			container.setText(`Error: Dataview plugin not found or not enabled`);
+			this.logger.error(`Dataview plugin not found or not enabled`);
+			return;
 		}
 
-		// Prepare the execution context
-		const executionContext = {
-			dv: dataviewApi,
-			input: parameters,
-			container,
-			app: this.app,
-			...context
-		};
-
 		try {
-			// Get script content
 			let scriptContent = this.scriptCache.get(scriptId);
 			if (!scriptContent) {
 				const file = this.app.vault.getAbstractFileByPath(script.filePath) as TFile;
-				scriptContent = await this.app.vault.read(file);
-				this.scriptCache.set(scriptId, scriptContent);
+				if (file) {
+					scriptContent = await this.app.vault.read(file);
+					this.scriptCache.set(scriptId, scriptContent);
+				} else {
+					throw new Error(`Script file not found at path: ${script.filePath}`);
+				}
 			}
 
-			// Remove metadata comments for execution
-			const cleanScript = scriptContent.replace(/\/\*\*[\s\S]*?\*\/\s*/, '');
+			const cleanCode = scriptContent.replace(/\/\*\*[\s\S]*?\*\//, '').trim();
 
-			// Execute the script
-			const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-			const executor = new AsyncFunction('dv', 'input', 'container', 'app', cleanScript);
+			// The 'input' variable for parameters is not automatically available here.
+			// We need to inject it into the code that will be executed.
+			const codeWithParams = `const input = ${JSON.stringify(parameters)};\n${cleanCode}`;
 
-			await executor(
-				executionContext.dv,
-				executionContext.input,
-				executionContext.container,
-				executionContext.app
-			);
+			// --- THIS IS THE CORRECTED FUNCTION CALL ---
+			// The correct method on the Dataview API is 'executeJs'.
+			await dataviewApi.executeJs(codeWithParams, container, this, script.filePath);
+			// -----------------------------------------
 
 		} catch (error) {
 			this.logger.logError(`Error executing script '${scriptId}':`, error);

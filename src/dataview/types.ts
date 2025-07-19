@@ -1,4 +1,13 @@
 // types.ts - Define types for JS-based dataviews
+export interface IRawDataviewScript {
+	id: string;
+	name: string;
+	description?: string;
+	parameters?: IDataviewParameter[];
+	script: string; // The script content as a string
+}
+
+
 export interface IDataviewScript {
 	id: string;
 	name: string;
@@ -16,6 +25,7 @@ export interface IDataviewParameter {
 	required: boolean;
 	default?: any;
 	description?: string;
+	value?: any; //
 }
 
 export interface IDataviewExecution {

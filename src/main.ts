@@ -9,16 +9,16 @@ import { DEFAULT_SETTINGS } from "./config";
 import { WeeklyKanbanCommand } from "./task";
 import { ZettelkastenCommand } from "./dashboard";
 import { ResearchCommands } from "./research";
+import { DataviewJSManager } from "./dataview";
 
 
 export default class ZettelkastenPlugin extends Plugin {
 	private factory!: NoteFactory;
 	private zettelkastenCommand!: ZettelkastenCommand;
 	private integrationManager!: IntegrationManager;
+	private dataviewJSManager!: DataviewJSManager;
 	private logger = Logger.createLogger('ZettelkastenPlugin');
-
-	// @ts-ignore
-	settings: ZettelkastenSettings;
+	public settings!: ZettelkastenSettings;
 
 	async onload() {
 		this.logger.info('Zettelkasten Plugin loaded');
@@ -52,6 +52,15 @@ export default class ZettelkastenPlugin extends Plugin {
 		this.integrationManager = IntegrationManager.getInstance(this.app);
 		await this.integrationManager.initialize()
 
+		// load Zettelkasten-Dataview Manager
+		this.dataviewJSManager = new DataviewJSManager(this.app);
+		await this.dataviewJSManager.onload();
+		// Register markdown processor for custom syntax
+		this.registerMarkdownCodeBlockProcessor('dvjs',
+			(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
+		);
+
+
 		new Notice('Zettelkasten Plugin loaded with dashboard!');
 	}
 
@@ -77,7 +86,33 @@ export default class ZettelkastenPlugin extends Plugin {
 	onunload() {
 		console.log('Zettelkasten Plugin unloaded');
 	}
+
+	// In ZettelkastenPlugin
+	private async processDvjsBlock(source: string, el: HTMLElement, ctx: any) {
+
+		const lines = source.trim().split('\n');
+		const scriptId = lines[0]; // The ID is the whole content
+		if (!scriptId) return;
+
+		// Parse parameters from remaining lines
+		const params: any = {};
+		lines.slice(1).forEach(line => {
+			const [key, value] = line.split(/[=:]/).map(s => s.trim());
+			if (key && value) {
+				try {
+					// Try to parse as JSON for complex values
+					params[key] = JSON.parse(value);
+				} catch {
+					// Fallback to string
+					params[key] = value.replace(/^["']|["']$/g, ''); // Remove quotes
+				}
+			}
+		});
+		// We call executeScript, not executeCode
+		try {
+			await this.dataviewJSManager.executeScript(scriptId, el, params);
+		} catch (error) {
+			new Notice(`Error executing script ${scriptId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
 }
-
-
-
