@@ -8,6 +8,7 @@ import { ZettelkastenSettingTab } from './settings';
 import { DEFAULT_SETTINGS } from "./config";
 import { WeeklyKanbanCommand } from "./task";
 import { ZettelkastenCommand } from "./dashboard";
+import { ResearchCommands } from "./research";
 
 
 export default class ZettelkastenPlugin extends Plugin {
@@ -24,6 +25,7 @@ export default class ZettelkastenPlugin extends Plugin {
 
 		// Load Settings
 		await this.loadSettings();
+		await this.saveSettings()
 
 		this.app.workspace.onLayoutReady( async () => {
 			// Initialize factory
@@ -40,6 +42,10 @@ export default class ZettelkastenPlugin extends Plugin {
 				const weeklyKanbanCommand = new WeeklyKanbanCommand(this.app, this.settings, this.factory);
 				weeklyKanbanCommand.registerCommand(this);
 			}
+
+			// initialize Research Commands
+			const researchCommands = new ResearchCommands(this.app, this, this.factory);
+			researchCommands.registerCommands();
 		});
 
 		// load integration manager

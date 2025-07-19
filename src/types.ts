@@ -108,5 +108,7 @@ export interface ZettelkastenSettings {
 	naming: INamingPatterns
 	features: IFeatureFlags
 	debug: IDebugConfig;
+
+	ResearchDashboard: ISubFeature;
 }
 

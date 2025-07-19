@@ -68,7 +68,7 @@ export class Property {
 		updates = Utils.deepClone(updates);
 
 		const isTemplate = this.getPropertyValue("template") as boolean | undefined;
-		const isUpdateTemplate = updates.hasOwnProperty("template") && updates.template as boolean| undefined;
+		const isUpdateTemplate = Object.prototype.hasOwnProperty.call(updates, "template") && updates.template as boolean| undefined;
 
 
 		for (const key in updates) {
@@ -391,6 +391,11 @@ export abstract class BaseNote {
 	public getBody(): Body {
 		this.logger.debug("Get body of the note");
 		return this.body;
+	}
+
+	public setBody(body: Body): void {
+		this.logger.debug("Set body of the note");
+		this.body = body;
 	}
 
 	// 基础属性操作方法

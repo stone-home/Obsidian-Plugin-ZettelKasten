@@ -351,7 +351,7 @@ export class NoteFactory {
 			}
 			const isTemplateExist = await this.getTemplate(noteType, template.getTitle())
 			if (isTemplateExist === undefined) {
-				this.registerTemplate(noteType, template.getTitle(), template);
+				await this.registerTemplate(noteType, template.getTitle(), template);
 			}
 
 		}

@@ -122,7 +122,6 @@ export class GroupNoteCards extends Modal {
 					indexNote.addTag(selectedTag)
 					indexNote.addTag(`📍tagNode`);
 					indexNote.addAlias(`"#${selectedTag}"`)
-					console.error(indexNote)
 					const dataviewSectionName = "Index Notes";
 					indexNote.getBody().newSection(dataviewSectionName, 1);
 					indexNote.getBody().addContent(

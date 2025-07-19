@@ -49,7 +49,7 @@ export const FEATURES: IFeatureFlags = {
 		enabled: true,
 		description: 'Enable weekly kanban board for task management',
 		path: "kanban"
-	}
+	},
 } as const;
 
 
@@ -139,5 +139,12 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	naming: NAMING_PATTERNS,
 	features: FEATURES,
 	debug: DEBUG_CONFIG,
+
+	ResearchDashboard: {
+		enabled: true,
+		description: 'Enable research dashboard for managing literature and projects',
+		researchRootPath: "research",
+		zoteroPath: "zotero",
+	}
 }
 

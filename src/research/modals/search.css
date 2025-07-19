@@ -1,0 +1,39 @@
+/* --- General Search Modal Styling --- */
+.search-dashboard-modal .modal-content {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.search-dashboard-modal .setting-item-control {
+	width: 100%;
+}
+
+
+/* --- Filter Query with Toggle --- */
+.search-dashboard-modal .setting-item-control .toggle-container {
+	margin-left: 10px;
+}
+
+/* --- Results Box --- */
+.search-dashboard-modal .results-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.search-dashboard-modal .results-box {
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-secondary);
+	min-height: 200px;
+	border-radius: var(--radius-m);
+	padding: 12px;
+	overflow-y: auto; /* Add scroll if content overflows */
+}
+
+/* --- Action Buttons (Insert/Cancel) --- */
+.search-dashboard-modal .setting-item:last-child .setting-item-control {
+	display: flex;
+	justify-content: flex-end; /* Align buttons to the right */
+	gap: 10px;
+}
