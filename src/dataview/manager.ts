@@ -7,8 +7,12 @@ import {
 	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicReference,
-	ViewResearchTopicPapers
+	ViewResearchTopicPapers,
+	ViewResearchLiteratureMetadata,
+	ViewResearchLiteratureRelevantPapers,
+	ViewResearchLiteratureReferences
 } from "./views";
+import {Utils} from "../utils";
 
 
 export class DataviewJSManager extends Component {
@@ -33,10 +37,10 @@ export class DataviewJSManager extends Component {
 	// Initialize the scripts folder structure
 	private async initializeScriptsFolder(): Promise<void> {
 		const folder = this.app.vault.getAbstractFileByPath(this.scriptsFolder);
-		if (!folder) {
+		if (!folder){
 			await this.app.vault.createFolder(this.scriptsFolder);
-			await this.createDefaultScripts();
 		}
+		await this.createDefaultScripts();
 	}
 
 	// Create some default example scripts
@@ -46,7 +50,10 @@ export class DataviewJSManager extends Component {
 			ViewResearchDirectionTopic,
 			ViewResearchTopicReference,
 			ViewResearchTopicMyPapers,
-			ViewResearchTopicPapers
+			ViewResearchTopicPapers,
+			ViewResearchLiteratureReferences,
+			ViewResearchLiteratureMetadata,
+			ViewResearchLiteratureRelevantPapers
 		]
 
 		for (const script of defaultScripts) {
@@ -159,6 +166,17 @@ export class DataviewJSManager extends Component {
 		} = {}
 	): Promise<IDataviewScript> {
 		const filePath = `${this.scriptsFolder}/${id}.js`;
+		if (Utils.fileExists(this.app, filePath, false)) {
+			this.logger.info(`Script with ID '${id}' already exists at path: ${filePath}`);
+			await this.reloadScript(filePath);
+			const jsContent = this.getScript(id)
+			if (jsContent) {
+				return jsContent;
+			} else {
+				this.logger.error(`Failed to reload script with ID '${id}' at path: ${filePath}`);
+				throw new Error(`Script with ID '${id}' already exists and could not be reloaded.`);
+			}
+		}
 
 		// Generate metadata header
 		let header = `/**\n * @id ${id}\n * @name ${name}\n`;

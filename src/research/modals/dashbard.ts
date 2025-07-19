@@ -18,7 +18,10 @@ import {
 	ViewResearchDirectionLiteratureReview,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
-	ViewResearchTopicReference
+	ViewResearchTopicReference,
+	ViewResearchLiteratureMetadata,
+	ViewResearchLiteratureReferences,
+	ViewResearchLiteratureRelevantPapers
 } from "../../dataview";
 
 
@@ -28,12 +31,14 @@ export class ResearchDashboardModal extends Modal {
 	private plugin: ZettelkastenPlugin;
 	private factory: NoteFactory;
 	private logger = Logger.createLogger('ResearchDashboardModal');
+	private codeBlockType: string;
 
 	constructor(app: App, plugin: ZettelkastenPlugin, factory: NoteFactory) {
 		super(app);
 		this.plugin = plugin;
 		this.factory = factory;
 		this.modalEl.addClass('research-dashboard-modal');
+		this.codeBlockType = this.plugin.settings.ResearchDashboard.codeBlockType || 'zettelkasten';
 	}
 
 	async onOpen() {
@@ -91,16 +96,16 @@ export class ResearchDashboardModal extends Modal {
 			this.plugin.settings.ResearchDashboard.zoteroPath
 		)
 
-		const steps = [
+		const steps: IDashboardWorkflowInput[] = [
 			{
 				text: 'Literature Import',
 				icon: 'file-plus-2',
-				callback: () => {
+				callback: async () => {
 					LiteratureImportSearchModal.open();
 					this.close()
 				}},
-			{ text: 'Literature Review', icon: 'glasses' },
-			{ text: 'New Research', icon: 'lightbulb' }
+			{ text: 'Literature Review', icon: 'glasses', callback: async () => {}},
+			{ text: 'New Research', icon: 'lightbulb', callback: async () => {}}
 		];
 		this.createWorkflow(workflow, steps);
 	}
@@ -122,9 +127,9 @@ export class ResearchDashboardModal extends Modal {
 
 		const workflow = section.createDiv('workflow-steps');
 		const steps = [
-			{ text: 'Questions', icon: 'help-circle' },
-			{ text: 'Objective', icon: 'target' },
-			{ text: 'Steps', icon: 'list-ordered' }
+			{ text: 'Questions', icon: 'help-circle', callback: async () => {}},
+			{ text: 'Objective', icon: 'target', callback: async () => {}},
+			{ text: 'Steps', icon: 'list-ordered', callback: async () => {}},
 		];
 		this.createWorkflow(workflow, steps);
 	}
@@ -164,15 +169,16 @@ export class ResearchDashboardModal extends Modal {
 			directions: this.getResearchRootPath() + '/directions',
 			topics: this.getResearchRootPath() + '/topics',
 			papers: this.getResearchRootPath() + '/papers',
-			references: this.getResearchRootPath() + '/references'
+			references: this.getResearchRootPath() + '/references',
+			literatures: this.getResearchRootPath() + '/literatures',
 		}
 	}
 
-	private async importLiteraturePaper(selectedNote: ISearchResult | ISearchResult[]): Promise<void> {
-		if (!(Array.isArray(selectedNote))) {
-			selectedNote = [selectedNote];
+	private async importLiteraturePaper(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
+		if (!(Array.isArray(selectedNotes))) {
+			selectedNotes = [selectedNotes];
 		}
-		selectedNote.map(async (selectedNote: ISearchResult) => {
+		selectedNotes.map(async (selectedNote: ISearchResult) => {
 			this.logger.info(`Executing importLiteraturePaper for note: ${selectedNote.name} in path: ${selectedNote.path}`);
 			const zoteroItems = await this.loadZoteroFromFile(selectedNote.path)
 			if (!zoteroItems) {
@@ -181,13 +187,20 @@ export class ResearchDashboardModal extends Modal {
 				return;
 			}
 			// Create all directions' notes based on the tags
-			await this.createDirectionNote(selectedNote, zoteroItems)
+			let copiedSelectedNote = Utils.deepClone(selectedNote);
+			await this.createDirectionNote(copiedSelectedNote, zoteroItems)
 
 			// Create all directions' notes based on the tags
-			await this.createTopicNote(selectedNote, zoteroItems)
+			copiedSelectedNote = Utils.deepClone(selectedNote);
+			await this.createTopicNote(copiedSelectedNote, zoteroItems)
 
 			// Create all annotations' notes based on the tags
-			await this.createAnnotationNote(selectedNote, zoteroItems)
+			copiedSelectedNote = Utils.deepClone(selectedNote);
+			await this.createAnnotationNote(copiedSelectedNote, zoteroItems)
+
+			// Create the literature paper note
+			copiedSelectedNote = Utils.deepClone(selectedNote);
+			await this.createLiteraturePaperNote(copiedSelectedNote, zoteroItems)
 
 		})
 	}
@@ -198,6 +211,11 @@ export class ResearchDashboardModal extends Modal {
 
 	private formatTopicName(direction: string): string {
 		return `Topic - ${direction}`;
+	}
+
+	private formatLiteraturePaperName(paperName: string, year: string): string {
+		const safeFilename = paperName.replace(/[^a-zA-Z0-9_.\- ]/g, '_');
+		return `Summary - ${year} - ${safeFilename}`;
 	}
 
 	private async createDirectionNote(selectedNote: ISearchResult, zoteroItems: IZoteroNoteItems): Promise<void> {
@@ -223,15 +241,14 @@ export class ResearchDashboardModal extends Modal {
 			directionNote.setPath(directionPath);
 			if ((await directionNote.exist())) {
 				this.logger.warn(`Note with title "${directionName}" already exists in path "${directionPath}". Skipping creation.`);
-				new Notice(`Note with title "${directionName}" already exists in path "${directionPath}". Skipping creation.`);
 				return;
 			}
 			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
 			directionNote.addTag(["research/direction", "📍tagNode"])
 			directionNote.addAlias(`"#${direction.replace(zoteroKeyTagPath, "research").trim()}"`);
 			directionNote.setProperty("new", false)
-			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchDirectionTopic)], "Topics in Direction", 1);
-			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchDirectionLiteratureReview)], "Literature Reviews", 1);
+			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchDirectionTopic)], "Topics in Direction", 1);
+			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchDirectionLiteratureReview)], "Literature Reviews", 1);
 			// add the zotero note as a source note
 			const sourceNote = zoteroItems.note.getProperty("id") || zoteroItems.note.getProperty("citekey") || zoteroItems.note.getTitle() || undefined;
 			if (sourceNote) {
@@ -270,16 +287,15 @@ export class ResearchDashboardModal extends Modal {
 			topicNote.setPath(topicPath);
 			if ((await topicNote.exist())) {
 				this.logger.warn(`Note with title "${topicName}" already exists in path "${topicPath}". Skipping creation.`);
-				new Notice(`Note with title "${topicName}" already exists in path "${topicPath}". Skipping creation.`);
 				return;
 			}
 			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
 			topicNote.addTag(["research/topic", "📍tagNode"])
 			topicNote.setProperty("new", false)
 			topicNote.addAlias(`"#${topic.replace(zoteroKeyTagPath, "research").trim()}"`);
-			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicPapers)], "Papers", 1);
-			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicMyPapers)], "My Papers", 1);
-			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent('dvjs', ViewResearchTopicReference)], "References", 1);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicPapers)], "Papers", 1);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicMyPapers)], "My Papers", 1);
+			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicReference)], "References", 1);
 			topicNote.addBodyContent([], "Knowledges", 1);
 			topicNote.addBodyContent([], "Methods", 1);
 
@@ -308,10 +324,16 @@ export class ResearchDashboardModal extends Modal {
 			const annotationNote = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
 			annotationNote.setTitle(name);
 			annotationNote.setPath(this.getResearchPath().references);
-			annotationNote.setProperty("url", annotation.url)
-			annotationNote.addSourceNote(`[[${zoteroId}]]`)
-			annotationNote.addTag(annotation.tags)
-			annotationNote.addBodyContent([], "**🔗Source**", 4)
+			if ((await annotationNote.exist())) {
+				this.logger.info(`Note with title "${annotationNote.getTitle()}" already exists in path "${annotationNote.getPath()}". Skipping creation.`);
+				return;
+			}
+			annotationNote.setProperty("url", annotation.url);
+			annotationNote.setProperty("new", false);
+			annotationNote.addSourceNote(`[[${zoteroId}]]`);
+			annotationNote.addTag(annotation.tags);
+			annotationNote.addBodyContent([], "**🔗Source**", 4);
+			const displayName = annotation.content.filter((line => line.trim().length > 0)).join(". ")
 			annotationNote.addBodyContent(
 				[
 					"> [!INFO] Annotation Metadata",
@@ -321,9 +343,11 @@ export class ResearchDashboardModal extends Modal {
 					`> **Note Date**:: ${annotation.date}`,
 					`> **Bibliography**:: ${annotation.bibliography}`,
 					'',
+					`DisplayName:: ${displayName.length > 100 ? displayName.substring(0, 100) + '...' : displayName}`,
+					'',
 					...annotation.content
 				],
-				"Qoute",
+				"Quote",
 				1);
 			if (annotation.comments && annotation.comments.length > 0) {
 				annotationNote.addBodyContent(annotation.comments, "Comments", 1);
@@ -335,7 +359,58 @@ export class ResearchDashboardModal extends Modal {
 			await Promise.all(annotationPromises);
 		} catch (error) {
 			this.logger.error("An error occurred while processing annotation:", error);
-		}const topicTags = this.getKeyDirectionTag().topic.toLowerCase();
+		}
+	}
+
+	private async createLiteraturePaperNote(selectedNote: ISearchResult, zoteroItem: IZoteroNoteItems): Promise<void> {
+		const literatureNote = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+		literatureNote.setTitle(this.formatLiteraturePaperName(selectedNote.name, zoteroItem.note.getProperty("year") || ''));
+		literatureNote.setPath(this.getResearchPath().literatures)
+		if ((await literatureNote.exist())) {
+			this.logger.warn(`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`);
+			new Notice(`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`);
+			return;
+		}
+
+		const zoteroId = zoteroItem.note.getProperty("id") || zoteroItem.note.getProperty("citekey") || zoteroItem.note.getTitle() || undefined;
+		const noHashTags = selectedNote.tags.map((tag) => tag.replace(this.getKeyDirectionTag().zotero.toLowerCase(), "research").trim());
+		literatureNote.addTag(noHashTags)
+		literatureNote.setProperty("url", zoteroItem.note.getProperty("url") || '');
+		literatureNote.setProperty("shortName", "")
+		literatureNote.setProperty("year", zoteroItem.note.getProperty("date") || '');
+		literatureNote.setProperty("organisation", "")
+		literatureNote.setProperty("venus", "")
+		literatureNote.setProperty("star", false)
+		literatureNote.addSourceNote(`[[${zoteroId}]]`);
+		literatureNote.addTag([
+			"✍️writing/academic/literatureSummary",
+			"research",
+			"📍tagNode"
+		])
+		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureMetadata)], "Metadata", 4)
+		literatureNote.addBodyContent(
+			[
+				"🩻**topic**::",
+				"🧬**position**::",
+				"🔗**evidence**::",
+				"🫆**method**::",
+				"💊**TL;DR**::",
+				""
+			],
+			"👻Summary",
+			1
+		)
+		literatureNote.addBodyContent([], "⭐️Highlights", 1)
+		literatureNote.addBodyContent([], "📌Limitation", 1)
+		literatureNote.addBodyContent([], "💡Notes", 1)
+		literatureNote.addBodyContent([], "⭐️Highlights", 1)
+		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureRelevantPapers)], "🗃️Relevant Papers", 1)
+		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureReferences)], "🔖References", 1)
+		await literatureNote.save()
+
+		if (this.plugin.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+			await this.app.workspace.openLinkText(literatureNote.getTitle(), '', false, { state: { mode: 'read' } });
+		}
 	}
 
 	private async loadZoteroFromFile(filePath: string): Promise<IZoteroNoteItems> {
@@ -493,7 +568,7 @@ export class ResearchDashboardModal extends Modal {
 				const specificTagRegex = /#\S+/g;
 				if (line.match(specificTagRegex)) {
 					line.split('#').forEach(tag => {
-						tag = tag.replace("#", "").trim();
+						tag = tag.replace("#", "").replace(",", "").trim();
 						if (tag.length > 0 && !tag.includes(" ")) {
 							annotation.tags.push(tag);
 						}

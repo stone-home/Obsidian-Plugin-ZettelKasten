@@ -5,7 +5,10 @@ export {
 	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
-	ViewResearchTopicReference
+	ViewResearchTopicReference,
+	ViewResearchLiteratureRelevantPapers,
+	ViewResearchLiteratureReferences,
+	ViewResearchLiteratureMetadata
 } from "./views";
 import {IDataviewParameter, IDataviewScript, IRawDataviewScript} from "./types";
 

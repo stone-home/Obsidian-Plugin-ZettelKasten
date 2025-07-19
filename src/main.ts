@@ -46,19 +46,20 @@ export default class ZettelkastenPlugin extends Plugin {
 			// initialize Research Commands
 			const researchCommands = new ResearchCommands(this.app, this, this.factory);
 			researchCommands.registerCommands();
+
+			// load Zettelkasten-Dataview Manager
+			this.dataviewJSManager = new DataviewJSManager(this.app);
+			await this.dataviewJSManager.onload();
+			// Register markdown processor for custom syntax
+			this.registerMarkdownCodeBlockProcessor(this.settings.ResearchDashboard.codeBlockType,
+				(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
+			);
 		});
 
 		// load integration manager
 		this.integrationManager = IntegrationManager.getInstance(this.app);
 		await this.integrationManager.initialize()
 
-		// load Zettelkasten-Dataview Manager
-		this.dataviewJSManager = new DataviewJSManager(this.app);
-		await this.dataviewJSManager.onload();
-		// Register markdown processor for custom syntax
-		this.registerMarkdownCodeBlockProcessor('dvjs',
-			(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
-		);
 
 
 		new Notice('Zettelkasten Plugin loaded with dashboard!');

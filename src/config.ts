@@ -140,11 +140,13 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	features: FEATURES,
 	debug: DEBUG_CONFIG,
 
+	// Plugin - Research Dashboard settings
 	ResearchDashboard: {
 		enabled: true,
 		description: 'Enable research dashboard for managing literature and projects',
 		researchRootPath: "research",
 		zoteroPath: "zotero",
+		codeBlockType: "zettelkasten-research",
 	}
 }
 

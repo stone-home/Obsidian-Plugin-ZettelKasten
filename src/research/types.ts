@@ -44,6 +44,7 @@ export interface IResearchPath {
 	topics: string;
 	papers: string;
 	references: string;
+	literatures: string;
 }
 
 
