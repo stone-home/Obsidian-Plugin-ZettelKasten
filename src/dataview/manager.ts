@@ -223,7 +223,7 @@ export class DataviewJSManager extends Component {
 		return category ? allScripts.filter(s => s.category === category) : allScripts;
 	}
 
-	async executeScript(scriptId: string, container: HTMLElement, parameters: Record<string, any> = {}): Promise<void> {
+	async executeScript(scriptId: string, container: HTMLElement, parameters: Record<string, any> = {}, ctx?: any): Promise<void> {
 		const script = this.getScript(scriptId);
 		if (!script) {
 			container.setText(`Error: Script '${scriptId}' not found`);
@@ -258,7 +258,7 @@ export class DataviewJSManager extends Component {
 
 			// --- THIS IS THE CORRECTED FUNCTION CALL ---
 			// The correct method on the Dataview API is 'executeJs'.
-			await dataviewApi.executeJs(codeWithParams, container, this, script.filePath);
+			await dataviewApi.executeJs(codeWithParams, container, this, ctx? ctx.sourcePath: script.filePath);
 			// -----------------------------------------
 
 		} catch (error) {

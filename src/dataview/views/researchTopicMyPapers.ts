@@ -14,14 +14,31 @@ export const View: IRawDataviewScript = {
 		}
 	],
 	script: `
-// Recent Notes Table View
-// Parameters: days (number, default: 7), limit (number, default: 10)
-// Contents of scripts/recent-notes.js
-dv.table(["File", "Creation Date"],
-    dv.pages()
-        .sort(p => p.file.ctime, 'desc')
-        .limit(10)
-        .map(p => [p.file.link, p.file.ctime])
-);
+const currentPage =  dv.current()
+const directionTag = currentPage.aliases.find(a => a.includes("research/direction"))
+const pathParts = dv.current().file.folder.split("/")
+const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
+
+let tags = "#✍️writing/academic/literatureReview"
+let papers = dv.pages(\`"\${rootFolder}" and \${tags} and #🗂️project/PhD\`)
+
+let titles = ["Research Problem", "ID", "Status", "Raised By"]
+let contents = []
+
+papers.forEach(page => {
+    let literature = page.file.inlinks.filter(inlink => dv.page(inlink).file.etags.includes(tags))
+    let title = [
+        \`[[\${page.file.path}|\${page.shortName}]]\`,
+        page.id,
+        page?.status,
+        literature,
+    ]
+    contents.push(title)
+})
+
+dv.table(
+    titles,
+    contents
+)
 	`
 }

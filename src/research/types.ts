@@ -2,6 +2,7 @@ import {BaseDefault} from "../notes";
 
 export interface ISearchResult {
 	name: string;
+	basename: string;
 	path: string;
 	tags: string[];
 }
@@ -45,6 +46,7 @@ export interface IResearchPath {
 	papers: string;
 	references: string;
 	literatures: string;
+	reviews: string;
 }
 
 

@@ -15,9 +15,9 @@ import { DataviewJSManager } from "./dataview";
 export default class ZettelkastenPlugin extends Plugin {
 	private factory!: NoteFactory;
 	private zettelkastenCommand!: ZettelkastenCommand;
-	private integrationManager!: IntegrationManager;
-	private dataviewJSManager!: DataviewJSManager;
 	private logger = Logger.createLogger('ZettelkastenPlugin');
+	private dataviewJSManager!: DataviewJSManager;
+	public integrationManager!: IntegrationManager;
 	public settings!: ZettelkastenSettings;
 
 	async onload() {
@@ -111,7 +111,7 @@ export default class ZettelkastenPlugin extends Plugin {
 		});
 		// We call executeScript, not executeCode
 		try {
-			await this.dataviewJSManager.executeScript(scriptId, el, params);
+			await this.dataviewJSManager.executeScript(scriptId, el, params, ctx);
 		} catch (error) {
 			new Notice(`Error executing script ${scriptId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}

@@ -17,11 +17,22 @@ export const View: IRawDataviewScript = {
 // Recent Notes Table View
 // Parameters: days (number, default: 7), limit (number, default: 10)
 // Contents of scripts/recent-notes.js
-dv.table(["File", "Creation Date"],
-    dv.pages()
-        .sort(p => p.file.ctime, 'desc')
-        .limit(10)
-        .map(p => [p.file.link, p.file.ctime])
-);
+const currentPage =  dv.current()
+const topicTag = currentPage.aliases.find(a => a.includes("research/topic"))
+const pathParts = dv.current().file.folder.split("/")
+const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
+
+
+const papers = dv.pages(\`"\${rootFolder}/references"\`).filter(page => page.file.etags.some(tag => tag.includes(topicTag)))
+console.error(papers)
+
+dv.table(
+    ["Description", "Year", "Source"],
+    papers.map(paper => [
+        paper.DisplayName,
+        paper.year,
+        \`[[\${paper.file.path}|View]]\`
+    ])
+)
 	`
 }

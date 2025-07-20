@@ -88,23 +88,31 @@ export class ResearchDashboardModal extends Modal {
 		section.createEl('h3', { text: 'Exploration' });
 		const workflow = section.createDiv('workflow-steps');
 		// Define Callbacks for each step
-		const LiteratureImportSearchModal = new SearchDashboardModal(
-			this.app,
-			this.plugin,
-			this.factory,
-			(selectedNote) => this.importLiteraturePaper(selectedNote),
-			this.plugin.settings.ResearchDashboard.zoteroPath
-		)
 
 		const steps: IDashboardWorkflowInput[] = [
 			{
 				text: 'Literature Import',
 				icon: 'file-plus-2',
 				callback: async () => {
-					LiteratureImportSearchModal.open();
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) => this.exploreImportLiteraturePaper(selectedNote),
+						this.plugin.settings.ResearchDashboard.zoteroPath
+					).open()
 					this.close()
 				}},
-			{ text: 'Literature Review', icon: 'glasses', callback: async () => {}},
+			{ text: 'Literature Review', icon: 'glasses', callback: async () => {
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) => this.exploreCreateLiteratureReviewNote(selectedNote),
+						this.getResearchPath().topics
+					).open()
+					this.close()
+				}},
 			{ text: 'New Research', icon: 'lightbulb', callback: async () => {}}
 		];
 		this.createWorkflow(workflow, steps);
@@ -171,10 +179,11 @@ export class ResearchDashboardModal extends Modal {
 			papers: this.getResearchRootPath() + '/papers',
 			references: this.getResearchRootPath() + '/references',
 			literatures: this.getResearchRootPath() + '/literatures',
+			reviews: this.getResearchRootPath() + '/reviews',
 		}
 	}
 
-	private async importLiteraturePaper(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
+	private async exploreImportLiteraturePaper(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
 		if (!(Array.isArray(selectedNotes))) {
 			selectedNotes = [selectedNotes];
 		}
@@ -244,7 +253,7 @@ export class ResearchDashboardModal extends Modal {
 				return;
 			}
 			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
-			directionNote.addTag(["research/direction", "📍tagNode"])
+			directionNote.addTag(["📍tagNode", direction.replace(this.getKeyDirectionTag().zotero.toLowerCase(), "research")])
 			directionNote.addAlias(`"#${direction.replace(zoteroKeyTagPath, "research").trim()}"`);
 			directionNote.setProperty("new", false)
 			directionNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchDirectionTopic)], "Topics in Direction", 1);
@@ -290,7 +299,7 @@ export class ResearchDashboardModal extends Modal {
 				return;
 			}
 			const zoteroKeyTagPath = this.getKeyDirectionTag().zotero.toLowerCase();
-			topicNote.addTag(["research/topic", "📍tagNode"])
+			topicNote.addTag(["📍tagNode", topic.replace(this.getKeyDirectionTag().zotero.toLowerCase(), "research")])
 			topicNote.setProperty("new", false)
 			topicNote.addAlias(`"#${topic.replace(zoteroKeyTagPath, "research").trim()}"`);
 			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicPapers)], "Papers", 1);
@@ -373,13 +382,15 @@ export class ResearchDashboardModal extends Modal {
 		}
 
 		const zoteroId = zoteroItem.note.getProperty("id") || zoteroItem.note.getProperty("citekey") || zoteroItem.note.getTitle() || undefined;
-		const noHashTags = selectedNote.tags.map((tag) => tag.replace(this.getKeyDirectionTag().zotero.toLowerCase(), "research").trim());
-		literatureNote.addTag(noHashTags)
+		const tags = zoteroItem.note.getProperties().getTags().map((tag) => tag.replace(this.getKeyDirectionTag().zotero.replace("#", ""), "research"));
+		literatureNote.addTag(tags)
 		literatureNote.setProperty("url", zoteroItem.note.getProperty("url") || '');
 		literatureNote.setProperty("shortName", "")
 		literatureNote.setProperty("year", zoteroItem.note.getProperty("date") || '');
 		literatureNote.setProperty("organisation", "")
 		literatureNote.setProperty("venus", "")
+		literatureNote.setProperty("code", "")
+		literatureNote.setProperty("new", false)
 		literatureNote.setProperty("star", false)
 		literatureNote.addSourceNote(`[[${zoteroId}]]`);
 		literatureNote.addTag([
@@ -526,6 +537,45 @@ export class ResearchDashboardModal extends Modal {
 		return annotations
 	}
 
+	private async exploreCreateLiteratureReviewNote(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
+
+		if (!(Array.isArray(selectedNotes))) {
+			selectedNotes = [selectedNotes];
+		}
+		selectedNotes.map(async (selectedNote: ISearchResult) => {
+			const topicTag = selectedNote.tags
+				.filter(tag => tag.includes("research/topic"))
+
+			const noteName = await this.plugin.integrationManager.getTemplater().getPrompt("Enter the name of the Literature Review note:");
+			const note = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+			if (!noteName) {
+				this.logger.warn("Note Name cannot be empty.");
+				new Notice("Note name cannot be empty.");
+				return;
+			}
+			note.setTitle(`${Utils.generateDate()} - ${noteName}`)
+			note.setPath(this.getResearchPath().reviews);
+			if ((await note.exist())) {
+				this.logger.warn(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
+				new Notice(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
+				return;
+			}
+			note.addSourceNote(`[[${selectedNote.basename}]]`);
+			note.addTag("🗂️project/PhD")
+			note.addTag("✍️writing/academic/literatureReview")
+			note.addTag(topicTag)
+			note.addBodyContent([], "ℹTopic", 1)
+			note.addBodyContent([], "🫆Position", 1)
+			note.addBodyContent([
+				"| Paper | Column 1|",
+				"| :---: | :---: |",
+				"| sample 1| |",
+			], "🧩Evidence", 1)
+			note.addBodyContent([], "⭐Potential Solutions", 1)
+			await note.save()
+		})
+	}
+
 	private parseAnnotationSection(lines: string[], id: string): IAnnotationSection {
 		const annotation: IAnnotationSection = {
 			id: id,
@@ -593,7 +643,7 @@ export class ResearchDashboardModal extends Modal {
 		styleEl.textContent = `
             .research-dashboard-modal.modal {
                 width: 90%;
-                max-width: 500px;
+                max-width: 600px;
             }
             .research-dashboard-modal .modal-content {
                 display: flex;

@@ -174,10 +174,16 @@ export class SearchDashboardModal extends Modal {
 		}).map(note => {
 			const metadata = this.app.metadataCache.getFileCache(note);
 			const frontmatter = metadata!.frontmatter;
-			const tags: string[] = metadata?.tags ? metadata.tags.map(tag => tag.tag.toLowerCase()) : []
+			let tags: string[] = metadata?.tags ? metadata.tags.map(tag => tag.tag.toLowerCase()) : [] // Add tags from body
+			if (frontmatter) {
+				if (Array.isArray(frontmatter?.tags)) {
+					tags.push(...frontmatter.tags.map(tag => tag.toLowerCase())); // Add tags from frontmatter
+				}
+			}
 			const uniqueTags = Array.from(new Set(tags))
 			return {
 				name: frontmatter?.title || note.basename,
+				basename: note.basename,
 				path: note.path,
 				tags: uniqueTags
 			}
