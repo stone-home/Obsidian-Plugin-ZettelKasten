@@ -5,6 +5,7 @@ export interface IRawDataviewScript {
 	description?: string;
 	parameters?: IDataviewParameter[];
 	script: string; // The script content as a string
+	updateDate?: string; // Date when the script was last updated
 }
 
 

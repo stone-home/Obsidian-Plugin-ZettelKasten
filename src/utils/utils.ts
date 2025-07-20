@@ -256,8 +256,10 @@ export class Utils {
 		const unifiedTags = tag.map(t => {
 			// In this stage all special characters are removed except for alphanumeric, underscore, hyphen, and slash.
 			// hash shoube be removed to unify the tag format in post-processing
+			// Important: \uFE0F is the variation selector for emoji, which allows us to keep emojis in the tags.
+			// somehow, the \uFE0F is not belong to \p{S} in the regex, so we need to add it manually
 			if (keepEmoji) {
-				t = t.replace(/[^\p{L}\p{N}_/\-\s\p{S}]/gu, '');
+				t = t.replace(/[^\p{L}\p{N}_/\-\s\p{S}\uFE0F]/gu, '');
 			} else {
 				t = t.replace(/[^a-zA-Z0-9_/\-]/g, '');
 			}
@@ -275,11 +277,26 @@ export class Utils {
 				t = "#" + t; // Add # prefix if keepHash is true
 			}
 
-
-			return t;
+			return t.normalize("NFC");
 		}).filter(t => t.length > 0); // Filter out empty tags
 
 		Logger.debug(`Unified tags: [${tag.join(', ')}] -> [${unifiedTags.join(', ')}]`);
 		return Array.from(new Set(unifiedTags));
 	}
+
+	static getEmojiCodePoints(text: string): string[] {
+		const codePoints = [];
+		for (let i = 0; i < text.length; i++) {
+			const codePoint = text.codePointAt(i);
+			if (codePoint !== undefined) {
+				codePoints.push(`U+${codePoint.toString(16).toUpperCase()}`);
+				// If the character is part of a surrogate pair, advance 'i' to skip the second part
+				if (codePoint > 0xFFFF) {
+					i++;
+				}
+			}
+		}
+		return codePoints;
+	}
+
 }

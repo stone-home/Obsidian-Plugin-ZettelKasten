@@ -65,10 +65,22 @@ export class Project {
 					break;
 				}
 			}
+			// other type is the default type if no other type is found
+			// Therefore, check if the Input file is a main file of project
+			if (taskType === ProjectFileType.otherType && targetSource.path.startsWith(this.property.entrypoint)) {
+				taskType = ProjectFileType.questionType;
+			}
 		}
 		if (!taskType) {
 			this.logger.error("Task type is not defined. Please provide a valid task type.");
 			return;
+		}
+
+		let subtaskTags: string[] = []
+		if (taskType === ProjectFileType.questionType) {
+			subtaskTags = this.property.exclusiveTags[ProjectFileType.objectiveType];
+		} else if (taskType === ProjectFileType.objectiveType) {
+			subtaskTags = this.property.exclusiveTags[ProjectFileType.stepType];
 		}
 
 		const name = await this.plugin.integrationManager.getTemplater().getPrompt(`Please enter file name of ${taskType}:`);
@@ -79,20 +91,35 @@ export class Project {
 		const note = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
 		note.setTitle(`${Utils.generateDate()} - ${name}`);
 		note.setPath(this.getTargetFolderPath(taskType));
+		if (taskType === ProjectFileType.objectiveType) {
+			note.setProperty("StartDate", Utils.generateDate())
+			note.setProperty("EndDate", "")
+			note.setProperty("Section", "inbox")
+			note.setProperty("Dependencies", "")
+			note.setProperty("Length", 1)
+		}
 		note.addTag([
 			"🗂️project/PhD",
 			...this.property.exclusiveTags[taskType],
 		])
 		note.addBodyContent([], `${taskType[0].toUpperCase()}${taskType.slice(1, taskType.length)}`, 1)
-		note.addBodyContent(
-			[DataviewHelper.getCodeBlockContent(
-				this.plugin.settings.DataviewConfig.codeBlockType,
-				ViewProjectCustomTable,
-				[])
-			],
-			`🛤️Research Path - ${taskType}`,
-			1
-		)
+		if (taskType !== ProjectFileType.stepType) {
+			note.addBodyContent(
+				[DataviewHelper.getCodeBlockContent(
+					this.plugin.settings.DataviewConfig.codeBlockType,
+					ViewProjectCustomTable,
+					[
+						{ name: "inlink", type: "boolean", required: true, value: true},
+						{ name: "outlink", type: "boolean", required: true, value: false},
+						{ name: "header", type: "array", required: true, value: [`🐾${taskType} Tasks`, "Active"]},
+						{ name: "property", type: "array", required: true, value: ["file.link","new"]},
+						{ name: "tags", type: "array", required: true, value: subtaskTags},
+					])
+				],
+				`🛤️Research Path - ${taskType}`,
+				1
+			)
+		}
 		sources.forEach((source) => {
 			note.addSourceNote(`[[${source.basename}]]`);
 		})

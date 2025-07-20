@@ -2,9 +2,10 @@ import { IRawDataviewScript } from "../types";
 
 
 export const View: IRawDataviewScript = {
-	id: "research-gantt-chart-view",
-	name: "Project Gantt Chart",
+	id: "research-custom-table-view",
+	name: "Project Custom Table",
 	description: "A view to display entire projects' timelines and tasks in a Gantt chart format.",
+	updateDate: "2025-07-20",
 	parameters: [
 		{
 			name: "tags",
@@ -44,13 +45,12 @@ export const View: IRawDataviewScript = {
 		}
 	],
 	script: `
-let tagArray = input.tags
+	let tagArray = input.tags || []
 let property = input.property
 let header = input.header
-let inlink = input.inlink
-let outlink = input.outlink
+let inlink = input.inlink || false
+let outlink = input.outlink || false
 let query = input.query? input.query : undefined
-
 let pages = []
 let current_note = dv.current()
 
@@ -69,16 +69,14 @@ if (outlink){
 if (!inlink && !outlink){
     pages.push(...dv.pages(query))
 }
-
-for (let tag of tagArray){
-    pages = pages.filter(page => {
-        if (page === undefined || page == null){
-            return false
+pages = pages.filter(page => {
+    return tagArray.every(tag => {
+        if (!tag.startsWith("#")) {
+            tag = \`#\${tag}\`
         }
         return page.file.etags.includes(tag)
     })
-}
-
+})
 let tableList = pages.map(page => {
     let resultList = []
     for(let item of property){
@@ -91,8 +89,6 @@ let tableList = pages.map(page => {
     }
     return resultList
 })
-
 dv.table(header, tableList)
-
 	`
 }

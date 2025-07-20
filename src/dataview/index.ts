@@ -19,7 +19,7 @@ export class DataviewHelper {
 	static getCodeBlockContent(blockName: string, view: IRawDataviewScript|IDataviewScript, parameters?: IDataviewParameter[]): string {
 		parameters = parameters || [];
 		const params = parameters.map(param => {
-			return `${param.name}: ${param.value}`;
+			return `${param.name}: ${JSON.stringify(param.value)}`;
 		})
 		return [
 			"```" + blockName,

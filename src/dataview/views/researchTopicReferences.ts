@@ -24,7 +24,6 @@ const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
 
 
 const papers = dv.pages(\`"\${rootFolder}/references"\`).filter(page => page.file.etags.some(tag => tag.includes(topicTag)))
-console.error(papers)
 
 dv.table(
     ["Description", "Year", "Source"],

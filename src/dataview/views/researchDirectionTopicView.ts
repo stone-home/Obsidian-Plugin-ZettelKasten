@@ -23,8 +23,6 @@ const pathParts = dv.current().file.folder.split("/")
 const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
 
 
-console.error(rootFolder)
-console.error(currentPage)
 const pages = dv.pages(directionTag)
 const titles = [
     "Topic",

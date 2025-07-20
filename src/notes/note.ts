@@ -432,7 +432,8 @@ export abstract class BaseNote {
 
 	public addTag(tag: string | string[]): void {
 		const tags = Array.isArray(tag) ? tag : [tag];
-		this.properties.addTag(Utils.unifiedTagFormat(tags, false, true));
+		const unifiedTags = Utils.unifiedTagFormat(tags, false, true);
+		this.properties.addTag(unifiedTags);
 	}
 
 	public addAlias(alias: string | string[]): void {
