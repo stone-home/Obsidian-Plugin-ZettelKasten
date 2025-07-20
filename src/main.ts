@@ -48,12 +48,14 @@ export default class ZettelkastenPlugin extends Plugin {
 			researchCommands.registerCommands();
 
 			// load Zettelkasten-Dataview Manager
-			this.dataviewJSManager = new DataviewJSManager(this.app);
-			await this.dataviewJSManager.onload();
-			// Register markdown processor for custom syntax
-			this.registerMarkdownCodeBlockProcessor(this.settings.ResearchDashboard.codeBlockType,
-				(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
-			);
+			if( this.settings.DataviewConfig.enabled) {
+				this.dataviewJSManager = new DataviewJSManager(this.app, this.settings.DataviewConfig.path);
+				await this.dataviewJSManager.onload();
+				// Register markdown processor for custom syntax
+				this.registerMarkdownCodeBlockProcessor(this.settings.ResearchDashboard.codeBlockType,
+					(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
+				);
+			}
 		});
 
 		// load integration manager

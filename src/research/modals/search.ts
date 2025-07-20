@@ -3,6 +3,7 @@ import { App, Modal } from 'obsidian';
 import { NoteFactory } from "../../notes";
 import { ISearchResult, ISearchConfirmCallback } from "../types";
 import { Logger } from "../../logger";
+import { Utils } from "../../utils";
 
 
 export class SearchDashboardModal extends Modal {
@@ -185,7 +186,7 @@ export class SearchDashboardModal extends Modal {
 					tags.push(...frontmatter.tags.map(tag => tag.toLowerCase())); // Add tags from frontmatter
 				}
 			}
-			const uniqueTags = Array.from(new Set(tags))
+			const uniqueTags = Utils.unifiedTagFormat(tags, true, true)
 			return {
 				name: frontmatter?.title || note.basename,
 				basename: note.basename,

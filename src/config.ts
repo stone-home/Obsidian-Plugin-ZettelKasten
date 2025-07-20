@@ -121,17 +121,6 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	autoOpenNewNote: true,
 	showUpgradeNotifications: true,
 
-	// Template settings
-	includeTimestamp: true,
-	defaultTags: [],
-	templateDirPath: "templates",
-	default: {
-		[NoteType.FLEETING]: "default",
-		[NoteType.LITERATURE]: "default",
-		[NoteType.PERMANENT]: "default",
-		[NoteType.ATOMIC]: "default",
-	},
-
 	// Initialize createNoteOptions with the default values from config.ts
 	createNoteOptions: [],
 
@@ -139,6 +128,18 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	naming: NAMING_PATTERNS,
 	features: FEATURES,
 	debug: DEBUG_CONFIG,
+
+	// Template settings
+	includeTimestamp: true,
+	defaultTags: [],
+	templateDirPath: ".zettelkasten/templates",
+	default: {
+		[NoteType.FLEETING]: "default",
+		[NoteType.LITERATURE]: "default",
+		[NoteType.PERMANENT]: "default",
+		[NoteType.ATOMIC]: "default",
+	},
+
 
 	// Plugin - Research Dashboard settings
 	ResearchDashboard: {
@@ -150,6 +151,7 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 
 	DataviewConfig: {
 		enabled: true,
+		path: ".zettelkasten/dataview",
 		description: 'Enable Dataview integration for advanced querying and visualization',
 		codeBlockType: "zettelkasten-research",
 	}

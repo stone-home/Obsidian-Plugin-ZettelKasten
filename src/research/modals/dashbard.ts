@@ -54,6 +54,9 @@ export class ResearchDashboardModal extends Modal {
 	}
 
 	private async loadAllProjects(): Promise<void> {
+		if (!Utils.fileExists(this.app, this.getResearchPath().papers, true)) {
+			await this.app.vault.createFolder(this.getResearchPath().papers);
+		}
 		const filesAndFolders = await this.app.vault.adapter.list(this.getResearchPath().papers);
 		if (filesAndFolders.folders.length === 0) {
 			this.logger.info(`No Projects found in path: ${this.getResearchPath().papers}`);
@@ -563,7 +566,6 @@ export class ResearchDashboardModal extends Modal {
 		if (!file) {
 			throw new Error(`File not found at path: ${filePath}`);
 		}
-
 
 		// create a new note based on the file's frontmatter type
 		const cache = this.app.metadataCache.getFileCache(file);

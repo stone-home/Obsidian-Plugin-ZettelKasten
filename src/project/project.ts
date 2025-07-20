@@ -71,7 +71,7 @@ export class Project {
 			return;
 		}
 
-		const name = await this.plugin.integrationManager.getTemplater().getPrompt("Please enter the question:");
+		const name = await this.plugin.integrationManager.getTemplater().getPrompt(`Please enter file name of ${taskType}:`);
 		if (!name) {
 			this.logger.error("Question note's name is an empty string. Please set a valid name.");
 			return;
@@ -97,6 +97,10 @@ export class Project {
 			note.addSourceNote(`[[${source.basename}]]`);
 		})
 		await note.save()
+
+		if (this.plugin.settings.features.AUTO_OPEN_CREATED_NOTES) {
+			await this.app.workspace.openLinkText(note.getTitle(), '', false, { state: { mode: 'source' } });
+		}
 	}
 
 	public async createProject(sources: ISearchResult|ISearchResult[]): Promise<void> {
@@ -138,6 +142,10 @@ export class Project {
 			}
 		);
 		await reformedNote.save();
+
+		if (this.plugin.settings.features.AUTO_OPEN_CREATED_NOTES) {
+			await this.app.workspace.openLinkText(reformedNote.getTitle(), '', false, { state: { mode: 'source' } });
+		}
 	}
 
 

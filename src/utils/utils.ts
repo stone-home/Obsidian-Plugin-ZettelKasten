@@ -247,4 +247,39 @@ export class Utils {
 			return false;
 		}
 	}
+
+	static unifiedTagFormat(tag: string[], keepHash: boolean = true, keepEmoji: boolean = true): string[] {
+		if (!tag || tag.length === 0) {
+			return [];
+		}
+
+		const unifiedTags = tag.map(t => {
+			// In this stage all special characters are removed except for alphanumeric, underscore, hyphen, and slash.
+			// hash shoube be removed to unify the tag format in post-processing
+			if (keepEmoji) {
+				t = t.replace(/[^\p{L}\p{N}_/\-\s\p{S}]/gu, '');
+			} else {
+				t = t.replace(/[^a-zA-Z0-9_/\-]/g, '');
+			}
+			// Ensure the first character should be non-hash
+			// removing hash aims to unify the tag format in post-processing
+			if (t.startsWith("#")) {
+				t = t.slice(1); // Remove leading #
+			}
+
+			if (t.endsWith("/")) {
+				t = t.slice(0, -1); // Remove trailing slash
+			}
+
+			if (keepHash) {
+				t = "#" + t; // Add # prefix if keepHash is true
+			}
+
+
+			return t;
+		}).filter(t => t.length > 0); // Filter out empty tags
+
+		Logger.debug(`Unified tags: [${tag.join(', ')}] -> [${unifiedTags.join(', ')}]`);
+		return Array.from(new Set(unifiedTags));
+	}
 }

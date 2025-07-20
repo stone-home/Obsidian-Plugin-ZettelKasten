@@ -18,6 +18,10 @@ export class ResearchCommands {
 
 	// Register all commands
 	registerCommands() {
+		if (!this.plugin.settings.DataviewConfig.enabled) {
+			new Notice(`Dataview is not enabled. Please enable it in the settings to use Research Commands.`, 5000);
+			throw new Error("Dataview is not enabled. Please enable it in the settings to use Research Commands.");
+		}
 		// Dashboard Commands
 		this.registerDashboardCommands();
 	}
