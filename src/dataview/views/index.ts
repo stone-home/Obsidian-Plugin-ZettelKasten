@@ -13,3 +13,8 @@ export { View as ViewResearchLiteratureMetadata } from "./researchLiteratureMeta
 export { View as ViewResearchLiteratureReferences } from "./researchLiteratureReferences"
 export { View as ViewResearchLiteratureRelevantPapers } from "./researchLiteratureRelevantPapers"
 
+
+// General Views
+export { View as ViewProjectGanttChart } from "./projectGanttChart"
+export { View as ViewProjectCustomTable } from "./projectCustomTableView"
+

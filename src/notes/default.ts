@@ -49,8 +49,3 @@ export class PermanentDefaultTemplate extends BaseTemplate {
 		return _body;
 	}
 }
-
-
-
-
-

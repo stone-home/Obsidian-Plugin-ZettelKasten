@@ -17,6 +17,7 @@ export class SearchDashboardModal extends Modal {
 	private logger = Logger.createLogger("Research-SearchDashboardModal");
 	private callback: ISearchConfirmCallback;
 	private selectedResult: ISearchResult | null = null;
+	private searchTitle = 'Search Dashboard';
 
 
 	constructor(
@@ -25,12 +26,16 @@ export class SearchDashboardModal extends Modal {
 		factory: NoteFactory,
 		callback: ISearchConfirmCallback,
 		targetDir?: string,
+		searchTitle?: string
 	) {
 		super(app);
 		this.plugin = plugin;
 		this.factory = factory;
 		this.callback = callback;
 		this.targetDirectory = targetDir || this.plugin.settings.ResearchDashboard.researchRootPath; // Default to vault root if not provided
+		if (searchTitle) {
+			this.searchTitle = searchTitle;
+		}
 
 	}
 
@@ -40,7 +45,7 @@ export class SearchDashboardModal extends Modal {
 		contentEl.empty();
 
 		// Set modal title
-		contentEl.createEl('h2', { text: 'Search Dashboard' });
+		contentEl.createEl('h2', { text: this.searchTitle });
 
 		// Render search container
 		this.renderSearchContainer(contentEl);

@@ -146,6 +146,11 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 		description: 'Enable research dashboard for managing literature and projects',
 		researchRootPath: "research",
 		zoteroPath: "zotero",
+	},
+
+	DataviewConfig: {
+		enabled: true,
+		description: 'Enable Dataview integration for advanced querying and visualization',
 		codeBlockType: "zettelkasten-research",
 	}
 }

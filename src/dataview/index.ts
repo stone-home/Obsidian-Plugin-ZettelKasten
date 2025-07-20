@@ -8,7 +8,9 @@ export {
 	ViewResearchTopicReference,
 	ViewResearchLiteratureRelevantPapers,
 	ViewResearchLiteratureReferences,
-	ViewResearchLiteratureMetadata
+	ViewResearchLiteratureMetadata,
+	ViewProjectCustomTable,
+	ViewProjectGanttChart
 } from "./views";
 import {IDataviewParameter, IDataviewScript, IRawDataviewScript} from "./types";
 

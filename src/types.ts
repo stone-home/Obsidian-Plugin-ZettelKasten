@@ -110,5 +110,6 @@ export interface ZettelkastenSettings {
 	debug: IDebugConfig;
 
 	ResearchDashboard: ISubFeature;
+	DataviewConfig: ISubFeature
 }
 

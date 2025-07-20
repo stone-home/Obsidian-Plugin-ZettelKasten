@@ -10,7 +10,9 @@ import {
 	ViewResearchTopicPapers,
 	ViewResearchLiteratureMetadata,
 	ViewResearchLiteratureRelevantPapers,
-	ViewResearchLiteratureReferences
+	ViewResearchLiteratureReferences,
+	ViewProjectGanttChart,
+	ViewProjectCustomTable
 } from "./views";
 import {Utils} from "../utils";
 
@@ -53,7 +55,9 @@ export class DataviewJSManager extends Component {
 			ViewResearchTopicPapers,
 			ViewResearchLiteratureReferences,
 			ViewResearchLiteratureMetadata,
-			ViewResearchLiteratureRelevantPapers
+			ViewResearchLiteratureRelevantPapers,
+			ViewProjectGanttChart,
+			ViewProjectCustomTable
 		]
 
 		for (const script of defaultScripts) {

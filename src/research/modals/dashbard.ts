@@ -14,20 +14,19 @@ import {Logger} from "../../logger";
 import {Utils} from "../../utils";
 import {
 	DataviewHelper,
-	ViewResearchDirectionTopic,
 	ViewResearchDirectionLiteratureReview,
+	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
 	ViewResearchTopicReference,
-	ViewResearchLiteratureMetadata,
-	ViewResearchLiteratureReferences,
-	ViewResearchLiteratureRelevantPapers
 } from "../../dataview";
+import {Project, ProjectConfig, projectReformResearchNote} from "../../project";
+import {ProjectFileType} from "../../project/config";
 
 
 export class ResearchDashboardModal extends Modal {
-	private selectedProject: string = '';
-	private projects: string[] = ['Quantum Computing Research', 'AI in Healthcare', 'Decentralized Finance Trends'];
+	private selectedProject: Project |undefined = undefined;
+	private projects: Record<string, Project> = {};
 	private plugin: ZettelkastenPlugin;
 	private factory: NoteFactory;
 	private logger = Logger.createLogger('ResearchDashboardModal');
@@ -38,10 +37,11 @@ export class ResearchDashboardModal extends Modal {
 		this.plugin = plugin;
 		this.factory = factory;
 		this.modalEl.addClass('research-dashboard-modal');
-		this.codeBlockType = this.plugin.settings.ResearchDashboard.codeBlockType || 'zettelkasten';
+		this.codeBlockType = this.plugin.settings.DataviewConfig.codeBlockType || 'zettelkasten';
 	}
 
 	async onOpen() {
+		await this.loadAllProjects()
 		const { contentEl } = this;
 		contentEl.empty();
 
@@ -51,6 +51,22 @@ export class ResearchDashboardModal extends Modal {
 		this.renderExploration(contentEl);
 		this.renderCreating(contentEl);
 		this.addStyles();
+	}
+
+	private async loadAllProjects(): Promise<void> {
+		const filesAndFolders = await this.app.vault.adapter.list(this.getResearchPath().papers);
+		if (filesAndFolders.folders.length === 0) {
+			this.logger.info(`No Projects found in path: ${this.getResearchPath().papers}`);
+		}
+		const regex = /^\d{4}-\d{2}-\d{2}\s*-\s*(.*)$/;
+		filesAndFolders.folders.forEach((folder) => {
+			const folderName = folder.split('/').pop()?.trim() || '';
+			const nameMatch = folderName.match(regex);
+			if (nameMatch) {
+				const projectName = nameMatch[1].trim();
+				this.projects[projectName] = this.createProjectEntity(projectName);
+			}
+		})
 	}
 
 	/**
@@ -99,7 +115,8 @@ export class ResearchDashboardModal extends Modal {
 						this.plugin,
 						this.factory,
 						(selectedNote) => this.exploreImportLiteraturePaper(selectedNote),
-						this.plugin.settings.ResearchDashboard.zoteroPath
+						this.plugin.settings.ResearchDashboard.zoteroPath,
+						"Zotero Literature Search",
 					).open()
 					this.close()
 				}},
@@ -109,11 +126,30 @@ export class ResearchDashboardModal extends Modal {
 						this.plugin,
 						this.factory,
 						(selectedNote) => this.exploreCreateLiteratureReviewNote(selectedNote),
-						this.getResearchPath().topics
+						this.getResearchPath().topics,
+						"Create Literature Review from A Topic",
 					).open()
 					this.close()
 				}},
-			{ text: 'New Research', icon: 'lightbulb', callback: async () => {}}
+			{ text: 'New Research', icon: 'lightbulb', callback: async () => {
+					const projectName = await this.plugin.integrationManager.getTemplater().getPrompt("Enter a short project name (max 20 words):");
+					if (!projectName) {
+						this.logger.error("Project name cannot be empty.");
+						new Notice("Project name cannot be empty.");
+						return;
+					}
+					const newProject = this.createProjectEntity(projectName);
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) => newProject.createProject(selectedNote),
+						this.getResearchPath().reviews,
+						"Create New Research Project",
+					).open()
+					this.projects[projectName] = newProject;
+					this.close()
+				}}
 		];
 		this.createWorkflow(workflow, steps);
 	}
@@ -129,17 +165,84 @@ export class ResearchDashboardModal extends Modal {
 			.setDesc('Choose the project you are currently working on.')
 			.addDropdown(dropdown => {
 				dropdown.addOption('', 'Select a project...');
-				this.projects.forEach(project => dropdown.addOption(project, project));
-				dropdown.onChange(value => { this.selectedProject = value; });
+				Object.keys(this.projects).forEach((key) => dropdown.addOption(key, key))
+				if (this.selectedProject) {
+					dropdown.setValue(this.selectedProject.getBaseName())
+				} else {
+					dropdown.setValue('')
+				}
+
+				dropdown.onChange(async value => {
+					if (value === '') {
+						// If "Select a project..." is chosen, clear the selected project
+						this.selectedProject = undefined;
+					} else {
+						// Otherwise, set the selected project based on the chosen key
+						this.selectedProject = this.projects[value];
+					}
+					await this.onOpen()
+				});
 			});
 
-		const workflow = section.createDiv('workflow-steps');
-		const steps = [
-			{ text: 'Questions', icon: 'help-circle', callback: async () => {}},
-			{ text: 'Objective', icon: 'target', callback: async () => {}},
-			{ text: 'Steps', icon: 'list-ordered', callback: async () => {}},
-		];
-		this.createWorkflow(workflow, steps);
+		if (this.selectedProject) {
+			const workflow = section.createDiv('workflow-steps');
+			const steps = [
+				{ text: 'Questions', icon: 'help-circle', callback: async () => {
+						if (!this.selectedProject) {
+							new Notice("Please select a project first.");
+							return;
+						}
+						const projectName = this.selectedProject.getProjectName();
+						const mainFileName = this.selectedProject.projectNameToFileName(projectName)
+						await this.selectedProject.createSubtaskProject(
+							{
+								name: mainFileName,
+								basename: mainFileName,
+								path: this.getResearchPath().papers + '/' + mainFileName,
+								tags: []
+							},
+							ProjectFileType.questionType
+						)
+						this.close()
+					}},
+				{ text: 'Objective', icon: 'target', callback: async () => {
+						const targetProject = this.selectedProject;
+						if (!targetProject) {
+							this.logger.error("Select a project first.");
+							new Notice("Please select a project first.");
+							return;
+						}
+						new SearchDashboardModal(
+							this.app,
+							this.plugin,
+							this.factory,
+							(selectedNote) => targetProject.createSubtaskProject(selectedNote),
+							targetProject.getTargetFolderPath(ProjectFileType.questionType),
+							`Create Objective for ${targetProject.getBaseName()}`,
+						).open()
+						this.close()
+					}},
+				{ text: 'Steps', icon: 'list-ordered', callback: async () => {
+						const targetProject = this.selectedProject;
+						if (!targetProject) {
+							this.logger.error("Select a project first.");
+							new Notice("Please select a project first.");
+							return;
+						}
+						new SearchDashboardModal(
+							this.app,
+							this.plugin,
+							this.factory,
+							(selectedNote) => targetProject.createSubtaskProject(selectedNote),
+							targetProject.getTargetFolderPath(ProjectFileType.objectiveType),
+							`Create Steps for ${targetProject.getBaseName()}`,
+						).open()
+						this.close()
+					}},
+			];
+			this.createWorkflow(workflow, steps);
+		}
+
 	}
 
 	private createWorkflow(container: HTMLElement, steps: IDashboardWorkflowInput[]) {
@@ -176,11 +279,28 @@ export class ResearchDashboardModal extends Modal {
 		return {
 			directions: this.getResearchRootPath() + '/directions',
 			topics: this.getResearchRootPath() + '/topics',
-			papers: this.getResearchRootPath() + '/papers',
 			references: this.getResearchRootPath() + '/references',
 			literatures: this.getResearchRootPath() + '/literatures',
 			reviews: this.getResearchRootPath() + '/reviews',
+			papers: this.getResearchRootPath() + '/papers',
 		}
+	}
+
+	private formatProjectName(project: string): string {
+		return `${Utils.generateDate()} - ${project}`;
+	}
+
+	private formatDirectionName(direction: string): string {
+		return `Direction - ${direction}`;
+	}
+
+	private formatTopicName(direction: string): string {
+		return `Topic - ${direction}`;
+	}
+
+	private formatLiteraturePaperName(paperName: string, year: string): string {
+		const safeFilename = paperName.replace(/[^a-zA-Z0-9_.\- ]/g, '_');
+		return `Summary - ${year} - ${safeFilename}`;
 	}
 
 	private async exploreImportLiteraturePaper(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
@@ -214,17 +334,43 @@ export class ResearchDashboardModal extends Modal {
 		})
 	}
 
-	private formatDirectionName(direction: string): string {
-		return `Direction - ${direction}`;
-	}
+	private async exploreCreateLiteratureReviewNote(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
 
-	private formatTopicName(direction: string): string {
-		return `Topic - ${direction}`;
-	}
+		if (!(Array.isArray(selectedNotes))) {
+			selectedNotes = [selectedNotes];
+		}
+		selectedNotes.map(async (selectedNote: ISearchResult) => {
+			const topicTag = selectedNote.tags
+				.filter(tag => tag.includes("research/topic"))
 
-	private formatLiteraturePaperName(paperName: string, year: string): string {
-		const safeFilename = paperName.replace(/[^a-zA-Z0-9_.\- ]/g, '_');
-		return `Summary - ${year} - ${safeFilename}`;
+			const noteName = await this.plugin.integrationManager.getTemplater().getPrompt("Enter the name of the Literature Review note:");
+			const note = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
+			if (!noteName) {
+				this.logger.warn("Note Name cannot be empty.");
+				new Notice("Note name cannot be empty.");
+				return;
+			}
+			note.setTitle(`${Utils.generateDate()} - ${noteName}`)
+			note.setPath(this.getResearchPath().reviews);
+			if ((await note.exist())) {
+				this.logger.warn(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
+				new Notice(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
+				return;
+			}
+			note.addSourceNote(`[[${selectedNote.basename}]]`);
+			note.addTag("🗂️project/PhD")
+			note.addTag("✍️writing/academic/literatureReview")
+			note.addTag(topicTag)
+			note.addBodyContent([], "ℹTopic", 1)
+			note.addBodyContent([], "🫆Position", 1)
+			note.addBodyContent([
+				"| Paper | Column 1|",
+				"| :---: | :---: |",
+				"| sample 1| |",
+			], "🧩Evidence", 1)
+			note.addBodyContent([], "⭐Potential Solutions", 1)
+			await note.save()
+		})
 	}
 
 	private async createDirectionNote(selectedNote: ISearchResult, zoteroItems: IZoteroNoteItems): Promise<void> {
@@ -380,48 +526,36 @@ export class ResearchDashboardModal extends Modal {
 			new Notice(`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`);
 			return;
 		}
-
 		const zoteroId = zoteroItem.note.getProperty("id") || zoteroItem.note.getProperty("citekey") || zoteroItem.note.getTitle() || undefined;
 		const tags = zoteroItem.note.getProperties().getTags().map((tag) => tag.replace(this.getKeyDirectionTag().zotero.replace("#", ""), "research"));
-		literatureNote.addTag(tags)
-		literatureNote.setProperty("url", zoteroItem.note.getProperty("url") || '');
-		literatureNote.setProperty("shortName", "")
-		literatureNote.setProperty("year", zoteroItem.note.getProperty("date") || '');
-		literatureNote.setProperty("organisation", "")
-		literatureNote.setProperty("venus", "")
-		literatureNote.setProperty("code", "")
-		literatureNote.setProperty("new", false)
-		literatureNote.setProperty("star", false)
-		literatureNote.addSourceNote(`[[${zoteroId}]]`);
-		literatureNote.addTag([
-			"✍️writing/academic/literatureSummary",
-			"research",
-			"📍tagNode"
-		])
-		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureMetadata)], "Metadata", 4)
-		literatureNote.addBodyContent(
-			[
-				"🩻**topic**::",
-				"🧬**position**::",
-				"🔗**evidence**::",
-				"🫆**method**::",
-				"💊**TL;DR**::",
-				""
-			],
-			"👻Summary",
-			1
-		)
-		literatureNote.addBodyContent([], "⭐️Highlights", 1)
-		literatureNote.addBodyContent([], "📌Limitation", 1)
-		literatureNote.addBodyContent([], "💡Notes", 1)
-		literatureNote.addBodyContent([], "⭐️Highlights", 1)
-		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureRelevantPapers)], "🗃️Relevant Papers", 1)
-		literatureNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchLiteratureReferences)], "🔖References", 1)
-		await literatureNote.save()
+		const reformedNote = projectReformResearchNote(
+			literatureNote,
+			{
+				codeblockKey: this.codeBlockType,
+				ongoingProject: false,
+				sourceNote: [zoteroId],
+				url: zoteroItem.note.getProperty("url") || '',
+				year: zoteroItem.note.getProperty("date") || '',
+				eTags: [...tags]
+			})
 
+		await reformedNote.save()
 		if (this.plugin.settings?.features.AUTO_OPEN_CREATED_NOTES) {
 			await this.app.workspace.openLinkText(literatureNote.getTitle(), '', false, { state: { mode: 'read' } });
 		}
+	}
+
+	private createProjectEntity(name: string): Project {
+		// Ensure that ProjectConfig must be copied before use to prevent mutation of the original config
+		let config = Utils.deepClone(ProjectConfig);
+		config.entrypoint = this.getResearchPath().papers + '/' + this.formatProjectName(name);
+		config.basename = name
+		return new Project(
+			this.app,
+			this.plugin,
+			this.factory,
+			config
+		)
 	}
 
 	private async loadZoteroFromFile(filePath: string): Promise<IZoteroNoteItems> {
@@ -537,44 +671,7 @@ export class ResearchDashboardModal extends Modal {
 		return annotations
 	}
 
-	private async exploreCreateLiteratureReviewNote(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
 
-		if (!(Array.isArray(selectedNotes))) {
-			selectedNotes = [selectedNotes];
-		}
-		selectedNotes.map(async (selectedNote: ISearchResult) => {
-			const topicTag = selectedNote.tags
-				.filter(tag => tag.includes("research/topic"))
-
-			const noteName = await this.plugin.integrationManager.getTemplater().getPrompt("Enter the name of the Literature Review note:");
-			const note = this.factory.createNote(NoteType.LITERATURE) as BaseDefault;
-			if (!noteName) {
-				this.logger.warn("Note Name cannot be empty.");
-				new Notice("Note name cannot be empty.");
-				return;
-			}
-			note.setTitle(`${Utils.generateDate()} - ${noteName}`)
-			note.setPath(this.getResearchPath().reviews);
-			if ((await note.exist())) {
-				this.logger.warn(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
-				new Notice(`Note with title "${note.getTitle()}" already exists in path "${note.getPath()}". Skipping creation.`);
-				return;
-			}
-			note.addSourceNote(`[[${selectedNote.basename}]]`);
-			note.addTag("🗂️project/PhD")
-			note.addTag("✍️writing/academic/literatureReview")
-			note.addTag(topicTag)
-			note.addBodyContent([], "ℹTopic", 1)
-			note.addBodyContent([], "🫆Position", 1)
-			note.addBodyContent([
-				"| Paper | Column 1|",
-				"| :---: | :---: |",
-				"| sample 1| |",
-			], "🧩Evidence", 1)
-			note.addBodyContent([], "⭐Potential Solutions", 1)
-			await note.save()
-		})
-	}
 
 	private parseAnnotationSection(lines: string[], id: string): IAnnotationSection {
 		const annotation: IAnnotationSection = {
