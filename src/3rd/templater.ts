@@ -18,8 +18,8 @@ export class TemplaterIntegration {
 	public async initialize(): Promise<boolean> {
 		try {
 			// Check if Templater plugin is installed and enabled
-			// @ts-ignore
 			this.templaterPlugin =
+				// @ts-ignore
 				this.app.plugins.plugins["templater-obsidian"];
 
 			if (!this.templaterPlugin) {
