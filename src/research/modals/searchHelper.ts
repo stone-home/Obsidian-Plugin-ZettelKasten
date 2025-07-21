@@ -1,9 +1,8 @@
 import { App } from "obsidian";
 import { NoteFactory } from "../../notes";
-import { SearchDashboardModal } from './search';
-import { AbsSearchHandler } from './searchHandlers';
+import { SearchDashboardModal } from "./search";
+import { AbsSearchHandler } from "./searchHandlers";
 import ZettelkastenPlugin from "../../main";
-
 
 export class SearchHelper {
 	private app: App;
@@ -20,7 +19,7 @@ export class SearchHelper {
 		handler: AbsSearchHandler,
 		targetDir?: string,
 		searchTitle?: string,
-		searchTags?: string[]
+		searchTags?: string[],
 	): Promise<void> {
 		const searchModal = new SearchDashboardModal(
 			this.app,
@@ -29,11 +28,8 @@ export class SearchHelper {
 			(searchQuery) => handler.process(searchQuery),
 			targetDir,
 			searchTitle,
-			searchTags
-		)
-		searchModal.open()
+			searchTags,
+		);
+		searchModal.open();
 	}
-
-
-
 }

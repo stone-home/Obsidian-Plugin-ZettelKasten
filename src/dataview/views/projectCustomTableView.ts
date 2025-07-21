@@ -1,48 +1,54 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-custom-table-view",
 	name: "Project Custom Table",
-	description: "A view to display entire projects' timelines and tasks in a Gantt chart format.",
+	description:
+		"A view to display entire projects' timelines and tasks in a Gantt chart format.",
 	updateDate: "2025-07-20",
 	parameters: [
 		{
 			name: "tags",
 			type: "array",
 			required: true,
-			description: "An array of tags to filter the notes by. The notes must have at least one of these tags."
+			description:
+				"An array of tags to filter the notes by. The notes must have at least one of these tags.",
 		},
 		{
 			name: "property",
 			type: "array",
 			required: true,
-			description: "An array of properties to display in the table. Each property should be a string representing a field in the note."
+			description:
+				"An array of properties to display in the table. Each property should be a string representing a field in the note.",
 		},
 		{
 			name: "header",
 			type: "array",
 			required: true,
-			description: "An array of headers for the table. The length of this array should match the length of the property array."
+			description:
+				"An array of headers for the table. The length of this array should match the length of the property array.",
 		},
 		{
 			name: "inlink",
 			type: "boolean",
 			required: false,
-			description: "If true, include notes that link to the current note."
+			description:
+				"If true, include notes that link to the current note.",
 		},
 		{
 			name: "outlink",
 			type: "boolean",
 			required: false,
-			description: "If true, include notes that the current note links to."
+			description:
+				"If true, include notes that the current note links to.",
 		},
 		{
 			name: "query",
 			type: "string",
 			required: false,
-			description: "A Dataview query to filter the notes. If not provided, all notes will be included."
-		}
+			description:
+				"A Dataview query to filter the notes. If not provided, all notes will be included.",
+		},
 	],
 	script: `
 	let tagArray = input.tags || []
@@ -90,5 +96,5 @@ let tableList = pages.map(page => {
     return resultList
 })
 dv.table(header, tableList)
-	`
-}
+	`,
+};

@@ -9,22 +9,24 @@ export {
 	ViewResearchLiteratureMetadata,
 	ViewProjectCustomTable,
 	ViewProjectGanttChart,
-	ViewProjectReference
+	ViewProjectReference,
 } from "./views";
-import {IDataviewParameter, IDataviewScript, IRawDataviewScript} from "./types";
-
+import {
+	IDataviewParameter,
+	IDataviewScript,
+	IRawDataviewScript,
+} from "./types";
 
 export class DataviewHelper {
-	static getCodeBlockContent(blockName: string, view: IRawDataviewScript|IDataviewScript, parameters?: IDataviewParameter[]): string {
+	static getCodeBlockContent(
+		blockName: string,
+		view: IRawDataviewScript | IDataviewScript,
+		parameters?: IDataviewParameter[],
+	): string {
 		parameters = parameters || [];
-		const params = parameters.map(param => {
+		const params = parameters.map((param) => {
 			return `${param.name}: ${JSON.stringify(param.value)}`;
-		})
-		return [
-			"```" + blockName,
-			view.id,
-			...params,
-			"```",
-		].join("\n")
+		});
+		return ["```" + blockName, view.id, ...params, "```"].join("\n");
 	}
 }

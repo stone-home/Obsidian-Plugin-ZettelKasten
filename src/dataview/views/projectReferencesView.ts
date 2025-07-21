@@ -1,10 +1,10 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "project-reference-manager-view",
 	name: "Project Reference Manager",
-	description: "A view to display literature references related to the cureent paper.",
+	description:
+		"A view to display literature references related to the cureent paper.",
 	parameters: [],
 	script: `
 const currentPage =  dv.current()
@@ -27,5 +27,5 @@ dv.table(
         p.year
     ])
 )
-	`
-}
+	`,
+};

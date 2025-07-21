@@ -1,17 +1,17 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-topic-papers",
 	name: "Research Topic Papers",
-	description: "A view to display papers related to a specific research topic.",
+	description:
+		"A view to display papers related to a specific research topic.",
 	parameters: [
 		{
 			name: "direction",
 			type: "string",
 			required: true,
-			description: "The research direction to filter topics by."
-		}
+			description: "The research direction to filter topics by.",
+		},
 	],
 	script: `
 // Recent Notes Table View
@@ -59,5 +59,5 @@ dv.table(
             ]
         })
 );
-	`
-}
+	`,
+};

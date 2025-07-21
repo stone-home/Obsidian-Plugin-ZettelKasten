@@ -8,7 +8,6 @@ export interface IRawDataviewScript {
 	updateDate?: string; // Date when the script was last updated
 }
 
-
 export interface IDataviewScript {
 	id: string;
 	name: string;
@@ -22,7 +21,7 @@ export interface IDataviewScript {
 
 export interface IDataviewParameter {
 	name: string;
-	type: 'string' | 'number' | 'boolean' | 'date' | 'array';
+	type: "string" | "number" | "boolean" | "date" | "array";
 	required: boolean;
 	default?: any;
 	description?: string;

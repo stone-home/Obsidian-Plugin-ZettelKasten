@@ -1,1 +1,1 @@
-export { WeeklyKanbanCommand } from './command';
+export { WeeklyKanbanCommand } from "./command";

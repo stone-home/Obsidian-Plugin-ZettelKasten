@@ -1,17 +1,17 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-direction-literature-review-view",
 	name: "Research Direction Literature Review View",
-	description: "A view to display literature reviews organized by research direction.",
+	description:
+		"A view to display literature reviews organized by research direction.",
 	parameters: [
 		{
 			name: "direction",
 			type: "string",
 			required: true,
-			description: "The research direction to filter topics by."
-		}
+			description: "The research direction to filter topics by.",
+		},
 	],
 	script: `
 const currentPage =  dv.current()
@@ -40,5 +40,5 @@ dv.table(
     titles,
     contents
 )
-	`
-}
+	`,
+};

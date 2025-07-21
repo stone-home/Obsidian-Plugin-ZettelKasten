@@ -1,11 +1,11 @@
-import {IBodySection} from "../notes";
+import { IBodySection } from "../notes";
 
 export interface IProjectSubfolderPaths {
-	[key: string]: string
+	[key: string]: string;
 }
 
 export interface IProjectExclusiveTags {
-	[key: string]: string[]
+	[key: string]: string[];
 }
 
 export interface IProjectData {
@@ -15,14 +15,11 @@ export interface IProjectData {
 	exclusiveTags: IProjectExclusiveTags;
 }
 
-
 export interface IReformNoteProperties {
-	codeblockKey: string,
-	ongoingProject: boolean,
-	sourceNotes?: string[],
-	eTags?: string[],
-	eSection?: IBodySection[],
-	[key: string]: any
+	codeblockKey: string;
+	ongoingProject: boolean;
+	sourceNotes?: string[];
+	eTags?: string[];
+	eSection?: IBodySection[];
+	[key: string]: any;
 }
-
-

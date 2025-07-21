@@ -30,14 +30,20 @@ export class DataviewScriptBuilder {
 		return this;
 	}
 
-	parameter(name: string, type: IDataviewParameter['type'], required = false, defaultValue?: any, description?: string): this {
+	parameter(
+		name: string,
+		type: IDataviewParameter["type"],
+		required = false,
+		defaultValue?: any,
+		description?: string,
+	): this {
 		if (!this.script.parameters) this.script.parameters = [];
 		this.script.parameters.push({
 			name,
 			type,
 			required,
 			default: defaultValue,
-			description
+			description,
 		});
 		return this;
 	}
@@ -54,7 +60,7 @@ export class DataviewScriptBuilder {
 
 	async build(): Promise<IDataviewScript> {
 		if (!this.script.id || !this.script.name || !this.script.content) {
-			throw new Error('Script must have id, name, and content');
+			throw new Error("Script must have id, name, and content");
 		}
 
 		return await this.manager.createScript(
@@ -65,8 +71,8 @@ export class DataviewScriptBuilder {
 				description: this.script.description,
 				category: this.script.category,
 				parameters: this.script.parameters,
-				tags: this.script.tags
-			}
+				tags: this.script.tags,
+			},
 		);
 	}
 }

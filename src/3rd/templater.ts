@@ -1,10 +1,10 @@
 // src/integrations/templater.ts
-import { App } from 'obsidian';
-import { Logger } from '../logger';
+import { App } from "obsidian";
+import { Logger } from "../logger";
 
 export class TemplaterIntegration {
 	private app: App;
-	private logger = Logger.createLogger('TemplaterIntegration');
+	private logger = Logger.createLogger("TemplaterIntegration");
 	private templaterPlugin: any = null;
 
 	constructor(app: App) {
@@ -19,23 +19,25 @@ export class TemplaterIntegration {
 		try {
 			// Check if Templater plugin is installed and enabled
 			// @ts-ignore
-			this.templaterPlugin = this.app.plugins.plugins['templater-obsidian'];
+			this.templaterPlugin =
+				this.app.plugins.plugins["templater-obsidian"];
 
 			if (!this.templaterPlugin) {
-				this.logger.warn('Templater plugin is not installed');
+				this.logger.warn("Templater plugin is not installed");
 				return false;
 			}
 
 			if (!this.templaterPlugin._loaded) {
-				this.logger.warn('Templater plugin is not enabled');
+				this.logger.warn("Templater plugin is not enabled");
 				return false;
 			}
 
-			this.logger.info('Templater integration initialized successfully');
+			this.logger.info("Templater integration initialized successfully");
 			return true;
-
 		} catch (error) {
-			this.logger.error(`Failed to initialize Templater integration: ${error}`);
+			this.logger.error(
+				`Failed to initialize Templater integration: ${error}`,
+			);
 			return false;
 		}
 	}
@@ -54,24 +56,33 @@ export class TemplaterIntegration {
 	 */
 	private getTemplaterModule(moduleName: string): any {
 		if (!this.templaterPlugin) {
-			this.logger.error('Templater plugin not available');
+			this.logger.error("Templater plugin not available");
 			return null;
 		}
 
 		try {
-			const modules = this.templaterPlugin.templater.functions_generator.internal_functions.modules_array;
-			const module = modules.find((module: any) => module.name === moduleName);
+			const modules =
+				this.templaterPlugin.templater.functions_generator
+					.internal_functions.modules_array;
+			const module = modules.find(
+				(module: any) => module.name === moduleName,
+			);
 
 			if (!module || !module.static_object) {
-				this.logger.error(`Templater module '${moduleName}' not found or not available`);
+				this.logger.error(
+					`Templater module '${moduleName}' not found or not available`,
+				);
 				return null;
 			}
 
-			this.logger.debug(`Successfully retrieved Templater module: ${moduleName}`);
+			this.logger.debug(
+				`Successfully retrieved Templater module: ${moduleName}`,
+			);
 			return module.static_object;
-
 		} catch (error) {
-			this.logger.error(`Failed to get Templater module '${moduleName}': ${error}`);
+			this.logger.error(
+				`Failed to get Templater module '${moduleName}': ${error}`,
+			);
 			return null;
 		}
 	}
@@ -79,23 +90,27 @@ export class TemplaterIntegration {
 	/**
 	 * Get prompt from user using Templater's system prompt
 	 */
-	public async getPrompt(promptText: string, defaultValue?: string): Promise<string | null> {
+	public async getPrompt(
+		promptText: string,
+		defaultValue?: string,
+	): Promise<string | null> {
 		if (!this.isAvailable()) {
-			this.logger.error('Templater is not available');
+			this.logger.error("Templater is not available");
 			return null;
 		}
 
 		try {
-			const systemModule = this.getTemplaterModule('system');
+			const systemModule = this.getTemplaterModule("system");
 			if (!systemModule || !systemModule.prompt) {
-				this.logger.error('Templater system.prompt not available');
+				this.logger.error("Templater system.prompt not available");
 				return null;
 			}
 
 			const result = await systemModule.prompt(promptText, defaultValue);
-			this.logger.info(`Got prompt result: ${result ? 'success' : 'cancelled'}`);
+			this.logger.info(
+				`Got prompt result: ${result ? "success" : "cancelled"}`,
+			);
 			return result;
-
 		} catch (error) {
 			this.logger.error(`Failed to get prompt: ${error}`);
 			return null;
@@ -109,30 +124,33 @@ export class TemplaterIntegration {
 		textItems: string[] | ((item: any) => string),
 		items: any[],
 		throwOnCancel: boolean = false,
-		placeholder?: string
+		placeholder?: string,
 	): Promise<any> {
 		if (!this.isAvailable()) {
-			this.logger.error('Templater is not available');
+			this.logger.error("Templater is not available");
 			return null;
 		}
 
 		try {
-			const systemModule = this.getTemplaterModule('system');
+			const systemModule = this.getTemplaterModule("system");
 			if (!systemModule || !systemModule.suggester) {
-				this.logger.error('Templater system.suggester not available');
+				this.logger.error("Templater system.suggester not available");
 				return null;
 			}
 
-			const result = await systemModule.suggester(textItems, items, throwOnCancel, placeholder);
-			this.logger.info(`Got suggester result: ${result ? 'success' : 'cancelled'}`);
+			const result = await systemModule.suggester(
+				textItems,
+				items,
+				throwOnCancel,
+				placeholder,
+			);
+			this.logger.info(
+				`Got suggester result: ${result ? "success" : "cancelled"}`,
+			);
 			return result;
-
 		} catch (error) {
 			this.logger.error(`Failed to get suggestion: ${error}`);
 			return null;
 		}
 	}
 }
-
-
-

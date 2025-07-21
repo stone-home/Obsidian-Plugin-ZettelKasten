@@ -1,23 +1,25 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-gantt-chart-view",
 	name: "Project Gantt Chart",
-	description: "A view to display entire projects' timelines and tasks in a Gantt chart format.",
+	description:
+		"A view to display entire projects' timelines and tasks in a Gantt chart format.",
 	parameters: [
 		{
 			name: "dirPath",
 			type: "string",
 			required: true,
-			description: "The directory path to the project files, which you want to visualize in the Gantt chart."
+			description:
+				"The directory path to the project files, which you want to visualize in the Gantt chart.",
 		},
 		{
 			name: "name",
 			type: "string",
 			required: true,
-			description: "Name of the Gantt Chart, which will be displayed as the title of the chart."
-		}
+			description:
+				"Name of the Gantt Chart, which will be displayed as the title of the chart.",
+		},
 	],
 	script: `
 const fs = require("fs");
@@ -311,5 +313,5 @@ try {
 } catch (error) {
     console.error("Initialization failed: " + error.message);
 }
-	`
-}
+	`,
+};

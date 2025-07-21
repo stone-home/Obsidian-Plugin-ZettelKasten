@@ -1,4 +1,4 @@
-import {BaseDefault} from "../notes";
+import { BaseDefault } from "../notes";
 
 export interface ISearchResult {
 	name: string;
@@ -7,18 +7,15 @@ export interface ISearchResult {
 	tags: string[];
 }
 
-
 export interface IDashboardWorkflowInput {
 	text: string;
 	icon: string;
 	callback: () => Promise<void>;
 }
 
-
 export interface ISearchConfirmCallback {
-	(selectedNote: ISearchResult| ISearchResult[]): Promise<void>;
+	(selectedNote: ISearchResult | ISearchResult[]): Promise<void>;
 }
-
 
 export interface IAnnotationSection {
 	id: string;
@@ -27,12 +24,11 @@ export interface IAnnotationSection {
 	year?: string;
 	page?: string;
 	date?: string;
-	content: string[],
+	content: string[];
 	comments?: string[];
 	bibliography?: string;
 	url?: string;
 }
-
 
 export interface IDashboardKeyTags {
 	zotero: string;
@@ -49,8 +45,7 @@ export interface IResearchPath {
 	reviews: string;
 }
 
-
 export interface IZoteroNoteItems {
-	note: BaseDefault,
-	annotations: IAnnotationSection[],
+	note: BaseDefault;
+	annotations: IAnnotationSection[];
 }

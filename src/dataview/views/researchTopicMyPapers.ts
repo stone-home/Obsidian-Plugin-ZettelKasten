@@ -1,6 +1,5 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-topic-my-papers",
 	name: "My Papers by Research Topic",
@@ -10,8 +9,8 @@ export const View: IRawDataviewScript = {
 			name: "direction",
 			type: "string",
 			required: true,
-			description: "The research direction to filter topics by."
-		}
+			description: "The research direction to filter topics by.",
+		},
 	],
 	script: `
 const currentPage =  dv.current()
@@ -40,5 +39,5 @@ dv.table(
     titles,
     contents
 )
-	`
-}
+	`,
+};

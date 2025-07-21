@@ -1,1 +1,1 @@
-export { IntegrationManager } from './manager';
+export { IntegrationManager } from "./manager";

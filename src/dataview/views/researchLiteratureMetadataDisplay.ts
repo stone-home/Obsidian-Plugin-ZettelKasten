@@ -1,6 +1,5 @@
 import { IRawDataviewScript } from "../types";
 
-
 export const View: IRawDataviewScript = {
 	id: "research-literature-metadata-display",
 	name: "The metadata of this paper",
@@ -10,37 +9,43 @@ export const View: IRawDataviewScript = {
 			name: "current",
 			type: "boolean",
 			required: false,
-			description: "Whether to display the metadata of the current paper."
+			description:
+				"Whether to display the metadata of the current paper.",
 		},
 		{
 			name: "query",
 			type: "string",
 			required: false,
-			description: "Used to filter the papers to be displayed. If not provided, all papers will be displayed."
+			description:
+				"Used to filter the papers to be displayed. If not provided, all papers will be displayed.",
 		},
 		{
 			name: "groupEnable",
 			type: "boolean",
 			required: false,
-			description: "Group the papers by a specific key, groupKey. If not provided, no grouping will be applied."
+			description:
+				"Group the papers by a specific key, groupKey. If not provided, no grouping will be applied.",
 		},
 		{
 			name: "groupKey",
 			type: "string",
 			required: false,
-			description: "The key is used to group the papers. If not provided, no grouping will be applied."
+			description:
+				"The key is used to group the papers. If not provided, no grouping will be applied.",
 		},
 		{
 			name: "isDetailed",
 			type: "boolean",
 			required: false,
-			description: "Statistics view will show all papers' links rather than the count of papers. Default is false."
+			description:
+				"Statistics view will show all papers' links rather than the count of papers. Default is false.",
 		},
 		{
 			name: "statisticOnly",
 			type: "boolean",
 			required: false,
-			description: "Whether to only show the statistics view. Default is true.",
+			description:
+				"Whether to only show the statistics view. Default is true.",
 		},
 	],
 	script: `
@@ -282,5 +287,5 @@ if (!statisticOnly) {
         processedPages: processedPages
     });
 }
-	`
-}
+	`,
+};

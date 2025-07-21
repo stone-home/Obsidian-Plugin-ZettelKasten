@@ -4,7 +4,7 @@
 
 The Zettelkasten Manager is a plugin for Obsidian that provides a comprehensive suite of tools for managing your Zettelkasten notes. It helps you create, organize, and link your notes with ease, following the principles of the Zettelkasten method.
 
------
+---
 
 ## Features
 
@@ -14,7 +14,7 @@ The Zettelkasten Manager is a plugin for Obsidian that provides a comprehensive 
 - **Customizable Settings**: Configure note creation options, default paths, and other settings to tailor the plugin to your workflow.
 - **Templater Integration**: The plugin integrates with the Templater plugin for more advanced templating capabilities.
 
------
+---
 
 ## How to Use
 
@@ -23,7 +23,7 @@ The Zettelkasten Manager is a plugin for Obsidian that provides a comprehensive 
 3.  **Manage Active Notes**: The dashboard displays information about the currently active note, including its title, type, and tags. You can also move the active note to a different folder from the dashboard.
 4.  **Upgrade Notes**: The dashboard allows you to upgrade a note from one type to another (e.g., from a Fleeting note to a Literature note).
 
------
+---
 
 ## Installation
 
@@ -43,7 +43,7 @@ The Zettelkasten Manager is a plugin for Obsidian that provides a comprehensive 
 4.  Reload Obsidian.
 5.  Go to **Settings** \> **Community plugins**, and enable "Zettelkasten Manager".
 
------
+---
 
 ## Configuration
 
@@ -64,13 +64,13 @@ The Zettelkasten Manager offers a variety of settings to customize your experien
 
 - **Configure Note Types**: Customize the available note types and their default properties when creating a new note. You can add, remove, and edit note creation options.
 
------
+---
 
 ## Dependencies
 
 - [winston](https://www.npmjs.com/package/winston)
 
------
+---
 
 ## License
 

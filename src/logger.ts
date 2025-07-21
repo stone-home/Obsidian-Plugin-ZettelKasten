@@ -1,5 +1,4 @@
-import { Notice } from 'obsidian';
-
+import { Notice } from "obsidian";
 
 // src/logger.ts - 适配 Obsidian 环境的简化 Logger
 export class Logger {
@@ -19,20 +18,20 @@ export class Logger {
 		if (error instanceof Error) {
 			return error.message;
 		}
-		if (typeof error === 'string') {
+		if (typeof error === "string") {
 			return error;
 		}
-		if (error && typeof error === 'object') {
+		if (error && typeof error === "object") {
 			// Try to get message property from object
 			const errorObj = error as any;
-			if (errorObj.message && typeof errorObj.message === 'string') {
+			if (errorObj.message && typeof errorObj.message === "string") {
 				return errorObj.message;
 			}
 			// Try to stringify the object
 			try {
 				return JSON.stringify(error);
 			} catch {
-				return '[Object object]';
+				return "[Object object]";
 			}
 		}
 		return String(error);
@@ -43,7 +42,10 @@ export class Logger {
 	 * @param error - The error object of unknown type
 	 * @returns {object} Error details with message and stack
 	 */
-	public static getErrorDetails(error: unknown): { message: string; stack?: string } {
+	public static getErrorDetails(error: unknown): {
+		message: string;
+		stack?: string;
+	} {
 		const message = Logger.getErrorMessage(error);
 
 		if (error instanceof Error && error.stack) {
@@ -57,7 +59,10 @@ export class Logger {
 	public static error(message: string, error?: unknown): void {
 		if (error !== undefined) {
 			const errorDetails = Logger.getErrorDetails(error);
-			console.error(`[Zettelkasten] ERROR: ${message} - ${errorDetails.message}`, errorDetails.stack ? { stack: errorDetails.stack } : {});
+			console.error(
+				`[Zettelkasten] ERROR: ${message} - ${errorDetails.message}`,
+				errorDetails.stack ? { stack: errorDetails.stack } : {},
+			);
 		} else {
 			console.error(`[Zettelkasten] ERROR: ${message}`);
 		}
@@ -93,13 +98,17 @@ export class Logger {
 	 * @param error - The error object
 	 * @param showNotice - Whether to show user notification (default: true)
 	 */
-	public static logError(context: string, error: unknown, showNotice: boolean = true): void {
+	public static logError(
+		context: string,
+		error: unknown,
+		showNotice: boolean = true,
+	): void {
 		Logger.error(context, error);
 
 		if (showNotice) {
 			const errorMessage = Logger.getErrorMessage(error);
 			// Try to show notice if available
-			if (typeof Notice !== 'undefined') {
+			if (typeof Notice !== "undefined") {
 				new Notice(`${context}: ${errorMessage}`, 6000);
 			}
 		}
@@ -120,36 +129,42 @@ export class ContextLogger {
 	}
 
 	private formatMessage(level: string, message: string): string {
-		const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+		const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
 		return `[Zettelkasten:${this.context}] ${level}: ${message}`;
 	}
 
 	public error(message: string, error?: unknown): void {
 		if (error !== undefined) {
 			const errorDetails = Logger.getErrorDetails(error);
-			console.error(this.formatMessage('ERROR', `${message} - ${errorDetails.message}`), errorDetails.stack ? { stack: errorDetails.stack } : {});
+			console.error(
+				this.formatMessage(
+					"ERROR",
+					`${message} - ${errorDetails.message}`,
+				),
+				errorDetails.stack ? { stack: errorDetails.stack } : {},
+			);
 		} else {
-			console.error(this.formatMessage('ERROR', message));
+			console.error(this.formatMessage("ERROR", message));
 		}
 	}
 
 	public warn(message: string, ...args: any[]): void {
-		console.warn(this.formatMessage('WARN', message), ...args);
+		console.warn(this.formatMessage("WARN", message), ...args);
 	}
 
 	public info(message: string, ...args: any[]): void {
-		console.log(this.formatMessage('INFO', message), ...args);
+		console.log(this.formatMessage("INFO", message), ...args);
 	}
 
 	public http(message: string, ...args: any[]): void {
 		if (Logger.isDebugMode) {
-			console.log(this.formatMessage('HTTP', message), ...args);
+			console.log(this.formatMessage("HTTP", message), ...args);
 		}
 	}
 
 	public debug(message: string, ...args: any[]): void {
 		if (Logger.isDebugMode) {
-			console.log(this.formatMessage('DEBUG', message), ...args);
+			console.log(this.formatMessage("DEBUG", message), ...args);
 		}
 	}
 
@@ -159,13 +174,17 @@ export class ContextLogger {
 	 * @param error - The error object
 	 * @param showNotice - Whether to show user notification (default: true)
 	 */
-	public logError(message: string, error: unknown, showNotice: boolean = true): void {
+	public logError(
+		message: string,
+		error: unknown,
+		showNotice: boolean = true,
+	): void {
 		this.error(message, error);
 
 		if (showNotice) {
 			const errorMessage = Logger.getErrorMessage(error);
 			// Try to show notice if available
-			if (typeof Notice !== 'undefined') {
+			if (typeof Notice !== "undefined") {
 				new Notice(`${message}: ${errorMessage}`, 6000);
 			}
 		}

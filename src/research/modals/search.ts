@@ -1,26 +1,24 @@
 import ZettelkastenPlugin from "../../main";
-import { App, Modal } from 'obsidian';
+import { App, Modal } from "obsidian";
 import { NoteFactory } from "../../notes";
 import { ISearchResult, ISearchConfirmCallback } from "../types";
 import { Logger } from "../../logger";
 import { Utils } from "../../utils";
 
-
 export class SearchDashboardModal extends Modal {
 	private plugin: ZettelkastenPlugin;
 	private factory: NoteFactory;
 	private targetDirectory: string;
-	private searchQuery: string = '';
-	private tagFilter: string = '';
+	private searchQuery: string = "";
+	private tagFilter: string = "";
 	private tagFilterEnabled: boolean = true;
 	private searchResults: ISearchResult[] = []; // Your search results data
 	private allResults: ISearchResult[] = []; // Your search results data
 	private logger = Logger.createLogger("Research-SearchDashboardModal");
 	private callback: ISearchConfirmCallback;
 	private selectedResult: ISearchResult | null = null;
-	private searchTitle = 'Search Dashboard';
+	private searchTitle = "Search Dashboard";
 	private searchTags: string[] = []; // Tags to search for, if any
-
 
 	constructor(
 		app: App,
@@ -35,7 +33,8 @@ export class SearchDashboardModal extends Modal {
 		this.plugin = plugin;
 		this.factory = factory;
 		this.callback = callback;
-		this.targetDirectory = targetDir || this.plugin.settings.researchZoteroPath; // Default to vault root if not provided
+		this.targetDirectory =
+			targetDir || this.plugin.settings.researchZoteroPath; // Default to vault root if not provided
 		if (searchTitle) {
 			this.searchTitle = searchTitle;
 		}
@@ -45,12 +44,15 @@ export class SearchDashboardModal extends Modal {
 	}
 
 	onOpen() {
-		this.allResults = this.getAllNotes(this.targetDirectory, this.searchTags);
+		this.allResults = this.getAllNotes(
+			this.targetDirectory,
+			this.searchTags,
+		);
 		const { contentEl } = this;
 		contentEl.empty();
 
 		// Set modal title
-		contentEl.createEl('h2', { text: this.searchTitle });
+		contentEl.createEl("h2", { text: this.searchTitle });
 
 		// Render search container
 		this.renderSearchContainer(contentEl);
@@ -62,7 +64,7 @@ export class SearchDashboardModal extends Modal {
 		this.renderResultsDisplayFields(contentEl);
 
 		// execute initial search
-		this.performSearch()
+		this.performSearch();
 
 		// Add CSS styles
 		this.addStyles();
@@ -71,24 +73,28 @@ export class SearchDashboardModal extends Modal {
 	private renderSearchContainer(container: HTMLElement) {
 		this.logger.debug("Rendering search container");
 		// Search Section
-		const searchContainer = container.createDiv('search-container');
+		const searchContainer = container.createDiv("search-container");
 
-		const searchInputContainer = searchContainer.createDiv('search-input-container');
-		const searchIcon = searchInputContainer.createEl('span', { text: '🔍' });
-		searchIcon.addClass('search-icon');
+		const searchInputContainer = searchContainer.createDiv(
+			"search-input-container",
+		);
+		const searchIcon = searchInputContainer.createEl("span", {
+			text: "🔍",
+		});
+		searchIcon.addClass("search-icon");
 
-		const searchInput = searchInputContainer.createEl('input');
-		searchInput.type = 'text';
-		searchInput.placeholder = 'Search';
-		searchInput.addClass('search-input');
+		const searchInput = searchInputContainer.createEl("input");
+		searchInput.type = "text";
+		searchInput.placeholder = "Search";
+		searchInput.addClass("search-input");
 		searchInput.value = this.searchQuery;
 
 		searchInput.oninput = (e) => {
 			this.searchQuery = (e.target as HTMLInputElement).value;
-			this.performSearch()
+			this.performSearch();
 		};
 		searchInput.onkeydown = (e) => {
-			if (e.key === 'Enter') {
+			if (e.key === "Enter") {
 				this.performSearch();
 			}
 		};
@@ -97,170 +103,202 @@ export class SearchDashboardModal extends Modal {
 	private renderTageFilter(container: HTMLElement) {
 		this.logger.debug("Rendering Tage filter");
 		// Tag Filter Section
-		const tagFilterContainer = container.createDiv('tag-filter-container');
+		const tagFilterContainer = container.createDiv("tag-filter-container");
 
-		const tagFilterInput = tagFilterContainer.createEl('input')
-		tagFilterInput.type = 'text';
-		tagFilterInput.placeholder = 'Filter by tags (e.g. #tag1;#tag2)';
-		tagFilterInput.addClass('tag-filter-input');
+		const tagFilterInput = tagFilterContainer.createEl("input");
+		tagFilterInput.type = "text";
+		tagFilterInput.placeholder = "Filter by tags (e.g. #tag1;#tag2)";
+		tagFilterInput.addClass("tag-filter-input");
 		tagFilterInput.value = this.tagFilter;
 		tagFilterInput.oninput = (e) => {
 			this.tagFilter = (e.target as HTMLInputElement).value;
 		};
 		tagFilterContainer.onkeydown = (e) => {
-			if (e.key === 'Enter') {
+			if (e.key === "Enter") {
 				this.performSearch();
 			}
-		}
+		};
 		// Add tag suggestions
 		this.logger.debug("Rendering Auto-complete for tags");
-		const tagListId = 'tag-suggestions-datalist';
-		const tagDatalist = container.createEl(
-			'datalist', {
-				attr: {
-					id: tagListId
-				}
-			}
-		);
-		this.getAllTags().forEach(tag => {
-			tagDatalist.createEl('option', { value: tag });
+		const tagListId = "tag-suggestions-datalist";
+		const tagDatalist = container.createEl("datalist", {
+			attr: {
+				id: tagListId,
+			},
 		});
-		tagFilterInput.setAttribute('list', tagListId);
-
-
+		this.getAllTags().forEach((tag) => {
+			tagDatalist.createEl("option", { value: tag });
+		});
+		tagFilterInput.setAttribute("list", tagListId);
 
 		// Toggle Switch
-		const toggleContainer = tagFilterContainer.createDiv('toggle-container');
-		const toggleSwitch = toggleContainer.createEl('div');
-		toggleSwitch.addClass('toggle-switch');
-		toggleSwitch.addClass(this.tagFilterEnabled ? 'enabled' : 'disabled');
+		const toggleContainer =
+			tagFilterContainer.createDiv("toggle-container");
+		const toggleSwitch = toggleContainer.createEl("div");
+		toggleSwitch.addClass("toggle-switch");
+		toggleSwitch.addClass(this.tagFilterEnabled ? "enabled" : "disabled");
 
-		const toggleKnob = toggleSwitch.createEl('div');
-		toggleKnob.addClass('toggle-knob');
+		const toggleKnob = toggleSwitch.createEl("div");
+		toggleKnob.addClass("toggle-knob");
 
 		toggleSwitch.onclick = () => {
 			this.tagFilterEnabled = !this.tagFilterEnabled;
-			toggleSwitch.removeClass('enabled', 'disabled');
-			toggleSwitch.addClass(this.tagFilterEnabled ? 'enabled' : 'disabled');
+			toggleSwitch.removeClass("enabled", "disabled");
+			toggleSwitch.addClass(
+				this.tagFilterEnabled ? "enabled" : "disabled",
+			);
 		};
-
 	}
 
 	private renderResultsDisplayFields(container: HTMLElement) {
 		this.logger.debug("Rendering Results Display");
 		// Results Section
-		const resultsContainer = container.createDiv('results-container');
-		resultsContainer.createEl('h3', { text: 'Results' });
+		const resultsContainer = container.createDiv("results-container");
+		resultsContainer.createEl("h3", { text: "Results" });
 
-		const resultsArea = resultsContainer.createDiv('results-area');
-		resultsArea.addClass('results-scrollable');
+		const resultsArea = resultsContainer.createDiv("results-area");
+		resultsArea.addClass("results-scrollable");
 
 		// Display search results (placeholder)
 		this.displayResults(resultsArea);
 
 		// Action Buttons
-		const buttonContainer = container.createDiv('button-container');
+		const buttonContainer = container.createDiv("button-container");
 
-		const insertButton = buttonContainer.createEl('button', { text: 'Insert' });
-		insertButton.addClass('action-button', 'insert-button');
+		const insertButton = buttonContainer.createEl("button", {
+			text: "Insert",
+		});
+		insertButton.addClass("action-button", "insert-button");
 		insertButton.onclick = async () => {
 			if (this.selectedResult) {
 				await this.callback(this.selectedResult);
-				this.close()
+				this.close();
 			}
 		};
 
-		const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
-		cancelButton.addClass('action-button', 'cancel-button');
+		const cancelButton = buttonContainer.createEl("button", {
+			text: "Cancel",
+		});
+		cancelButton.addClass("action-button", "cancel-button");
 		cancelButton.onclick = async () => {
 			this.close();
 		};
-
 	}
 
 	private getAllNotes(path: string, tags: string[]): ISearchResult[] {
-		return this.app.vault.getMarkdownFiles().filter(note => {
-			const isInFolder = note.path.includes(path)
-			let isContainsTag = true
-			if (tags.length > 0) {
-				isContainsTag = tags.every(tag => {
-					let tags: string[] = [];
-					const metadata = this.app.metadataCache.getFileCache(note);
-					const frontmatter = metadata!.frontmatter;
-					if (metadata?.tags) {
-						tags.push(...metadata?.tags.map(t => t.tag));
-					}
-					if (frontmatter) {
-						if (Array.isArray(frontmatter?.tags)) {
-							tags.push(...frontmatter.tags); // Add tags from frontmatter
+		return this.app.vault
+			.getMarkdownFiles()
+			.filter((note) => {
+				const isInFolder = note.path.includes(path);
+				let isContainsTag = true;
+				if (tags.length > 0) {
+					isContainsTag = tags.every((tag) => {
+						let tags: string[] = [];
+						const metadata =
+							this.app.metadataCache.getFileCache(note);
+						const frontmatter = metadata!.frontmatter;
+						if (metadata?.tags) {
+							tags.push(...metadata?.tags.map((t) => t.tag));
 						}
-					}
-					const unifiedTags = Utils.unifiedTagFormat(tags, true, true);
-					// Tag may not be perfectly matched as nested-tag is used
-					return unifiedTags.filter(tag => unifiedTags.includes(tag)).length > 0;
-
-				});
-			}
-			return isInFolder && isContainsTag;
-		}).map(note => {
-			const metadata = this.app.metadataCache.getFileCache(note);
-			const frontmatter = metadata!.frontmatter;
-			let tags: string[] = metadata?.tags ? metadata.tags.map(tag => tag.tag.toLowerCase()) : [] // Add tags from body
-			if (frontmatter) {
-				if (Array.isArray(frontmatter?.tags)) {
-					tags.push(...frontmatter.tags.map(tag => tag.toLowerCase())); // Add tags from frontmatter
+						if (frontmatter) {
+							if (Array.isArray(frontmatter?.tags)) {
+								tags.push(...frontmatter.tags); // Add tags from frontmatter
+							}
+						}
+						const unifiedTags = Utils.unifiedTagFormat(
+							tags,
+							true,
+							true,
+						);
+						// Tag may not be perfectly matched as nested-tag is used
+						return (
+							unifiedTags.filter((tag) =>
+								unifiedTags.includes(tag),
+							).length > 0
+						);
+					});
 				}
-			}
-			const uniqueTags = Utils.unifiedTagFormat(tags, true, true)
-			return {
-				name: frontmatter?.title || note.basename,
-				basename: note.basename,
-				path: note.path,
-				tags: uniqueTags
-			}
-		});
+				return isInFolder && isContainsTag;
+			})
+			.map((note) => {
+				const metadata = this.app.metadataCache.getFileCache(note);
+				const frontmatter = metadata!.frontmatter;
+				let tags: string[] = metadata?.tags
+					? metadata.tags.map((tag) => tag.tag.toLowerCase())
+					: []; // Add tags from body
+				if (frontmatter) {
+					if (Array.isArray(frontmatter?.tags)) {
+						tags.push(
+							...frontmatter.tags.map((tag) => tag.toLowerCase()),
+						); // Add tags from frontmatter
+					}
+				}
+				const uniqueTags = Utils.unifiedTagFormat(tags, true, true);
+				return {
+					name: frontmatter?.title || note.basename,
+					basename: note.basename,
+					path: note.path,
+					tags: uniqueTags,
+				};
+			});
 	}
 
 	private getAllTags(): string[] {
-		const allTags = this.allResults.map(item => {
+		const allTags = this.allResults.map((item) => {
 			return item.tags;
-		})
-		return Array.from(new Set(allTags.flat())).sort((a, b) => {
-			return a.localeCompare(b);
-		}).map(tag => {
-			return tag.toLowerCase();
 		});
+		return Array.from(new Set(allTags.flat()))
+			.sort((a, b) => {
+				return a.localeCompare(b);
+			})
+			.map((tag) => {
+				return tag.toLowerCase();
+			});
 	}
 
 	private performSearch() {
 		// Implement your search logic here
 		// This is where you'd integrate with your plugin's search functionality
-		this.logger.debug("Performing Result Search from dir: " + this.targetDirectory);
+		this.logger.debug(
+			"Performing Result Search from dir: " + this.targetDirectory,
+		);
 		let filteredResults: ISearchResult[] = this.allResults;
 		// Apply the keyword filter
 		if (this.searchQuery.length > 0) {
-			filteredResults = this.allResults.filter(result => {
-				return result.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-			})
-			this.logger.debug(`After Filtering results (no. ${filteredResults.length}) by search query: ` + this.searchQuery);
+			filteredResults = this.allResults.filter((result) => {
+				return result.name
+					.toLowerCase()
+					.includes(this.searchQuery.toLowerCase());
+			});
+			this.logger.debug(
+				`After Filtering results (no. ${filteredResults.length}) by search query: ` +
+					this.searchQuery,
+			);
 		}
 
 		// Apply the tag filter
 		if (this.tagFilterEnabled && this.tagFilter.trim().length > 0) {
-			const filterTags = this.tagFilter.trim().split(';')
-				.filter(tag => tag.trim().startsWith('#'))
-				.map(tag => (tag.toLowerCase()));
+			const filterTags = this.tagFilter
+				.trim()
+				.split(";")
+				.filter((tag) => tag.trim().startsWith("#"))
+				.map((tag) => tag.toLowerCase());
 			if (filterTags.length > 0) {
-				filteredResults = filteredResults.filter(result => {
-					return filterTags.some(tag => result.tags.includes(tag));
+				filteredResults = filteredResults.filter((result) => {
+					return filterTags.some((tag) => result.tags.includes(tag));
 				});
-				this.logger.debug(`After Filtering results (no. ${filteredResults.length}) by tags: ` + filterTags.join(', '));
+				this.logger.debug(
+					`After Filtering results (no. ${filteredResults.length}) by tags: ` +
+						filterTags.join(", "),
+				);
 			}
 		}
 		this.searchResults = filteredResults;
 
 		// Update results display
-		const resultsArea = this.contentEl.querySelector('.results-area') as HTMLElement;
+		const resultsArea = this.contentEl.querySelector(
+			".results-area",
+		) as HTMLElement;
 
 		if (resultsArea) {
 			this.displayResults(resultsArea);
@@ -271,42 +309,49 @@ export class SearchDashboardModal extends Modal {
 		container.empty();
 
 		if (this.searchResults.length === 0) {
-			container.createEl('div', {
-				text: 'No results found. Try adjusting your search query or filters.',
-				cls: 'no-results'
+			container.createEl("div", {
+				text: "No results found. Try adjusting your search query or filters.",
+				cls: "no-results",
 			});
 			return;
 		}
 
 		// Display actual results here
 		this.searchResults.forEach((result, index) => {
-			const resultItem = container.createDiv('result-item');
-			resultItem.createEl('div', { text: `${result.name}` });
+			const resultItem = container.createDiv("result-item");
+			resultItem.createEl("div", { text: `${result.name}` });
 
 			// If this result is the currently selected one, apply the class on render
-			if (this.selectedResult && this.selectedResult.path === result.path) {
-				resultItem.addClass('selected');
+			if (
+				this.selectedResult &&
+				this.selectedResult.path === result.path
+			) {
+				resultItem.addClass("selected");
 			}
 
 			resultItem.onclick = () => {
 				// Handle result selection
-				const previouslySelectedItem = container.querySelector('.result-item.selected');
+				const previouslySelectedItem = container.querySelector(
+					".result-item.selected",
+				);
 				if (previouslySelectedItem) {
-					previouslySelectedItem.removeClass('selected');
+					previouslySelectedItem.removeClass("selected");
 				}
 
 				// Add the 'selected' class to the clicked item
-				resultItem.addClass('selected');
+				resultItem.addClass("selected");
 
 				// Update the state to remember the new selection
 				this.selectedResult = result;
-				this.logger.debug(`selected Result: ${this.selectedResult.name}`);
+				this.logger.debug(
+					`selected Result: ${this.selectedResult.name}`,
+				);
 			};
 		});
 	}
 
 	private addStyles() {
-		const styleEl = document.createElement('style');
+		const styleEl = document.createElement("style");
 		styleEl.textContent = `
             .search-container {
                 margin-bottom: 20px;

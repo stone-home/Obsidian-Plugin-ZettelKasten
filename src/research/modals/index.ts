@@ -1,3 +1,2 @@
-export { ResearchDashboardModal } from './dashbard';
-export { SearchDashboardModal } from './search';
-
+export { ResearchDashboardModal } from "./dashbard";
+export { SearchDashboardModal } from "./search";

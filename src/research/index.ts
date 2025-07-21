@@ -1,1 +1,1 @@
-export { ResearchCommands } from './command';
+export { ResearchCommands } from "./command";

@@ -1,15 +1,12 @@
-export {
-	NoteType,
-	NoteTypeData,
-} from "./config"
+export { NoteType, NoteTypeData } from "./config";
 
 export {
 	BaseTemplate,
 	FleetingDefaultTemplate,
 	LiteratureDefaultTemplate,
 	AtomicDefaultTemplate,
-	PermanentDefaultTemplate
-} from './default';
+	PermanentDefaultTemplate,
+} from "./default";
 
 export type {
 	IProperties,
@@ -17,8 +14,8 @@ export type {
 	IZettelkastenProperties,
 	INoteTemplateMetadata,
 	IBodySection,
-	IKeyValue
-} from './types';
+	IKeyValue,
+} from "./types";
 
 export {
 	BaseNote,
@@ -27,6 +24,6 @@ export {
 	BaseDefault,
 	KeyValue,
 	BodySection,
-} from './note'
+} from "./note";
 
-export { NoteFactory } from './factory';
+export { NoteFactory } from "./factory";

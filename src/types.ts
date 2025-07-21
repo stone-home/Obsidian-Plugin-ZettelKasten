@@ -1,6 +1,4 @@
-import { INoteTemplateMetadata, NoteType, IKeyValue} from "./notes";
-
-
+import { INoteTemplateMetadata, NoteType, IKeyValue } from "./notes";
 
 export interface INoteOptionExtraParams {
 	tags?: string[];
@@ -23,26 +21,24 @@ export interface INoteOption {
 	extraInfo?: INoteOptionExtraParams;
 }
 
-
 export interface DefaultTemplate {
-	[NoteType.FLEETING]: string
-	[NoteType.LITERATURE]: string
-	[NoteType.PERMANENT]: string
-	[NoteType.ATOMIC]: string
+	[NoteType.FLEETING]: string;
+	[NoteType.LITERATURE]: string;
+	[NoteType.PERMANENT]: string;
+	[NoteType.ATOMIC]: string;
 }
-
 
 export interface ISubFeature {
 	enabled: boolean;
 	description: string;
-	[key: string]: any
+	[key: string]: any;
 }
 
 export interface IDataviewFeature {
 	enabled: boolean;
 	description: string;
 	path: string;
-	codeBlockType: string
+	codeBlockType: string;
 }
 
 /**
@@ -65,7 +61,6 @@ export interface INotificationConfig {
 	INFO_DURATION: number;
 	SUGGESTION_COOLDOWN: number;
 }
-
 
 export interface ZettelkastenSettings {
 	// Naming and formatting settings
@@ -102,6 +97,4 @@ export interface ZettelkastenSettings {
 
 	// New Note Options (for settings)
 	createNoteOptions: INoteOption[];
-
 }
-
