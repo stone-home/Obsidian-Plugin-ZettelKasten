@@ -85,7 +85,7 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	// Template settings
 	includeTimestamp: true,
 	defaultTags: [],
-	templateDirPath: ".zettelkasten/templates",
+	templateDirPath: "templates",
 	default: {
 		[NoteType.FLEETING]: "default",
 		[NoteType.LITERATURE]: "default",
@@ -100,7 +100,7 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 
 	// Dataview settings
 	dataviewEnabled: true,
-	dataviewQueryPath: ".zettelkasten/dataview",
+	dataviewQueryPath: "dataview",
 	dataviewCodeBlockType: "zettelkasten-query",
 
 	// Kanban settings
