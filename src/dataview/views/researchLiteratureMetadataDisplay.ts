@@ -30,15 +30,27 @@ export const View: IRawDataviewScript = {
 			required: false,
 			description: "The key is used to group the papers. If not provided, no grouping will be applied."
 		},
+		{
+			name: "isDetailed",
+			type: "boolean",
+			required: false,
+			description: "Statistics view will show all papers' links rather than the count of papers. Default is false."
+		},
+		{
+			name: "statisticOnly",
+			type: "boolean",
+			required: false,
+			description: "Whether to only show the statistics view. Default is true.",
+		},
 	],
 	script: `
-	//== Configuration ==//
 const current = input.current;
 const query = input.query;
-const groupEnable = input.groupEnable;
+const groupEnable = input.groupEnable ?? false;
 const groupKey = input.groupKey;
-const star = input.star || false;
-const isDetailed = input.isDetailed || false;
+const star = input.star ?? false;
+const isDetailed = input.isDetailed ?? false;
+const statisticOnly = input.statisticOnly ?? true;
 
 const tagPattern = {
     direction: "#research/direction/",
@@ -79,8 +91,7 @@ class PaperInfo {
     }
 
     getName(page) {
-        console.error(page)
-        const name = page.shortName || \`✏️\${page.id}\`;
+        const name = page.shortName || "✏️"+ page.id;
         const urlLink = page.url ? "[📑](" + page.url + ")" : "";
         const codeLink = page.code ? "[📀](" + page.code + ")" : "";
         return "[[" + page.file.path + "|" + name + "]]" + urlLink + codeLink;
@@ -142,13 +153,16 @@ class PaperInfo {
             }
         }
 
-        for (const tag of topicTags) {
+        for (const [index, tag] of topicTags.entries()) {
             let objective = this._getTagValue(tag);
             let query = tag + " and " + tagPattern.paper;
             if (directionTags.length > 0) {
                 query += " and (" + directionTags.join(" or ") + ")";
             }
             viewObj["🗯️ " + objective] = () => dv.pages(query);
+            if (index > 2) {
+                break
+            }
         }
 
         return viewObj;
@@ -255,19 +269,18 @@ const display = new DataviewDisplay();
 
 // The statistics view is only shown for the current page.
 if (current) {
-    dv.header(2, "📊 Statistics View");
     const [statHeaders, statContents] = paperInfo.generateStatsViewData(isDetailed);
     display.display(statHeaders, statContents, {});
-    dv.header(2, "📚 Literature View");
 }
 
-// In standard view, we always show the literature list.
-const [stdHeaders, stdContents, processedPages] = paperInfo.generateStandardViewData();
-display.display(stdHeaders, stdContents, {
-    doGroup: groupEnable,
-    groupKey: groupKey,
-    processedPages: processedPages
-});
-
+if (!statisticOnly) {
+    // In standard view, we always show the literature list.
+    const [stdHeaders, stdContents, processedPages] = paperInfo.generateStandardViewData();
+    display.display(stdHeaders, stdContents, {
+        doGroup: groupEnable,
+        groupKey: groupKey,
+        processedPages: processedPages
+    });
+}
 	`
 }

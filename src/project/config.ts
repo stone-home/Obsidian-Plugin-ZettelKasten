@@ -16,10 +16,10 @@ export const ProjectSubfolderPaths: IProjectSubfolderPaths = {
 }
 
 export const exclusiveTags: IProjectExclusiveTags = {
-	[ProjectFileType.questionType]: ["✍️writing/academic/question"],
-	[ProjectFileType.objectiveType]: ["✍️writing/academic/objective"],
-	[ProjectFileType.stepType]: ["✍️writing/academic/step", "kanban/task"],
-	[ProjectFileType.otherType]: ["✍️writing/academic/unclassified"]
+	[ProjectFileType.questionType]: ["writing/academic/question"],
+	[ProjectFileType.objectiveType]: ["writing/academic/objective"],
+	[ProjectFileType.stepType]: ["writing/academic/step", "kanban/task"],
+	[ProjectFileType.otherType]: ["writing/academic/unclassified"]
 }
 
 export const ProjectConfig: IProjectData = {

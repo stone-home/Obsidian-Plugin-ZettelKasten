@@ -11,7 +11,6 @@ export { View as ViewResearchTopicReference } from "./researchTopicReferences"
 // Research Literature Views
 export { View as ViewResearchLiteratureMetadata } from "./researchLiteratureMetadataDisplay"
 export { View as ViewResearchLiteratureReferences } from "./researchLiteratureReferences"
-export { View as ViewResearchLiteratureRelevantPapers } from "./researchLiteratureRelevantPapers"
 
 
 // General Views

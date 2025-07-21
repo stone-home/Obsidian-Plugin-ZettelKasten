@@ -19,7 +19,7 @@ const directionTag = currentPage.aliases.find(a => a.includes("research/directio
 const pathParts = dv.current().file.folder.split("/")
 const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
 
-let tags = "#✍️writing/academic/literatureReview"
+let tags = "#writing/academic/literatureReview"
 let papers = dv.pages(\`"\${rootFolder}" and \${tags} and #🗂️project/PhD\`)
 
 let titles = ["Research Problem", "ID", "Status", "Raised By"]

@@ -536,7 +536,7 @@ export class ResearchDashboardModal extends Modal {
 			{
 				codeblockKey: this.codeBlockType,
 				ongoingProject: false,
-				sourceNote: [zoteroId],
+				sourceNotes: [zoteroId],
 				url: zoteroItem.note.getProperty("url") || '',
 				year: zoteroItem.note.getProperty("date") || '',
 				eTags: [...tags]

@@ -9,7 +9,6 @@ import {
 	ViewResearchTopicReference,
 	ViewResearchTopicPapers,
 	ViewResearchLiteratureMetadata,
-	ViewResearchLiteratureRelevantPapers,
 	ViewResearchLiteratureReferences,
 	ViewProjectGanttChart,
 	ViewProjectCustomTable
@@ -55,7 +54,6 @@ export class DataviewJSManager extends Component {
 			ViewResearchTopicPapers,
 			ViewResearchLiteratureReferences,
 			ViewResearchLiteratureMetadata,
-			ViewResearchLiteratureRelevantPapers,
 			ViewProjectGanttChart,
 			ViewProjectCustomTable
 		]

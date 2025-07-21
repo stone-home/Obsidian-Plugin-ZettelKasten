@@ -5,23 +5,27 @@ export const View: IRawDataviewScript = {
 	id: "research-literature-paper-references",
 	name: "Research Literature References",
 	description: "A view to display literature references related to the cureent paper.",
-	parameters: [
-		{
-			name: "direction",
-			type: "string",
-			required: true,
-			description: "The research direction to filter topics by."
-		}
-	],
+	parameters: [],
 	script: `
-// Recent Notes Table View
-// Parameters: days (number, default: 7), limit (number, default: 10)
-// Contents of scripts/recent-notes.js
-dv.table(["File", "Creation Date"],
-    dv.pages()
-        .sort(p => p.file.ctime, 'desc')
-        .limit(10)
-        .map(p => [p.file.link, p.file.ctime])
-);
+const currentPage =  dv.current()
+const pathParts = dv.current().file.folder.split("/")
+const rootFolder = pathParts.slice(0, pathParts.length - 1).join("/")
+
+const refFolder = '"' + rootFolder + '/' + 'references' + '"'
+const pages = dv.pages(refFolder).filter(refPage => {
+    if (!currentPage.sources || !refPage.sources) {
+        return false;
+    }
+    return refPage.sources.some(source => currentPage.sources.some(cSource => cSource.path === source.path));
+});
+
+console.error(pages)
+dv.table(
+    ["Description", "Note Date"],
+    pages.map(p => [
+        \`[[\${p.file.name}|📍]]\${p.DisplayName}\`,
+        p.year
+    ])
+)
 	`
 }

@@ -29,7 +29,18 @@ export function projectReformResearchNote(note: BaseDefault, properties: IReform
 	properties.sourceNotes?.forEach(source => {
 		note.addSourceNote(`[[${source}]]`);
 	});
-	note.addBodyContent([DataviewHelper.getCodeBlockContent(properties.codeblockKey, ViewResearchLiteratureMetadata)], "Metadata", 4)
+	note.addBodyContent(
+		[
+			DataviewHelper.getCodeBlockContent(
+				properties.codeblockKey,
+				ViewResearchLiteratureMetadata,
+				[
+					{ name: "current", type: "boolean", required: false, value: true},
+				]
+			)
+		],
+		"Metadata",
+		4)
 	note.addBodyContent(
 		[
 			"🩻**topic**::",
@@ -53,7 +64,20 @@ export function projectReformResearchNote(note: BaseDefault, properties: IReform
 		note.addBodyContent([], "📌Limitation", 1)
 		note.addBodyContent([], "💡Notes", 1)
 		note.addBodyContent([], "⭐️Highlights", 1)
-		note.addBodyContent([DataviewHelper.getCodeBlockContent(properties.codeblockKey, ViewResearchLiteratureRelevantPapers)], "🗃️Relevant Papers", 1)
+		note.addBodyContent(
+			[
+				DataviewHelper.getCodeBlockContent(
+					properties.codeblockKey,
+					ViewResearchLiteratureMetadata,
+					[
+						{ name: "current", type: "boolean", required: false, value: true},
+						{ name: "isDetailed", type: "boolean", required: false, value: true},
+						{ name: "statisticOnly", type: "boolean", required: false, value: true},
+					]
+				)
+			],
+			"🗃️Relevant Papers",
+			4)
 		note.addBodyContent([DataviewHelper.getCodeBlockContent(properties.codeblockKey, ViewResearchLiteratureReferences)], "🔖References", 1)
 	}
 	properties?.eSection?.forEach(section => {
