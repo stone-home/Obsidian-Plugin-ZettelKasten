@@ -209,27 +209,15 @@ export class ResearchDashboardModal extends Modal {
 				text: "New Research",
 				icon: "lightbulb",
 				callback: async () => {
-					const projectName = await this.plugin.integrationManager
-						.getTemplater()
-						.getPrompt(
-							"Enter a short project name (max 20 words):",
-						);
-					if (!projectName) {
-						this.logger.error("Project name cannot be empty.");
-						new Notice("Project name cannot be empty.");
-						return;
-					}
-					const newProject = this.createProjectEntity(projectName);
 					new SearchDashboardModal(
 						this.app,
 						this.plugin,
 						this.factory,
 						(selectedNote) =>
-							newProject.createProject(selectedNote),
+							this.createResearchProject(selectedNote),
 						this.getResearchPath().reviews,
 						"Create New Research Project",
 					).open();
-					this.projects[projectName] = newProject;
 					this.close();
 				},
 			},
@@ -892,6 +880,22 @@ export class ResearchDashboardModal extends Modal {
 				{ state: { mode: "read" } },
 			);
 		}
+	}
+
+	private async createResearchProject(
+		selectedNotes: ISearchResult | ISearchResult[],
+	): Promise<void> {
+		const projectName = await this.plugin.integrationManager
+			.getTemplater()
+			.getPrompt("Enter a short project name (max 20 words):");
+		if (!projectName) {
+			this.logger.error("Project name cannot be empty.");
+			new Notice("Project name cannot be empty.");
+			return;
+		}
+		const newProject = this.createProjectEntity(projectName);
+		await newProject.createProject(selectedNotes);
+		this.projects[projectName] = newProject;
 	}
 
 	private createProjectEntity(name: string): Project {
