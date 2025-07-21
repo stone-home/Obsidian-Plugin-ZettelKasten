@@ -137,7 +137,7 @@ export class NoteFactory {
 	 * Load a note from a markdown file
 	 */
 	public async loadFromFile(path: string): Promise<BaseNote> {
-		this.logger.info(`Loading note from file: ${path}`);
+		this.logger.debug(`Loading note from file: ${path}`);
 
 		// obtain TFile object from the path
 		const file = this.app.vault.getAbstractFileByPath(path);
@@ -165,8 +165,6 @@ export class NoteFactory {
 	 * Load multiple notes from a directory
 	 */
 	public async loadFromDirectory(dirPath: string): Promise<BaseNote[]> {
-		this.logger.info(`Loading notes from directory: ${dirPath}`);
-
 		const notes: BaseNote[] = [];
 		const files = this.app.vault.getFiles().filter(file =>
 			file.path.startsWith(dirPath) && file.extension === 'md'
@@ -181,7 +179,7 @@ export class NoteFactory {
 			}
 		}
 
-		this.logger.info(`Loaded ${notes.length} notes from ${dirPath}`);
+		this.logger.debug(`Loaded ${notes.length} notes from ${dirPath}`);
 		return notes;
 	}
 
@@ -191,7 +189,7 @@ export class NoteFactory {
 	 * Populate a note instance with content from a file
 	 */
 	private async populateNoteFromContent(note: TFile): Promise<BaseTemplate> {
-		this.logger.info(`Loading notes from file: ${note.basename} and populate it`);
+		this.logger.debug(`Loading notes from file: ${note.basename} and populate it`);
 		// Load frontmatter and content
 		const cache = this.app.metadataCache.getFileCache(note);
 		const frontmatter = cache!.frontmatter
@@ -298,7 +296,7 @@ export class NoteFactory {
 		if (!this.templates.has(noteType)) {
 			this.templates.set(noteType, new Map());
 		}
-		template.setPath(this.templateDir(noteType));
+		template.setPath(await this.templateDir(noteType));
 		template.setTitle(templateName)
 		const templateFileExists: boolean = await template.exist()
 		if (!templateFileExists){
@@ -306,7 +304,7 @@ export class NoteFactory {
 			await template.save()
 		}
 		this.templates.get(noteType)!.set(templateName, {"path": template.getObPath(true)});
-		this.logger.info(`Registered template '${templateName}' for type: ${noteType}`);
+		this.logger.debug(`Registered template '${templateName}' for type: ${noteType}`);
 		return this.templates.get(noteType)!.get(templateName);
 	}
 
@@ -323,7 +321,7 @@ export class NoteFactory {
 	public async getTemplate(noteType: NoteType, templateName: string): Promise<BaseNote | undefined> {
 		const templatePath = this.templates.get(noteType)?.get(templateName)?.path;
 		if (!templatePath) {
-			this.logger.info(`Template '${templateName}' not found for type: ${noteType}`);
+			this.logger.debug(`Template '${templateName}' not found for type: ${noteType}`);
 			return undefined;
 		}
 		return this.loadFromFile(templatePath);
@@ -342,8 +340,8 @@ export class NoteFactory {
 	 * Refresh templates from the filesystem
 	 */
 	public async refreshTemplates(noteType: NoteType): Promise<void> {
-		this.logger.info(`Refereshing templates for note type: ${noteType}`);
-		const templates = await this.loadFromDirectory(this.templateDir(noteType));
+		this.logger.debug(`Refereshing templates for note type: ${noteType}`);
+		const templates = await this.loadFromDirectory(await this.templateDir(noteType));
 		for (const template of templates) {
 			if (!this.isTemplate(template)) {
 				this.logger.warn(`Skipping non-template note: ${template.getTitle()}`);
@@ -369,11 +367,10 @@ export class NoteFactory {
 	/**
 	 * Get a template dir by note type
 	 */
-	private templateDir(noteType: NoteType): string {
+	private async templateDir(noteType: NoteType): Promise<string> {
 		const dir = this.defaultTemplatesDir + '/' + noteType;
-		const file = this.app.vault.getAbstractFileByPath(dir);
-		if (!(file instanceof TFolder)) {
-			this.app.vault.createFolder(dir);
+		if (!Utils.fileExists(this.app, dir, true)) {
+			await this.app.vault.createFolder(dir);
 		}
 		return dir;
 	}
@@ -422,14 +419,12 @@ export class NoteFactory {
 		if (!templateName) {
 			templateName = this.getDefaultTemplate(noteType);
 		}
-		this.logger.info(`Creating new note of type: ${noteType} from template: ${templateName || undefined}`);
 		template = await this.getTemplate(noteType, templateName);
 		if (!template) {
 			this.logger.error(`Template '${templateName}' not found for type: ${noteType}`);
 			throw new Error(`Template '${templateName}' not found for type: ${noteType}`);
 		}
-
-		this.logger.info(`Creating new ${noteType} from template: ${templateName}`);
+		this.logger.info(`Creating new note of type: ${noteType} from template: ${templateName || undefined}`);
 		return this.createNote(noteType, false, template);
 	}
 }

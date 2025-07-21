@@ -62,12 +62,11 @@ export class ConfigHelper {
 		};
 		return durations[type];
 	}
-
 }
 
 
 export const DEFAULT_SETTINGS: ZettelkastenSettings = {
-	dateFormat: 'YYYY-MM-DD',
+	dateFormat: 'yyyy-MM-dd',
 
 	// Paths for different types of notes
 	fleetingPath: 'inbox/fleeting',

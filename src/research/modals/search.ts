@@ -19,6 +19,7 @@ export class SearchDashboardModal extends Modal {
 	private callback: ISearchConfirmCallback;
 	private selectedResult: ISearchResult | null = null;
 	private searchTitle = 'Search Dashboard';
+	private searchTags: string[] = []; // Tags to search for, if any
 
 
 	constructor(
@@ -27,21 +28,24 @@ export class SearchDashboardModal extends Modal {
 		factory: NoteFactory,
 		callback: ISearchConfirmCallback,
 		targetDir?: string,
-		searchTitle?: string
+		searchTitle?: string,
+		searchTags?: string[],
 	) {
 		super(app);
 		this.plugin = plugin;
 		this.factory = factory;
 		this.callback = callback;
-		this.targetDirectory = targetDir || this.plugin.settings.researchPath; // Default to vault root if not provided
+		this.targetDirectory = targetDir || this.plugin.settings.researchZoteroPath; // Default to vault root if not provided
 		if (searchTitle) {
 			this.searchTitle = searchTitle;
 		}
-
+		if (searchTags && searchTags.length > 0) {
+			this.searchTags = Utils.unifiedTagFormat(searchTags, true, true);
+		}
 	}
 
 	onOpen() {
-		this.allResults = this.getAllNotes(this.targetDirectory, []);
+		this.allResults = this.getAllNotes(this.targetDirectory, this.searchTags);
 		const { contentEl } = this;
 		contentEl.empty();
 
@@ -176,7 +180,28 @@ export class SearchDashboardModal extends Modal {
 
 	private getAllNotes(path: string, tags: string[]): ISearchResult[] {
 		return this.app.vault.getMarkdownFiles().filter(note => {
-			return note.path.includes(path);
+			const isInFolder = note.path.includes(path)
+			let isContainsTag = true
+			if (tags.length > 0) {
+				isContainsTag = tags.every(tag => {
+					let tags: string[] = [];
+					const metadata = this.app.metadataCache.getFileCache(note);
+					const frontmatter = metadata!.frontmatter;
+					if (metadata?.tags) {
+						tags.push(...metadata?.tags.map(t => t.tag));
+					}
+					if (frontmatter) {
+						if (Array.isArray(frontmatter?.tags)) {
+							tags.push(...frontmatter.tags); // Add tags from frontmatter
+						}
+					}
+					const unifiedTags = Utils.unifiedTagFormat(tags, true, true);
+					// Tag may not be perfectly matched as nested-tag is used
+					return unifiedTags.filter(tag => unifiedTags.includes(tag)).length > 0;
+
+				});
+			}
+			return isInFolder && isContainsTag;
 		}).map(note => {
 			const metadata = this.app.metadataCache.getFileCache(note);
 			const frontmatter = metadata!.frontmatter;

@@ -1,3 +1,4 @@
+import ZettelkastenPlugin from "../main";
 import { App } from 'obsidian';
 import { Logger } from '../logger';
 import { ZettelkastenSettings } from '../types';
@@ -8,13 +9,13 @@ import { NoteFactory} from "../notes";
 export class WeeklyKanbanCommand {
 	private app: App;
 	private logger = Logger.createLogger('WeeklyKanbanCommand');
-	private settings: ZettelkastenSettings;
+	private plugin: ZettelkastenPlugin;
 	private factory: NoteFactory;
 
 
-	constructor(app: App, settings: ZettelkastenSettings, factory: NoteFactory) {
+	constructor(app: App, plugin: ZettelkastenPlugin, factory: NoteFactory) {
 		this.app = app;
-		this.settings = settings;
+		this.plugin = plugin;
 		this.factory = factory;
 	}
 
@@ -29,13 +30,7 @@ export class WeeklyKanbanCommand {
 			id: 'open-weekly-kanban-dashboard',
 			name: 'Open Weekly Kanban Dashboard',
 			icon: 'brain',
-			callback: () => new WeeklyKanbanModal(this.app, this.settings, this.factory).open(),
-			hotkeys: [
-				{
-					modifiers: ['Mod', 'Shift'],
-					key: 'k'
-				}
-			]
+			callback: () => new WeeklyKanbanModal(this.app, this.plugin.settings, this.factory).open(),
 		});
 	}
 

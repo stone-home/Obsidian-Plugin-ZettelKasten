@@ -1,8 +1,8 @@
+import ZettelkastenPlugin from "../main";
 import { App } from 'obsidian';
 import { NoteFactory } from '../notes';
 import { Logger } from '../logger';
 import { ZettelKastenModal } from "./modal";
-import { ZettelkastenSettings } from '../types';
 
 
 
@@ -12,13 +12,13 @@ export class ZettelkastenCommand {
 	private app: App;
 	private logger = Logger.createLogger('ZettelkastenCommand');
 	private factory: NoteFactory;
-	private settings: ZettelkastenSettings | undefined;
+	private plugin: ZettelkastenPlugin
 
 
-	constructor(app: App, factory: NoteFactory, settings?: ZettelkastenSettings) {
+	constructor(app: App, factory: NoteFactory, plugin: ZettelkastenPlugin) {
 		this.app = app;
 		this.factory = factory;
-		this.settings = settings
+		this.plugin = plugin
 	}
 
 
@@ -46,7 +46,7 @@ export class ZettelkastenCommand {
 	 */
 	private async openZettelkastenModal(): Promise<void> {
 		try {
-			const modal = new ZettelKastenModal(this.app, this.factory, this.settings);
+			const modal = new ZettelKastenModal(this.app, this.factory, this.plugin);
 			modal.open();
 
 			this.logger.info('Zettelkasten modal opened');

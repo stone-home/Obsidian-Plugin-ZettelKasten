@@ -36,28 +36,6 @@ export class ResearchCommands {
 				new ResearchDashboardModal(this.app, this.plugin, this.factory).open();
 			}
 		});
-
-		this.plugin.addCommand({
-			id: 'open-search-dashboard',
-			name: 'Open Search Dashboard',
-			icon: 'search',
-			callback: () => {
-				new SearchDashboardModal(
-					this.app,
-					this.plugin,
-					this.factory,
-					async (selectedNote: ISearchResult | ISearchResult[]) => {
-						if (!(Array.isArray(selectedNote))) {
-							selectedNote = [selectedNote];
-						}
-						selectedNote.map((note: ISearchResult) => {
-							console.error(note.name);
-						})
-					},
-					"zotero"
-				).open();
-			}
-		});
 	}
 }
 

@@ -1,5 +1,6 @@
 export { DataviewJSManager } from "./manager";
 export { DataviewScriptBuilder } from "./builder";
+export { DataviewCommand } from "./command";
 export {
 	ViewResearchDirectionLiteratureReview,
 	ViewResearchDirectionTopic,

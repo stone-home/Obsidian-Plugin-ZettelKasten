@@ -1,4 +1,4 @@
-import {App, Modal, Notice, setIcon, Setting, TFile} from 'obsidian';
+import {App, Modal, Notice, setIcon, Setting, TFile, MarkdownView} from 'obsidian';
 import {SearchDashboardModal} from "./search";
 import {
 	IAnnotationSection,
@@ -86,16 +86,43 @@ export class ResearchDashboardModal extends Modal {
 		// Add the button group to the header
 		const buttonGroup = quickSearchHeader.createDiv('quick-search-button-group');
 		const buttons = [
-			{ label: 'Paper', icon: 'file-text' },
-			{ label: 'Reference', icon: 'quote' },
-			{ label: 'Venue', icon: 'building-2' }
+			{ label: 'Paper', icon: 'file-text', callback: async () => {
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) => this.quickSearchAndInsetNote(selectedNote),
+						this.plugin.settings.researchZoteroPath,
+						"Zotero Literature Search",
+					).open()
+					this.close()
+				}},
+			{ label: 'Reference', icon: 'quote', callback: async () => {
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) => this.quickSearchAndInsetNote(selectedNote),
+						this.plugin.settings.researchPath,
+						"Zotero Reference Search",
+						["research/reference"]
+					).open()
+					this.close()
+				} },
+			{ label: 'Venue', icon: 'building-2', callback: async () => {
+					new Notice("This feature is not implemented yet. Please check the documentation for more details.")
+				}}
 		];
 
-		buttons.forEach(({ label, icon }) => {
+		buttons.forEach(({ label, icon, callback}) => {
 			const buttonEl = buttonGroup.createEl('button', {
 				cls: 'quick-search-button',
 				attr: { title: label } // Use title attribute for hover tooltip,
 			});
+			buttonEl.addEventListener('click', async () => {
+				new Notice(`Clicked on: Quick Search: ${label}`);
+				await callback()
+			})
 			setIcon(buttonEl, icon);
 		});
 	}
@@ -306,6 +333,34 @@ export class ResearchDashboardModal extends Modal {
 		return `Summary - ${year} - ${safeFilename}`;
 	}
 
+	private async quickSearchAndInsetNote(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView)
+		if (!activeView) {
+			this.logger.warn("No active Markdown view found.");
+			return;
+		}
+		const editor = activeView.editor;
+
+		// Get current cursor position
+		const cursor = editor.getCursor();
+
+		// Insert content
+		if (!(Array.isArray(selectedNotes))) {
+			selectedNotes = [selectedNotes];
+		}
+		const content = selectedNotes.map(note => `[[${note.basename}]]`).join(", ")
+
+		// Insert the selected item at cursor position
+		editor.replaceRange(content, cursor);
+
+		// Optional: Move cursor to end of inserted text
+		const newCursor = {
+			line: cursor.line,
+			ch: cursor.ch + content.length
+		};
+		editor.setCursor(newCursor);
+	}
+
 	private async exploreImportLiteraturePaper(selectedNotes: ISearchResult | ISearchResult[]): Promise<void> {
 		if (!(Array.isArray(selectedNotes))) {
 			selectedNotes = [selectedNotes];
@@ -333,7 +388,6 @@ export class ResearchDashboardModal extends Modal {
 			// Create the literature paper note
 			copiedSelectedNote = Utils.deepClone(selectedNote);
 			await this.createLiteraturePaperNote(copiedSelectedNote, zoteroItems)
-
 		})
 	}
 
@@ -686,8 +740,6 @@ export class ResearchDashboardModal extends Modal {
 		note.setBody(body)
 		return annotations
 	}
-
-
 
 	private parseAnnotationSection(lines: string[], id: string): IAnnotationSection {
 		const annotation: IAnnotationSection = {

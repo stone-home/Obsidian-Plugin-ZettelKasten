@@ -24,7 +24,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
 
 export class ZettelkastenSettingTab extends PluginSettingTab {
 	plugin: ZettelkastenPlugin;
-	private logger: Logger = Logger.createLogger('ZettelkastenSettingTab'); // Initialize logger for this class
+	private logger = Logger.createLogger('ZettelkastenSettingTab'); // Initialize logger for this class
 	private activeSection: string; // State to keep track of the active section
 	private integrationManager: IntegrationManager; // Placeholder for integration manager, adjust as needed
 	private factory: NoteFactory; // Placeholder for note factory, adjust as needed
@@ -189,6 +189,18 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+
+		new Setting(containerEl)
+			.setName('Zotero Notes Path')
+			.setDesc('The path is used to store all notes imported from Zotero by the Zotero Integration.')
+			.addText(text => text
+				.setPlaceholder('e.g., zotero')
+				.setValue(this.plugin.settings.researchZoteroPath)
+				.onChange(async (value) => {
+					this.plugin.settings.researchZoteroPath = value;
+					await this.plugin.saveSettings();
+				}));
+
 		let templateDirPathTextComponent: TextComponent;
 		new Setting(containerEl)
 			.setName('Template Directory Path')
@@ -203,16 +215,17 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Confirm')
 				.onClick(async () => {
-					this.plugin.settings.templateDirPath = templateDirPathTextComponent.getValue().trim();
-					await this.plugin.saveSettings();
-					this.factory.factorReset()
-					this.factory.updateSettings(this.plugin.settings);
-					await this.factory.initialize(this.plugin.settings);
-					new Notice("Template directory path updated successfully.", 3000);
-					await this.plugin.saveSettings();
+					const targetPath = templateDirPathTextComponent.getValue().trim();
+					if (await Utils.moveFolder(this.app, this.plugin.settings.templateDirPath, targetPath)) {
+						this.plugin.settings.templateDirPath = targetPath;
+						this.factory.factorReset()
+						this.factory.updateSettings(this.plugin.settings);
+						await this.factory.initialize(this.plugin.settings);
+						await this.plugin.saveSettings();
+						new Notice("Please restart Obsidian to apply the changes.", 3000);
+					}
 				})
 			)
-
 
 		let dataviewPathCompoent: TextComponent;
 		new Setting(containerEl)
@@ -228,10 +241,35 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Confirm')
 				.onClick(async () => {
-					this.plugin.settings.dataviewQueryPath = dataviewPathCompoent.getValue().trim();
-					await this.plugin.saveSettings();
-					new Notice("Initizalizing Dataview queries and views in new path.", 3000);
-					await this.plugin.initializeDataviewPlugin()
+					const targetPath = dataviewPathCompoent.getValue().trim();
+					if (await Utils.moveFolder(this.app, this.plugin.settings.dataviewQueryPath, targetPath)) {
+						this.plugin.settings.dataviewQueryPath = targetPath;
+						await this.plugin.saveSettings();
+						new Notice("Please restart Obsidian to apply the changes.", 3000);
+					}
+				})
+			)
+
+		let researchPathComponent: TextComponent;
+		new Setting(containerEl)
+			.setName('Research Entrypoint')
+			.setDesc('A entry point (folder) for all notes in the research problem')
+			.addText(text => {
+					text
+						.setPlaceholder('e.g., research')
+						.setValue(this.plugin.settings.researchPath)
+					researchPathComponent = text
+				}
+			)
+			.addButton(button => button
+				.setButtonText('Confirm')
+				.onClick(async () => {
+					const targetPath = researchPathComponent.getValue().trim();
+					if (await Utils.moveFolder(this.app, this.plugin.settings.researchPath, targetPath)) {
+						this.plugin.settings.researchPath = targetPath;
+						await this.plugin.saveSettings();
+						new Notice("Please restart Obsidian to apply the changes.", 3000);
+					}
 				})
 			)
 	}
@@ -405,19 +443,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				}));
 	}
 
-	private addNoteOption(name: string, folderDir: boolean = false, path?: string): INoteOption {
 
-		// Create a new INoteOption object with default values
-		return {
-			enabled: true,
-			type: NoteType.FLEETING, // Default to Fleeting as a starting point
-			label: name,
-			emoji: '🌱',
-			path: path || undefined, // Leave empty for user to define
-			template: 'default',
-			folderNote: folderDir
-		};
-	}
 
 	private renderDefaultTemplateSettings(containerEl: HTMLElement, name: string, noteType: NoteType): void {
 		new Setting(containerEl)
@@ -437,5 +463,19 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						this.display(); // Re-render to update the setting title
 					});
 			})
+	}
+
+	private addNoteOption(name: string, folderDir: boolean = false, path?: string): INoteOption {
+
+		// Create a new INoteOption object with default values
+		return {
+			enabled: true,
+			type: NoteType.FLEETING, // Default to Fleeting as a starting point
+			label: name,
+			emoji: '🌱',
+			path: path || undefined, // Leave empty for user to define
+			template: 'default',
+			folderNote: folderDir
+		};
 	}
 }

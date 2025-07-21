@@ -1,10 +1,13 @@
-import {App, TAbstractFile} from 'obsidian';
+import {App, Notice, TAbstractFile} from 'obsidian';
 import { Logger } from '../logger';
 import {TFile, TFolder} from "obsidian";
 
 /**
  * A class containing general utility methods.
  */
+const logger = Logger.createLogger('Utils');
+
+
 export class Utils {
 	/**
 	 * Generates a string for the current date.
@@ -224,6 +227,8 @@ export class Utils {
 
 	/**
 	 * Checks if a file or folder exists in the vault.
+	 * In Obsidian or scope of getAbstractFileByPath that are only allowed to access all non-hidden files and folders.
+	 * it will return null if the file/folder is in the hidden folder.
 	 * @param app - The Obsidian app instance
 	 * @param path - The path to check
 	 * @param dir - If true, checks for a folder; if false, checks for a file
@@ -297,6 +302,36 @@ export class Utils {
 			}
 		}
 		return codePoints;
+	}
+
+	static async moveFolder(app: App, sourcePath: string, targetPath: string): Promise<boolean> {
+		const sourceFolder = app.vault.getAbstractFileByPath(sourcePath)
+		if (sourceFolder) {
+			if (!Utils.fileExists(app, sourceFolder, true)) {
+				logger.error(`Source path ${sourcePath} does not exist or is not a folder.`);
+				new Notice(`Source path ${sourcePath} does not exist or is not a folder.`, 3000);
+				return false
+			}
+		} else {
+			logger.error(`Source path ${sourcePath} does not exist.`);
+			new Notice(`Source path ${sourcePath} does not exist.`, 3000);
+			return false;
+		}
+
+		if (Utils.fileExists(app, targetPath, true)) {
+			logger.error(`Target path ${targetPath} already exists.`);
+			new Notice(`Target path ${targetPath} already exists.`, 3000);
+			return false
+		}
+
+		try {
+			await app.vault.rename(sourceFolder, targetPath);
+			console.log(`Successfully moved folder to ${targetPath}`);
+		} catch (error) {
+			logger.logError(`Failed to move folder from ${sourcePath} to ${targetPath}`, error);
+			return false;
+		}
+		return true;
 	}
 
 }
