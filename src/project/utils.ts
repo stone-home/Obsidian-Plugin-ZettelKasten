@@ -36,6 +36,7 @@ export function projectReformResearchNote(note: BaseDefault, properties: IReform
 				ViewResearchLiteratureMetadata,
 				[
 					{ name: "current", type: "boolean", required: false, value: true},
+					{ name: "statisticOnly", type: "boolean", required: false, value: false},
 				]
 			)
 		],
