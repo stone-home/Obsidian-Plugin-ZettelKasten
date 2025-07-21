@@ -298,7 +298,6 @@ export class WeeklyKanban {
 		task.setPath(this.getTaskDir());
 		task.addBodyContent("", "📝Note", 1);
 		task.addTag("kanban/task");
-		task.setProperty("done", false);
 		// insert current task note name into header
 		header.addContent(task.getTitle());
 		task.addLinkedPage(kanbanNote, header, "checklist");
