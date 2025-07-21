@@ -35,6 +35,31 @@
 	margin: 0;
 }
 
+.quick-access-header {
+	display: flex;
+	display: flex;
+	justify-content: flex-start; /* This groups items at the start */
+	align-items: center;
+	gap: 20px; /* This adds a 20px space between the text and the buttons */
+}
+
+.quick-access-button-group {
+	display: flex;
+	gap: 8px;
+}
+
+.quick-access-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-primary);
+	cursor: pointer;
+	transition: all 0.2s ease-in-out;
+}
+
 /* Compact New Note Cards */
 .note-cards-container {
 	display: grid;
@@ -183,7 +208,6 @@
 	color: var(--text-normal);
 	line-height: 1.1;
 }
-
 
 /* Responsive Design */
 @media (max-width: 500px) {

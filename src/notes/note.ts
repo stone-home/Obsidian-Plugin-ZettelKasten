@@ -1,12 +1,18 @@
-import {App, Notice, TFile, TAbstractFile} from "obsidian";
-import {IKeyValue, INoteLink, IProperties, IZettelkastenProperties, IBodySection, IBody} from "./types";
-import {NoteType} from "./config";
-import {Logger} from '../logger';
-import {Utils} from "../utils";
-import {IntegrationManager} from "../3rd";
+import { App, Notice, TFile, TAbstractFile } from "obsidian";
+import {
+	IKeyValue,
+	INoteLink,
+	IProperties,
+	IZettelkastenProperties,
+	IBodySection,
+	IBody,
+} from "./types";
+import { NoteType } from "./config";
+import { Logger } from "../logger";
+import { Utils } from "../utils";
+import { IntegrationManager } from "../3rd";
 
-
-export class KeyValue<T> implements IKeyValue<T>{
+export class KeyValue<T> implements IKeyValue<T> {
 	private key: string;
 	private value: T;
 
@@ -31,14 +37,14 @@ export class KeyValue<T> implements IKeyValue<T>{
 		let output: string = "";
 		// [TS] using different approach to format the output based on the type of value
 		if (Array.isArray(this.value)) {
-			if (this.value.length === 0){
+			if (this.value.length === 0) {
 				output = `${this.key}: []\n`; // Return empty array format
 			} else {
 				const formattedArray = this.value
 					// prevent undefined or null values in the array
-					.filter(item => item !== undefined && item !== null)
-					.map(item =>`  - ${item}`)
-					.join('\n');
+					.filter((item) => item !== undefined && item !== null)
+					.map((item) => `  - ${item}`)
+					.join("\n");
 				output = `${this.key}:\n${formattedArray}\n`;
 			}
 		} else {
@@ -48,18 +54,17 @@ export class KeyValue<T> implements IKeyValue<T>{
 	}
 }
 
-
 export class Property {
 	protected _properties: IProperties;
-	protected logger = Logger.createLogger('Property');
+	protected logger = Logger.createLogger("Property");
 	protected static readonly protectedKeys: string[] = ["id", "create"];
 
 	constructor() {
 		this._properties = {
-			"title": new KeyValue("title", ""),
-			"type": new KeyValue("type", ""),
-			"tags": new KeyValue("tags", []),
-			"aliases": new KeyValue("aliases", []),
+			title: new KeyValue("title", ""),
+			type: new KeyValue("type", ""),
+			tags: new KeyValue("tags", []),
+			aliases: new KeyValue("aliases", []),
 		};
 	}
 
@@ -67,9 +72,12 @@ export class Property {
 		this.logger.debug(`Starting property update...`);
 		updates = Utils.deepClone(updates);
 
-		const isTemplate = this.getPropertyValue("template") as boolean | undefined;
-		const isUpdateTemplate = updates.hasOwnProperty("template") && updates.template as boolean| undefined;
-
+		const isTemplate = this.getPropertyValue("template") as
+			| boolean
+			| undefined;
+		const isUpdateTemplate =
+			Object.prototype.hasOwnProperty.call(updates, "template") &&
+			(updates.template as boolean | undefined);
 
 		for (const key in updates) {
 			// Check if the key exists in the provided updates object
@@ -78,12 +86,18 @@ export class Property {
 				if (Property.protectedKeys.includes(key)) {
 					if (isTemplate && !isUpdateTemplate) {
 						if (incomingKeyValue) {
-							this.setPropertyValue(key, incomingKeyValue.getValue(), true);
+							this.setPropertyValue(
+								key,
+								incomingKeyValue.getValue(),
+								true,
+							);
 						}
-						continue
+						continue;
 					} else {
-						this.logger.warn(`Attempted to update protected property: ${key}. This will be ignored.`);
-						continue
+						this.logger.warn(
+							`Attempted to update protected property: ${key}. This will be ignored.`,
+						);
+						continue;
 					}
 				}
 				if (incomingKeyValue) {
@@ -110,16 +124,24 @@ export class Property {
 			delete this._properties[key];
 			this.logger.debug(`property ${key} is removed`);
 		} else {
-			this.logger.warn(`Attempted to remove non-existing property: ${key}`);
+			this.logger.warn(
+				`Attempted to remove non-existing property: ${key}`,
+			);
 		}
 	}
 
 	public getPropertyValue<T = any>(key: string): T {
-		this.logger.debug(`property ${key}:${this._properties[key]?.getValue()} is returned`);
+		this.logger.debug(
+			`property ${key}:${this._properties[key]?.getValue()} is returned`,
+		);
 		return this._properties[key]?.getValue();
 	}
 
-	public setPropertyValue(key: string, value: any, cleanup: boolean = false): void {
+	public setPropertyValue(
+		key: string,
+		value: any,
+		cleanup: boolean = false,
+	): void {
 		if (!this._properties.hasOwnProperty(key)) {
 			this._properties[key] = new KeyValue(key, value);
 			this.logger.debug(`property ${key}:${value} is added`);
@@ -209,20 +231,22 @@ export class BodySection implements IBodySection {
 	}
 
 	public getId(): string {
-		return `${this.title.replace(/\s+/g, '-').toLowerCase()}-${this.head_level}`;
+		return `${this.title.replace(/\s+/g, "-").toLowerCase()}-${this.head_level}`;
 	}
 }
 
 export class Body implements IBody {
 	public sections: Map<string, IBodySection> = new Map();
-	private logger = Logger.createLogger('Body');
+	private logger = Logger.createLogger("Body");
 
 	constructor() {
 		this.sections = new Map<string, IBodySection>();
 	}
 
 	public newSection(name: string, head_level: number): IBodySection {
-		this.logger.debug(`Create new section with name: ${name} and head level: ${head_level}`);
+		this.logger.debug(
+			`Create new section with name: ${name} and head level: ${head_level}`,
+		);
 		const section = new BodySection(name, head_level);
 		return this.addSection(section);
 	}
@@ -238,13 +262,22 @@ export class Body implements IBody {
 		return this.sections.get(id) || undefined;
 	}
 
-	public getSection(name: string, head_level: number): IBodySection | undefined {
-		this.logger.debug(`Get section by name: ${name} and head level: ${head_level}`);
+	public getSection(
+		name: string,
+		head_level: number,
+	): IBodySection | undefined {
+		this.logger.debug(
+			`Get section by name: ${name} and head level: ${head_level}`,
+		);
 		const section = new BodySection(name, head_level);
 		return this.getSectionById(section.getId()) || undefined;
 	}
 
-	public addContent(content: string | string[], sectionName: string = "default", head_level: number = 1): void {
+	public addContent(
+		content: string | string[],
+		sectionName: string = "default",
+		head_level: number = 1,
+	): void {
 		const sectionId = new BodySection(sectionName, head_level).getId();
 		if (!this.sections.has(sectionId)) {
 			this.newSection(sectionName, head_level);
@@ -264,7 +297,7 @@ export class Body implements IBody {
 	 */
 	public update(body: Body): void {
 		for (const [sectionId, content] of body.sections) {
-			if (!(this.getSectionById(sectionId))) {
+			if (!this.getSectionById(sectionId)) {
 				this.newSection(content.title, content.head_level);
 			}
 			this.addContent(content.content, content.title, content.head_level);
@@ -275,24 +308,27 @@ export class Body implements IBody {
 		let body: string = "";
 		for (const [id, content] of this.sections) {
 			if (content) {
-				body += `${'#'.repeat(content.head_level)} ${content.title}\n`;
-				body += content.content.join('\n') + '\n';
+				body += `${"#".repeat(content.head_level)} ${content.title}\n`;
+				body += content.content.join("\n") + "\n";
 			}
 		}
 		return body;
 	}
 }
 
-
-
 export class NoteLink implements INoteLink {
 	public targetNote: BaseNote;
 	public header: IBodySection;
-	public form?: 'list' | 'checklist';
+	public form?: "list" | "checklist";
 	private app: App;
 	public property: boolean = false; // Indicates if this link is a property link
 
-	constructor(app: App, targetNote: BaseNote, header: IBodySection, form?: 'list' | 'checklist') {
+	constructor(
+		app: App,
+		targetNote: BaseNote,
+		header: IBodySection,
+		form?: "list" | "checklist",
+	) {
 		this.app = app;
 		this.targetNote = targetNote;
 		this.header = header;
@@ -306,12 +342,12 @@ export class NoteLink implements INoteLink {
 	public async link(): Promise<void> {
 		if (await this.targetNote.exist()) {
 			const body = this.targetNote.getBody();
-			const section = body.getSectionById(this.header.getId())
+			const section = body.getSectionById(this.header.getId());
 			this.header.content.forEach((content) => {
-				const linkText = this.formatLink(content)
+				const linkText = this.formatLink(content);
 				section?.addContent(linkText);
-			})
-			await this.targetNote.update()
+			});
+			await this.targetNote.update();
 		}
 	}
 
@@ -319,9 +355,9 @@ export class NoteLink implements INoteLink {
 		const link = `[[${content}]]`;
 
 		switch (this.form) {
-			case 'list':
+			case "list":
 				return `- ${link}`;
-			case 'checklist':
+			case "checklist":
 				return `- [ ] ${link}`;
 			default:
 				return link;
@@ -330,10 +366,9 @@ export class NoteLink implements INoteLink {
 
 	private addLinkToContent(content: string, linkText: string): string {
 		// Insert the link at the end of the content
-		return content + '\n\n' + linkText;
+		return content + "\n\n" + linkText;
 	}
 }
-
 
 // Base class for notes, providing common properties and methods
 export abstract class BaseNote {
@@ -341,11 +376,11 @@ export abstract class BaseNote {
 	protected properties: Property;
 	protected body: Body;
 	protected linkedPages: INoteLink[] = [];
-	protected savePath: string = '000-inbox';
+	protected savePath: string = "000-inbox";
 	protected subPage: boolean = false;
 	protected template?: BaseNote;
 	protected noteType: NoteType;
-	private logger = Logger.createLogger('BaseNote');
+	private logger = Logger.createLogger("BaseNote");
 	private integrations: IntegrationManager;
 
 	abstract defaultProperty(): Property;
@@ -355,21 +390,29 @@ export abstract class BaseNote {
 		this.app = app;
 		this.noteType = noteType;
 		this.properties = this.defaultProperty();
-		this.body = this.defaultBody()
-		this.integrations = IntegrationManager.getInstance(this.app)
+		this.body = this.defaultBody();
+		this.integrations = IntegrationManager.getInstance(this.app);
 		if (template) {
 			this.updateByTemplate(template, true);
 		}
 	}
 
-	public updateByTemplate(template: BaseNote, keepNoteOrder: boolean = true): void {
+	public updateByTemplate(
+		template: BaseNote,
+		keepNoteOrder: boolean = true,
+	): void {
 		if (keepNoteOrder) {
-			this.properties.update(template.getProperties().getProperties(), false)
-			this.body.update(template.getBody())
-			this.setTitle("") // Clear the title to ensure the template title is not used
+			this.properties.update(
+				template.getProperties().getProperties(),
+				false,
+			);
+			this.body.update(template.getBody());
+			this.setTitle(""); // Clear the title to ensure the template title is not used
 		} else {
-			template.getProperties().update(this.properties.getProperties(), false);
-			template.getBody().update(this.getBody())
+			template
+				.getProperties()
+				.update(this.properties.getProperties(), false);
+			template.getBody().update(this.getBody());
 
 			this.properties = template.getProperties();
 			this.body = template.getBody();
@@ -380,7 +423,6 @@ export abstract class BaseNote {
 			this.logger.debug("Remove template property before saving");
 			this.properties.remove("template");
 		}
-
 	}
 
 	public getProperties(): Property {
@@ -393,6 +435,11 @@ export abstract class BaseNote {
 		return this.body;
 	}
 
+	public setBody(body: Body): void {
+		this.logger.debug("Set body of the note");
+		this.body = body;
+	}
+
 	// 基础属性操作方法
 	public getTitle(): string {
 		return this.properties.getTitle();
@@ -402,11 +449,13 @@ export abstract class BaseNote {
 		this.properties.setTitle(title);
 	}
 
-	public getType(): NoteType{
+	public getType(): NoteType {
 		let note_key = Utils.getKeyByValue(NoteType, this.properties.getType());
 		if (!note_key) {
-			this.logger.warn(`Note type ${this.properties.getType()} is not recognized, defaulting to UNKNOWN`);
-			note_key = 'FLEETING';
+			this.logger.warn(
+				`Note type ${this.properties.getType()} is not recognized, defaulting to UNKNOWN`,
+			);
+			note_key = "FLEETING";
 		}
 		return NoteType[note_key];
 	}
@@ -424,10 +473,10 @@ export abstract class BaseNote {
 		return this.savePath;
 	}
 
-
 	public addTag(tag: string | string[]): void {
 		const tags = Array.isArray(tag) ? tag : [tag];
-		this.properties.addTag(tags);
+		const unifiedTags = Utils.unifiedTagFormat(tags, false, true);
+		this.properties.addTag(unifiedTags);
 	}
 
 	public addAlias(alias: string | string[]): void {
@@ -440,7 +489,7 @@ export abstract class BaseNote {
 	}
 
 	public getProperty(key: string): any {
-		return this.properties.getPropertyValue(key)
+		return this.properties.getPropertyValue(key);
 	}
 
 	public enableSubpage(): void {
@@ -461,7 +510,11 @@ export abstract class BaseNote {
 		return obPath;
 	}
 
-	public addBodyContent(content: string | string[], section_name: string, head_level: number): void {
+	public addBodyContent(
+		content: string | string[],
+		section_name: string,
+		head_level: number,
+	): void {
 		this.body.addContent(content, section_name, head_level);
 	}
 
@@ -471,17 +524,22 @@ export abstract class BaseNote {
 	 */
 	public emptyBody(): void {
 		this.logger.debug("Empty the body of the note");
-		this.body = new Body()
+		this.body = new Body();
 	}
 
 	public addLinkInstance(link: INoteLink): void {
 		this.linkedPages.push(link);
 	}
 
-	public addLinkedPage(targetNote: BaseNote, header: IBodySection, form?: 'list' | 'checklist', property: boolean = false): INoteLink {
+	public addLinkedPage(
+		targetNote: BaseNote,
+		header: IBodySection,
+		form?: "list" | "checklist",
+		property: boolean = false,
+	): INoteLink {
 		const link = new NoteLink(this.app, targetNote, header, form);
 		if (property) {
-			link.enablePropertyLink()
+			link.enablePropertyLink();
 		}
 		this.addLinkInstance(link);
 		return link;
@@ -504,17 +562,19 @@ export abstract class BaseNote {
 		this.pre_process();
 		let note: string = this.properties.toString();
 		note += this.body.toString();
-		return this.post_process(note)
+		return this.post_process(note);
 	}
 
-	private async getTfile(dir: boolean = false): Promise<TAbstractFile | null> {
+	private async getTfile(
+		dir: boolean = false,
+	): Promise<TAbstractFile | null> {
 		const path = dir ? this.getPath() : this.getObPath(true); // 确保文件路径包含扩展名
 		return this.app.vault.getAbstractFileByPath(path);
 	}
 
 	// Check if the note exists in the vault
 	public async exist(dir: boolean = false): Promise<boolean> {
-		const path = await this.getTfile(dir) as TAbstractFile;
+		const path = (await this.getTfile(dir)) as TAbstractFile;
 		return Utils.fileExists(this.app, path, dir);
 	}
 
@@ -530,14 +590,18 @@ export abstract class BaseNote {
 
 		// Check whether title is empty
 		if (!this.getTitle() || this.getTitle().trim() === "") {
-			let title: string| null = await this.integrations.getTemplater().getPrompt("Typing title for the note")
-			this.logger.debug("The note title is empty, chaneging to user input: " + title);
-			if (title === null){
+			let title: string | null = await this.integrations
+				.getTemplater()
+				.getPrompt("Typing title for the note");
+			this.logger.debug(
+				"The note title is empty, chaneging to user input: " + title,
+			);
+			if (title === null) {
 				// @ts-ignore
 				title = "Untitled Note";
 			}
 			// @ts-ignore
-			this.setTitle(title)
+			this.setTitle(title);
 		}
 
 		// Checking whether title is duplicated
@@ -545,11 +609,13 @@ export abstract class BaseNote {
 		if (fileExists) {
 			const randomSuffix = Math.floor(Math.random() * 100) + 1;
 			this.setTitle(`${this.getTitle()} ${randomSuffix}`);
-			this.logger.warn(`Due to duplicated filename, file name changes to ${this.getTitle()}`);
+			this.logger.warn(
+				`Due to duplicated filename, file name changes to ${this.getTitle()}`,
+			);
 		}
 
 		// Overwrite the value of type
-		this.setType(this.noteType)
+		this.setType(this.noteType);
 	}
 
 	public async save(): Promise<TFile> {
@@ -557,33 +623,47 @@ export abstract class BaseNote {
 		await this.checkBeforeSave();
 		const s_note = await this.toString();
 		try {
-			const file = await this.app.vault.create(this.getObPath(true), s_note);
+			const file = await this.app.vault.create(
+				this.getObPath(true),
+				s_note,
+			);
 			// Execute linking operations
 			await this.linkingPages();
 			this.logger.debug(`Note saved: ${this.getObPath(false)}`);
 			return file;
 		} catch (error) {
-			this.logger.logError(`Save ${this.getTitle()} failed: ${error}`, error);
-			throw error
+			this.logger.logError(
+				`Save ${this.getTitle()} failed: ${error}`,
+				error,
+			);
+			throw error;
 		}
 	}
 
 	public async update(): Promise<TFile> {
 		this.logger.info(`Start updating note at ${this.getObPath()}`);
 		const updated_note = await this.toString();
-		const file = await this.getTfile() as TFile;
+		const file = (await this.getTfile()) as TFile;
 		try {
-			await this.app.vault.modify(file, updated_note)
+			await this.app.vault.modify(file, updated_note);
 		} catch (error) {
- 			this.logger.logError(`Update ${this.getTitle()} failed: ${error}`, error);
-			throw error
+			this.logger.logError(
+				`Update ${this.getTitle()} failed: ${error}`,
+				error,
+			);
+			throw error;
 		}
 		try {
-			this.logger.info(`Updating for linking phase for ${this.getTitle()}`);
+			this.logger.info(
+				`Updating for linking phase for ${this.getTitle()}`,
+			);
 			await this.linkingPages();
 		} catch (error) {
-			this.logger.logError(`Update ${this.getTitle()} failed: ${error}`, error);
-			throw error
+			this.logger.logError(
+				`Update ${this.getTitle()} failed: ${error}`,
+				error,
+			);
+			throw error;
 		}
 		return file;
 	}
@@ -597,31 +677,44 @@ export abstract class BaseNote {
 	 */
 	async move(newFolderPath: string): Promise<void> {
 		// Ensure the destination folder path doesn't end with a slash
-		if (newFolderPath.endsWith('/')) {
+		if (newFolderPath.endsWith("/")) {
 			newFolderPath = newFolderPath.slice(0, -1);
 		}
 
 		// Check if the destination is the same as the current folder
 		if (this.getPath() === newFolderPath) {
-			this.logger.warn(`The destination folder is the same as the current folder: ${newFolderPath}`);
-			new Notice(`The destination folder is the same as the current folder: ${newFolderPath}`);
+			this.logger.warn(
+				`The destination folder is the same as the current folder: ${newFolderPath}`,
+			);
+			new Notice(
+				`The destination folder is the same as the current folder: ${newFolderPath}`,
+			);
 			return;
 		}
 
 		const file = await this.getTfile();
 		// Check if the destination folder has the same name as the current file
 		this.setPath(newFolderPath);
-		const targetFileExist = await this.exist(false)
+		const targetFileExist = await this.exist(false);
 		if (targetFileExist) {
-			this.logger.warn(`A file with the same name already exists in the destination folder: ${newFolderPath}`);
-			new Notice(`A file with the same name already exists in the destination folder: ${newFolderPath}`);
+			this.logger.warn(
+				`A file with the same name already exists in the destination folder: ${newFolderPath}`,
+			);
+			new Notice(
+				`A file with the same name already exists in the destination folder: ${newFolderPath}`,
+			);
 			return;
 		}
 		try {
 			// The renameFile method moves the file by changing its path
-			if (file){
-				await this.app.fileManager.renameFile(file, this.getObPath(true));
-				this.logger.info(`Moving file '${file.name}' to '${this.getPath()}'`);
+			if (file) {
+				await this.app.fileManager.renameFile(
+					file,
+					this.getObPath(true),
+				);
+				this.logger.info(
+					`Moving file '${file.name}' to '${this.getPath()}'`,
+				);
 			} else {
 				this.logger.warn(`File not found: ${this.getObPath(true)}`);
 				new Notice(`File not found: ${this.getObPath(true)}`);
@@ -637,28 +730,26 @@ export abstract class BaseNote {
 			await link.link(this);
 		}
 	}
-
 }
-
 
 // Zettelkasten Relevant Class
 export class ZettelkastenProperty extends Property {
-	protected logger = Logger.createLogger('ZettelkastenProperty');
+	protected logger = Logger.createLogger("ZettelkastenProperty");
 	protected _properties: IZettelkastenProperties;
 
 	constructor() {
 		super();
 		this._properties = {
-			"title": new KeyValue("title", ""),
-			"type": new KeyValue("type", ""),
-			"url": new KeyValue("url", ""),
-			"create": new KeyValue("create", Utils.generateDate()),
-			"id": new KeyValue("id", Utils.generateZettelID()),
-			"tags": new KeyValue("tags", []),
-			"aliases": new KeyValue("aliases", []),
-			"sources": new KeyValue("sources", []),
-			"new": new KeyValue("new", true),
-		}
+			title: new KeyValue("title", ""),
+			type: new KeyValue("type", ""),
+			url: new KeyValue("url", ""),
+			create: new KeyValue("create", Utils.generateDate()),
+			id: new KeyValue("id", Utils.generateZettelID()),
+			tags: new KeyValue("tags", []),
+			aliases: new KeyValue("aliases", []),
+			sources: new KeyValue("sources", []),
+			new: new KeyValue("new", true),
+		};
 	}
 
 	public getUrl(): string {
@@ -671,7 +762,7 @@ export class ZettelkastenProperty extends Property {
 		this.setPropertyValue("url", url);
 	}
 
-	public addSources(sourceNote: string| string[]): void {
+	public addSources(sourceNote: string | string[]): void {
 		this.logger.debug(`Add Property: source_notes:${sourceNote}`);
 		this.setPropertyValue("sources", sourceNote);
 	}
@@ -700,14 +791,13 @@ export class ZettelkastenProperty extends Property {
 	}
 }
 
-
 // This default note is used for supplementing mandatory fields in the Zettelkasten system
 export class BaseDefault extends BaseNote {
 	protected properties: ZettelkastenProperty;
 
 	constructor(app: App, noteType: NoteType, template?: BaseNote) {
 		super(app, noteType);
-		this.properties = this.defaultProperty()
+		this.properties = this.defaultProperty();
 		if (template) {
 			this.updateByTemplate(template, true);
 		}
@@ -715,7 +805,7 @@ export class BaseDefault extends BaseNote {
 
 	defaultBody(): Body {
 		let _body: Body = new Body();
-		_body.newSection("**🔗Source**", 4)
+		_body.newSection("**🔗Source**", 4);
 		return _body;
 	}
 
@@ -738,5 +828,4 @@ export class BaseDefault extends BaseNote {
 			this.properties.addSources(sourceNote);
 		}
 	}
-
 }

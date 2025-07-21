@@ -1,7 +1,6 @@
-import { App } from 'obsidian';
-import { Logger } from '../logger';
-import { TemplaterIntegration } from './templater';
-
+import { App } from "obsidian";
+import { Logger } from "../logger";
+import { TemplaterIntegration } from "./templater";
 
 export class IntegrationManager {
 	// The single instance of IntegrationManager
@@ -9,7 +8,7 @@ export class IntegrationManager {
 
 	private app: App;
 	private templater: TemplaterIntegration;
-	private logger = Logger.createLogger('IntegrationManager');
+	private logger = Logger.createLogger("IntegrationManager");
 
 	// Make the constructor private to prevent direct instantiation
 	private constructor(app: App) {
@@ -31,19 +30,19 @@ export class IntegrationManager {
 	}
 
 	public async initialize(): Promise<void> {
-		this.logger.info('Initializing integrations...');
+		this.logger.info("Initializing integrations...");
 
 		// Initialize Templater
 		const templaterSuccess = await this.templater.initialize();
 		if (templaterSuccess) {
-			this.logger.info('Templater integration ready');
+			this.logger.info("Templater integration ready");
 		} else {
-			this.logger.warn('Templater integration failed to initialize.');
+			this.logger.warn("Templater integration failed to initialize.");
 		}
 
 		// Add other integrations here in the future
 
-		this.logger.info('Integration initialization complete');
+		this.logger.info("Integration initialization complete");
 	}
 
 	public getTemplater(): TemplaterIntegration {

@@ -1,10 +1,12 @@
-import {App, TAbstractFile} from 'obsidian';
-import { Logger } from '../logger';
-import {TFile, TFolder} from "obsidian";
+import { App, Notice, TAbstractFile } from "obsidian";
+import { Logger } from "../logger";
+import { TFile, TFolder } from "obsidian";
 
 /**
  * A class containing general utility methods.
  */
+const logger = Logger.createLogger("Utils");
+
 export class Utils {
 	/**
 	 * Generates a string for the current date.
@@ -55,10 +57,10 @@ export class Utils {
 	static sanitizeFilename(filename: string): string {
 		// Remove or replace characters that are invalid in filenames
 		const sanitized = filename
-			.replace(/[<>:"/\\|?*]/g, '-') // Replace invalid chars with dash
-			.replace(/\s+/g, '-') // Replace spaces with dash
-			.replace(/-+/g, '-') // Replace multiple dashes with single dash
-			.replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+			.replace(/[<>:"/\\|?*]/g, "-") // Replace invalid chars with dash
+			.replace(/\s+/g, "-") // Replace spaces with dash
+			.replace(/-+/g, "-") // Replace multiple dashes with single dash
+			.replace(/^-|-$/g, ""); // Remove leading/trailing dashes
 
 		Logger.debug(`Sanitized filename: "${filename}" -> "${sanitized}"`);
 		return sanitized;
@@ -70,28 +72,33 @@ export class Utils {
 	 * @param format - Format type ('short', 'long', 'time')
 	 * @returns {string} Formatted date string
 	 */
-	static formatDate(dateString: string, format: 'short' | 'long' | 'time' = 'short'): string {
+	static formatDate(
+		dateString: string,
+		format: "short" | "long" | "time" = "short",
+	): string {
 		const date = new Date(dateString);
 
 		let formatted: string;
 		switch (format) {
-			case 'long':
-				formatted = date.toLocaleDateString('zh-CN', {
-					year: 'numeric',
-					month: 'long',
-					day: 'numeric'
+			case "long":
+				formatted = date.toLocaleDateString("zh-CN", {
+					year: "numeric",
+					month: "long",
+					day: "numeric",
 				});
 				break;
-			case 'time':
-				formatted = date.toLocaleString('zh-CN');
+			case "time":
+				formatted = date.toLocaleString("zh-CN");
 				break;
-			case 'short':
+			case "short":
 			default:
-				formatted = date.toLocaleDateString('zh-CN');
+				formatted = date.toLocaleDateString("zh-CN");
 				break;
 		}
 
-		Logger.debug(`Formatted date: "${dateString}" -> "${formatted}" (${format})`);
+		Logger.debug(
+			`Formatted date: "${dateString}" -> "${formatted}" (${format})`,
+		);
 		return formatted;
 	}
 
@@ -101,7 +108,7 @@ export class Utils {
 	 * @returns {boolean} True if valid note type
 	 */
 	static isValidNoteType(type: string): boolean {
-		const validTypes = ['fleeting', 'literature', 'atomic', 'permanent'];
+		const validTypes = ["fleeting", "literature", "atomic", "permanent"];
 		const isValid = validTypes.includes(type.toLowerCase());
 		Logger.debug(`Validated note type: "${type}" -> ${isValid}`);
 		return isValid;
@@ -113,16 +120,16 @@ export class Utils {
 	 * @returns {string[]} Array of trimmed tags
 	 */
 	static parseTags(tagString: string): string[] {
-		if (!tagString || tagString.trim() === '') {
+		if (!tagString || tagString.trim() === "") {
 			return [];
 		}
 
 		const tags = tagString
-			.split(',')
-			.map(tag => tag.trim())
-			.filter(tag => tag.length > 0);
+			.split(",")
+			.map((tag) => tag.trim())
+			.filter((tag) => tag.length > 0);
 
-		Logger.debug(`Parsed tags: "${tagString}" -> [${tags.join(', ')}]`);
+		Logger.debug(`Parsed tags: "${tagString}" -> [${tags.join(", ")}]`);
 		return tags;
 	}
 
@@ -149,8 +156,10 @@ export class Utils {
 			return str;
 		}
 
-		const truncated = str.substring(0, maxLength - 3) + '...';
-		Logger.debug(`Truncated: "${str}" -> "${truncated}" (max: ${maxLength})`);
+		const truncated = str.substring(0, maxLength - 3) + "...";
+		Logger.debug(
+			`Truncated: "${str}" -> "${truncated}" (max: ${maxLength})`,
+		);
 		return truncated;
 	}
 
@@ -162,7 +171,7 @@ export class Utils {
 	 */
 	static debounce<T extends (...args: any[]) => any>(
 		func: T,
-		wait: number
+		wait: number,
 	): (...args: Parameters<T>) => void {
 		let timeout: NodeJS.Timeout;
 
@@ -178,7 +187,7 @@ export class Utils {
 	 * @returns {T} Cloned object
 	 */
 	static deepClone<T>(obj: T): T {
-		if (obj === null || typeof obj !== 'object') {
+		if (obj === null || typeof obj !== "object") {
 			return obj;
 		}
 
@@ -187,12 +196,12 @@ export class Utils {
 		}
 
 		if (obj instanceof Array) {
-			return obj.map(item => Utils.deepClone(item)) as unknown as T;
+			return obj.map((item) => Utils.deepClone(item)) as unknown as T;
 		}
 
-		if (typeof obj === 'object') {
+		if (typeof obj === "object") {
 			const cloned: any = {};
-			Object.keys(obj).forEach(key => {
+			Object.keys(obj).forEach((key) => {
 				cloned[key] = Utils.deepClone((obj as any)[key]);
 			});
 			return Object.assign(cloned, obj);
@@ -209,8 +218,13 @@ export class Utils {
 	 * @param value The string value whose key needs to be found.
 	 * @returns The corresponding enum key, or undefined if not found.
 	 */
-	static getKeyByValue<T extends Record<string, string>>(enumObject: T, value: string): keyof T | undefined {
-		return (Object.keys(enumObject) as Array<keyof T>).find(key => enumObject[key] === value);
+	static getKeyByValue<T extends Record<string, string>>(
+		enumObject: T,
+		value: string,
+	): keyof T | undefined {
+		return (Object.keys(enumObject) as Array<keyof T>).find(
+			(key) => enumObject[key] === value,
+		);
 	}
 
 	/**
@@ -224,16 +238,25 @@ export class Utils {
 
 	/**
 	 * Checks if a file or folder exists in the vault.
+	 * In Obsidian or scope of getAbstractFileByPath that are only allowed to access all non-hidden files and folders.
+	 * it will return null if the file/folder is in the hidden folder.
 	 * @param app - The Obsidian app instance
 	 * @param path - The path to check
 	 * @param dir - If true, checks for a folder; if false, checks for a file
 	 * @returns {boolean} True if the file/folder exists, false otherwise
 	 */
-	static fileExists(app: App, path: string|TAbstractFile, dir: boolean): boolean {
+	static fileExists(
+		app: App,
+		path: string | TAbstractFile,
+		dir: boolean,
+	): boolean {
 		try {
 			let tfile: TAbstractFile | null;
-			if (String.isString(path)){
-				tfile = app.vault.getAbstractFileByPath(path) as TFile | TFolder | null;
+			if (String.isString(path)) {
+				tfile = app.vault.getAbstractFileByPath(path) as
+					| TFile
+					| TFolder
+					| null;
 			} else {
 				tfile = path as TFile | TFolder;
 			}
@@ -246,5 +269,106 @@ export class Utils {
 		} catch (error) {
 			return false;
 		}
+	}
+
+	static unifiedTagFormat(
+		tag: string[],
+		keepHash: boolean = true,
+		keepEmoji: boolean = true,
+	): string[] {
+		if (!tag || tag.length === 0) {
+			return [];
+		}
+
+		const unifiedTags = tag
+			.map((t) => {
+				// In this stage all special characters are removed except for alphanumeric, underscore, hyphen, and slash.
+				// hash shoube be removed to unify the tag format in post-processing
+				// Important: \uFE0F is the variation selector for emoji, which allows us to keep emojis in the tags.
+				// somehow, the \uFE0F is not belong to \p{S} in the regex, so we need to add it manually
+				if (keepEmoji) {
+					t = t.replace(/[^\p{L}\p{N}_/\-\s\p{S}\uFE0F]/gu, "");
+				} else {
+					t = t.replace(/[^a-zA-Z0-9_/\-]/g, "");
+				}
+				// Ensure the first character should be non-hash
+				// removing hash aims to unify the tag format in post-processing
+				if (t.startsWith("#")) {
+					t = t.slice(1); // Remove leading #
+				}
+
+				if (t.endsWith("/")) {
+					t = t.slice(0, -1); // Remove trailing slash
+				}
+
+				if (keepHash) {
+					t = "#" + t; // Add # prefix if keepHash is true
+				}
+
+				return t.normalize("NFC");
+			})
+			.filter((t) => t.length > 0); // Filter out empty tags
+
+		Logger.debug(
+			`Unified tags: [${tag.join(", ")}] -> [${unifiedTags.join(", ")}]`,
+		);
+		return Array.from(new Set(unifiedTags));
+	}
+
+	static getEmojiCodePoints(text: string): string[] {
+		const codePoints = [];
+		for (let i = 0; i < text.length; i++) {
+			const codePoint = text.codePointAt(i);
+			if (codePoint !== undefined) {
+				codePoints.push(`U+${codePoint.toString(16).toUpperCase()}`);
+				// If the character is part of a surrogate pair, advance 'i' to skip the second part
+				if (codePoint > 0xffff) {
+					i++;
+				}
+			}
+		}
+		return codePoints;
+	}
+
+	static async moveFolder(
+		app: App,
+		sourcePath: string,
+		targetPath: string,
+	): Promise<boolean> {
+		const sourceFolder = app.vault.getAbstractFileByPath(sourcePath);
+		if (sourceFolder) {
+			if (!Utils.fileExists(app, sourceFolder, true)) {
+				logger.error(
+					`Source path ${sourcePath} does not exist or is not a folder.`,
+				);
+				new Notice(
+					`Source path ${sourcePath} does not exist or is not a folder.`,
+					3000,
+				);
+				return false;
+			}
+		} else {
+			logger.error(`Source path ${sourcePath} does not exist.`);
+			new Notice(`Source path ${sourcePath} does not exist.`, 3000);
+			return false;
+		}
+
+		if (Utils.fileExists(app, targetPath, true)) {
+			logger.error(`Target path ${targetPath} already exists.`);
+			new Notice(`Target path ${targetPath} already exists.`, 3000);
+			return false;
+		}
+
+		try {
+			await app.vault.rename(sourceFolder, targetPath);
+			console.log(`Successfully moved folder to ${targetPath}`);
+		} catch (error) {
+			logger.logError(
+				`Failed to move folder from ${sourcePath} to ${targetPath}`,
+				error,
+			);
+			return false;
+		}
+		return true;
 	}
 }

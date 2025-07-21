@@ -1,14 +1,9 @@
-import {NoteType, NoteTypeData, INoteTemplateMetadata} from "./notes";
+import { NoteType, NoteTypeData, INoteTemplateMetadata } from "./notes";
 import {
 	ZettelkastenSettings,
-	IFeatureFlags,
-	INamingPatterns,
-	IDebugConfig,
 	INotificationConfig,
-	INoteOption
+	INoteOption,
 } from "./types";
-
-
 
 /**
  * A list of all available note templates that can be created in 'New Note' modal
@@ -17,64 +12,24 @@ export const CreateNoteOptions: INoteOption[] = [
 	{
 		enabled: true,
 		type: NoteType.FLEETING,
-		label: 'Fleeting',
+		label: "Fleeting",
 	},
 	{
 		enabled: true,
 		type: NoteType.LITERATURE,
-		label: 'Literature',
+		label: "Literature",
 	},
 	{
 		enabled: true,
 		type: NoteType.ATOMIC,
-		label: 'Atomic',
+		label: "Atomic",
 	},
 	{
 		enabled: true,
 		type: NoteType.PERMANENT,
-		label: 'Permanent',
-	}
-]
-
-
-/**
- * Plugin feature flags
- */
-export const FEATURES: IFeatureFlags = {
-	AUTO_OPEN_CREATED_NOTES: true,
-	SHOW_UPGRADE_NOTIFICATIONS: true,
-	DEBUG_MODE: false,
-	FOLDER_NOTES:true,
-	WEEKLY_KANBAN: {
-		enabled: true,
-		description: 'Enable weekly kanban board for task management',
-		path: "kanban"
-	}
-} as const;
-
-
-/**
- * File naming patterns
- */
-export const NAMING_PATTERNS: INamingPatterns = {
-	DATE_FORMAT: 'yyyy-MM-dd',
-	TIME_FORMAT: 'HH:mm:ss',
-	ID_LENGTH: 8,
-	TITLE_MAX_LENGTH: 100,
-	INVALID_CHARS: /[<>:"/\\|?*]/g,
-	REPLACEMENT_CHAR: '-'
-} as const;
-
-
-/**
- * Development and debugging
- */
-export const DEBUG_CONFIG: IDebugConfig = {
-	LOG_LEVEL: 'info' as const,
-	SHOW_PERFORMANCE_METRICS: false,
-	ENABLE_ERROR_BOUNDARIES: true,
-} as const;
-
+		label: "Permanent",
+	},
+];
 
 /**
  * Notification settings
@@ -84,9 +39,8 @@ export const NOTIFICATION_CONFIG: INotificationConfig = {
 	ERROR_DURATION: 6000,
 	WARNING_DURATION: 5000,
 	INFO_DURATION: 3000,
-	SUGGESTION_COOLDOWN: 24 * 60 * 60 * 1000 // 24 hours
+	SUGGESTION_COOLDOWN: 24 * 60 * 60 * 1000, // 24 hours
 } as const;
-
 
 export class ConfigHelper {
 	/**
@@ -96,35 +50,42 @@ export class ConfigHelper {
 		return NoteTypeData[noteType];
 	}
 
-	static getNotificationDuration(type: 'success' | 'error' | 'warning' | 'info'): number {
+	static getNotificationDuration(
+		type: "success" | "error" | "warning" | "info",
+	): number {
 		const durations = {
 			success: NOTIFICATION_CONFIG.SUCCESS_DURATION,
 			error: NOTIFICATION_CONFIG.ERROR_DURATION,
 			warning: NOTIFICATION_CONFIG.WARNING_DURATION,
-			info: NOTIFICATION_CONFIG.INFO_DURATION
+			info: NOTIFICATION_CONFIG.INFO_DURATION,
 		};
 		return durations[type];
 	}
-
 }
 
-
 export const DEFAULT_SETTINGS: ZettelkastenSettings = {
+	dateFormat: "yyyy-MM-dd",
+
 	// Paths for different types of notes
-	fleetingPath: 'inbox/fleeting',
-	literaturePath: 'inbox/literature',
-	permanentPath: 'inbox/permanent',
-	atomicPath: 'inbox/atoms',
+	fleetingPath: "inbox/fleeting",
+	literaturePath: "inbox/literature",
+	permanentPath: "inbox/permanent",
+	atomicPath: "inbox/atoms",
 
 	// Basic settings
 	useTemplater: true,
 	autoOpenNewNote: true,
 	showUpgradeNotifications: true,
+	// Folder notes enabled
+	folderNotesEnabled: true,
+
+	// Initialize createNoteOptions with the default values from config.ts
+	createNoteOptions: [],
 
 	// Template settings
 	includeTimestamp: true,
 	defaultTags: [],
-	templateDirPath: "templates",
+	templateDirPath: ".zettelkasten/templates",
 	default: {
 		[NoteType.FLEETING]: "default",
 		[NoteType.LITERATURE]: "default",
@@ -132,12 +93,17 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 		[NoteType.ATOMIC]: "default",
 	},
 
-	// Initialize createNoteOptions with the default values from config.ts
-	createNoteOptions: [],
+	// Research settings
+	researchEnabled: true,
+	researchPath: "research",
+	researchZoteroPath: "zotero",
 
-	// System settings
-	naming: NAMING_PATTERNS,
-	features: FEATURES,
-	debug: DEBUG_CONFIG,
-}
+	// Dataview settings
+	dataviewEnabled: true,
+	dataviewQueryPath: ".zettelkasten/dataview",
+	dataviewCodeBlockType: "zettelkasten-query",
 
+	// Kanban settings
+	kanbanEnabled: true,
+	kanbanPath: "kanban",
+};
