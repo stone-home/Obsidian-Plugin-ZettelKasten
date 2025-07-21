@@ -183,9 +183,9 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			.setDesc('The path is used to store weekly kanban notes.')
 			.addText(text => text
 				.setPlaceholder('e.g., kanben')
-				.setValue(this.plugin.settings.features.WEEKLY_KANBAN!.path)
+				.setValue(this.plugin.settings.kanbanPath)
 				.onChange(async (value) => {
-					this.plugin.settings.features.WEEKLY_KANBAN!.path = value;
+					this.plugin.settings.kanbanPath = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -209,6 +209,29 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					this.factory.updateSettings(this.plugin.settings);
 					await this.factory.initialize(this.plugin.settings);
 					new Notice("Template directory path updated successfully.", 3000);
+					await this.plugin.saveSettings();
+				})
+			)
+
+
+		let dataviewPathCompoent: TextComponent;
+		new Setting(containerEl)
+			.setName('Dataview Path')
+			.setDesc('used to store dataview queries and views.')
+			.addText(text => {
+					text
+						.setPlaceholder('e.g., dataview')
+						.setValue(this.plugin.settings.dataviewQueryPath)
+					dataviewPathCompoent = text
+				}
+			)
+			.addButton(button => button
+				.setButtonText('Confirm')
+				.onClick(async () => {
+					this.plugin.settings.dataviewQueryPath = dataviewPathCompoent.getValue().trim();
+					await this.plugin.saveSettings();
+					new Notice("Initizalizing Dataview queries and views in new path.", 3000);
+					await this.plugin.initializeDataviewPlugin()
 				})
 			)
 	}
@@ -216,19 +239,6 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 
 	private renderNoteCreationSettings(containerEl: HTMLElement): void {
 		containerEl.createEl('p', { text: 'Configure the available note types and their default properties when creating a new note. 📝 presents a single note template; 🗂️ present a folder type notes' });
-
-
-		// Create a main container for our flex layout
-		// const settingsContainer = containerEl.createDiv({ cls: 'note-settings-container' });
-		// --- 1. RENDER THE HEADER ROW ---
-		// const headerEl = settingsContainer.createDiv({ cls: 'note-settings-header' });
-		// headerEl.createDiv({ text: 'Name'});
-		// headerEl.createDiv({ text: 'Enabled'});
-		// // Add placeholders for columns that only show when enabled
-		// headerEl.createDiv({ text: 'Type'})
-		// headerEl.createDiv({ text: 'Emoji'});
-		// headerEl.createDiv({ text: 'Template'});
-		// headerEl.createDiv({ text: 'Creation Path'});
 
 		// Loop for existing note type settings
 		this.plugin.settings.createNoteOptions.forEach((option: INoteOption, index: number) => {
@@ -348,7 +358,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 						await this.display(); // Re-render the settings to show the new entry
 					});
 			})
-		if (this.plugin.settings.features.FOLDER_NOTES){
+		if (this.plugin.settings.folderNotesEnabled){
 			noteCreationAddButton
 				.addButton(button => {
 					button

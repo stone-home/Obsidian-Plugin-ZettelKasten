@@ -38,6 +38,13 @@ export interface ISubFeature {
 	[key: string]: any
 }
 
+export interface IDataviewFeature {
+	enabled: boolean;
+	description: string;
+	path: string;
+	codeBlockType: string
+}
+
 /**
  * Feature Toggles is used to control the availability of features in the plugin
  */
@@ -46,18 +53,7 @@ export interface IFeatureFlags {
 	SHOW_UPGRADE_NOTIFICATIONS: boolean;
 	DEBUG_MODE: boolean;
 	FOLDER_NOTES: boolean;
-	WEEKLY_KANBAN: ISubFeature
 }
-
-/**
- * Debug and development settings
- */
-export interface IDebugConfig {
-	LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error';
-	SHOW_PERFORMANCE_METRICS: boolean;
-	ENABLE_ERROR_BOUNDARIES: boolean;
-}
-
 
 /**
  * Notification settings
@@ -70,46 +66,42 @@ export interface INotificationConfig {
 	SUGGESTION_COOLDOWN: number;
 }
 
-/**
- * File naming patterns and rules
- */
-export interface INamingPatterns {
-	DATE_FORMAT: string;
-	TIME_FORMAT: string;
-	ID_LENGTH: number;
-	TITLE_MAX_LENGTH: number;
-	INVALID_CHARS: RegExp;
-	REPLACEMENT_CHAR: string;
-}
-
 
 export interface ZettelkastenSettings {
+	// Naming and formatting settings
+	dateFormat: string;
 	// Default paths for different types of notes
 	fleetingPath: string;
 	literaturePath: string;
 	permanentPath: string;
 	atomicPath: string;
-
 	// Basic settings
 	useTemplater: boolean;
 	autoOpenNewNote: boolean;
 	showUpgradeNotifications: boolean;
-
+	// Folder Notes settings
+	folderNotesEnabled: boolean;
 	// Template settings
 	includeTimestamp: boolean;
 	defaultTags: string[];
 	templateDirPath: string;
 	default: DefaultTemplate;
 
+	// Research settings
+	researchEnabled: boolean;
+	researchPath: string;
+	researchZoteroPath: string;
+
+	// Dataview settings
+	dataviewEnabled: boolean;
+	dataviewQueryPath: string;
+	dataviewCodeBlockType: string;
+	// Kanban settings
+	kanbanEnabled: boolean;
+	kanbanPath: string;
+
 	// New Note Options (for settings)
 	createNoteOptions: INoteOption[];
 
-	// Advanced settings
-	naming: INamingPatterns
-	features: IFeatureFlags
-	debug: IDebugConfig;
-
-	ResearchDashboard: ISubFeature;
-	DataviewConfig: ISubFeature
 }
 

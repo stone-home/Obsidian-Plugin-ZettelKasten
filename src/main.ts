@@ -38,7 +38,7 @@ export default class ZettelkastenPlugin extends Plugin {
 			await this.initializeZettelkastenFeatures();
 
 			// Initialize Weekly Kanban Command
-			if (this.settings.features.WEEKLY_KANBAN.enabled) {
+			if (this.settings.kanbanEnabled) {
 				const weeklyKanbanCommand = new WeeklyKanbanCommand(this.app, this.settings, this.factory);
 				weeklyKanbanCommand.registerCommand(this);
 			}
@@ -47,15 +47,8 @@ export default class ZettelkastenPlugin extends Plugin {
 			const researchCommands = new ResearchCommands(this.app, this, this.factory);
 			researchCommands.registerCommands();
 
-			// load Zettelkasten-Dataview Manager
-			if( this.settings.DataviewConfig.enabled) {
-				this.dataviewJSManager = new DataviewJSManager(this.app, this.settings.DataviewConfig.path);
-				await this.dataviewJSManager.onload();
-				// Register markdown processor for custom syntax
-				this.registerMarkdownCodeBlockProcessor(this.settings.ResearchDashboard.codeBlockType,
-					(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
-				);
-			}
+			await this.initializeDataviewPlugin()
+
 		});
 
 		// load integration manager
@@ -65,6 +58,20 @@ export default class ZettelkastenPlugin extends Plugin {
 
 
 		new Notice('Zettelkasten Plugin loaded with dashboard!');
+	}
+
+	public async initializeDataviewPlugin() {
+		// load Zettelkasten-Dataview Manager
+		if( this.settings.dataviewEnabled) {
+			this.dataviewJSManager = new DataviewJSManager(this.app, this.settings.dataviewQueryPath);
+			await this.dataviewJSManager.onload();
+			// Register markdown processor for custom syntax
+			this.registerMarkdownCodeBlockProcessor(
+				this.settings.dataviewCodeBlockType,
+				(source, el, ctx) => this.processDvjsBlock(source, el, ctx)
+			);
+		}
+
 	}
 
 	private async initializeZettelkastenFeatures() {

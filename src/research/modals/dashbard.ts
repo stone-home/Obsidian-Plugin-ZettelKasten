@@ -18,7 +18,7 @@ import {
 	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
-	ViewResearchTopicReference,
+	ViewProjectReference,
 } from "../../dataview";
 import {Project, ProjectConfig, projectReformResearchNote} from "../../project";
 import {ProjectFileType} from "../../project/config";
@@ -37,7 +37,7 @@ export class ResearchDashboardModal extends Modal {
 		this.plugin = plugin;
 		this.factory = factory;
 		this.modalEl.addClass('research-dashboard-modal');
-		this.codeBlockType = this.plugin.settings.DataviewConfig.codeBlockType || 'zettelkasten';
+		this.codeBlockType = this.plugin.settings.dataviewCodeBlockType || 'zettelkasten';
 	}
 
 	async onOpen() {
@@ -118,7 +118,7 @@ export class ResearchDashboardModal extends Modal {
 						this.plugin,
 						this.factory,
 						(selectedNote) => this.exploreImportLiteraturePaper(selectedNote),
-						this.plugin.settings.ResearchDashboard.zoteroPath,
+						this.plugin.settings.researchZoteroPath,
 						"Zotero Literature Search",
 					).open()
 					this.close()
@@ -267,7 +267,7 @@ export class ResearchDashboardModal extends Modal {
 	}
 
 	private getResearchRootPath(): string {
-		return this.plugin.settings.ResearchDashboard.researchRootPath
+		return this.plugin.settings.researchPath
 	}
 
 	private getKeyDirectionTag(): IDashboardKeyTags {
@@ -453,7 +453,20 @@ export class ResearchDashboardModal extends Modal {
 			topicNote.addAlias(`"#${topic.replace(zoteroKeyTagPath, "research").trim()}"`);
 			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicPapers)], "Papers", 1);
 			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicMyPapers)], "My Papers", 1);
-			topicNote.addBodyContent([DataviewHelper.getCodeBlockContent(this.codeBlockType, ViewResearchTopicReference)], "References", 1);
+			topicNote.addBodyContent(
+				[
+					DataviewHelper.getCodeBlockContent(
+						this.codeBlockType,
+						ViewProjectReference,
+						[
+							{ name: "fromSameSource", type: "boolean", required: false, value: false},
+							{ name: "includeTopicTags", type: "boolean", required: false, value: true},
+						]
+					)
+				],
+				"References",
+				1
+			);
 			topicNote.addBodyContent([], "Knowledges", 1);
 			topicNote.addBodyContent([], "Methods", 1);
 
@@ -490,6 +503,7 @@ export class ResearchDashboardModal extends Modal {
 			annotationNote.setProperty("new", false);
 			annotationNote.addSourceNote(`[[${zoteroId}]]`);
 			annotationNote.addTag(annotation.tags);
+			annotationNote.addTag("research/reference");
 			annotationNote.addBodyContent([], "**🔗Source**", 4);
 			const displayName = annotation.content.filter((line => line.trim().length > 0)).join(". ")
 			annotationNote.addBodyContent(
@@ -543,7 +557,7 @@ export class ResearchDashboardModal extends Modal {
 			})
 
 		await reformedNote.save()
-		if (this.plugin.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+		if (this.plugin.settings?.autoOpenNewNote) {
 			await this.app.workspace.openLinkText(literatureNote.getTitle(), '', false, { state: { mode: 'read' } });
 		}
 	}

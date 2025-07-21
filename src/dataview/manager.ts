@@ -6,10 +6,9 @@ import {
 	ViewResearchDirectionLiteratureReview,
 	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
-	ViewResearchTopicReference,
 	ViewResearchTopicPapers,
 	ViewResearchLiteratureMetadata,
-	ViewResearchLiteratureReferences,
+	ViewProjectReference,
 	ViewProjectGanttChart,
 	ViewProjectCustomTable
 } from "./views";
@@ -49,13 +48,12 @@ export class DataviewJSManager extends Component {
 		const defaultScripts = [
 			ViewResearchDirectionLiteratureReview,
 			ViewResearchDirectionTopic,
-			ViewResearchTopicReference,
 			ViewResearchTopicMyPapers,
 			ViewResearchTopicPapers,
-			ViewResearchLiteratureReferences,
 			ViewResearchLiteratureMetadata,
 			ViewProjectGanttChart,
-			ViewProjectCustomTable
+			ViewProjectCustomTable,
+			ViewProjectReference,
 		]
 
 		for (const script of defaultScripts) {

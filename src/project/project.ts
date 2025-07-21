@@ -106,7 +106,7 @@ export class Project {
 		if (taskType !== ProjectFileType.stepType) {
 			note.addBodyContent(
 				[DataviewHelper.getCodeBlockContent(
-					this.plugin.settings.DataviewConfig.codeBlockType,
+					this.plugin.settings.dataviewCodeBlockType,
 					ViewProjectCustomTable,
 					[
 						{ name: "inlink", type: "boolean", required: true, value: true},
@@ -125,7 +125,7 @@ export class Project {
 		})
 		await note.save()
 
-		if (this.plugin.settings.features.AUTO_OPEN_CREATED_NOTES) {
+		if (this.plugin.settings.autoOpenNewNote) {
 			await this.app.workspace.openLinkText(note.getTitle(), '', false, { state: { mode: 'source' } });
 		}
 	}
@@ -160,7 +160,7 @@ export class Project {
 		const reformedNote = projectReformResearchNote(
 			projectNote,
 			{
-				codeblockKey: this.plugin.settings.DataviewConfig.codeBlockType,
+				codeblockKey: this.plugin.settings.dataviewCodeBlockType,
 				ongoingProject: true,
 				sourceNotes: sources.map(sources=> sources.basename),
 				eTags: tags,
@@ -170,7 +170,7 @@ export class Project {
 		);
 		await reformedNote.save();
 
-		if (this.plugin.settings.features.AUTO_OPEN_CREATED_NOTES) {
+		if (this.plugin.settings.autoOpenNewNote) {
 			await this.app.workspace.openLinkText(reformedNote.getTitle(), '', false, { state: { mode: 'source' } });
 		}
 	}

@@ -33,7 +33,7 @@ export class SearchDashboardModal extends Modal {
 		this.plugin = plugin;
 		this.factory = factory;
 		this.callback = callback;
-		this.targetDirectory = targetDir || this.plugin.settings.ResearchDashboard.researchRootPath; // Default to vault root if not provided
+		this.targetDirectory = targetDir || this.plugin.settings.researchPath; // Default to vault root if not provided
 		if (searchTitle) {
 			this.searchTitle = searchTitle;
 		}

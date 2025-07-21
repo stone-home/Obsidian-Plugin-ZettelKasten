@@ -57,7 +57,7 @@ export class WeeklyKanban {
 	}
 
 	public getKanbanRoot(): string {
-		return this.settings.features.WEEKLY_KANBAN!.path || this.app.vault.getRoot() + '/Kanban';
+		return this.settings.kanbanPath || this.app.vault.getRoot() + '/Kanban';
 	}
 
 	public getKanbanDir(weekNumber?: number): string {
@@ -169,7 +169,7 @@ export class WeeklyKanban {
 		kanban.addBodyContent(this.kanbanConfig(), "Vanished", 2)
 		kanban.addTag('kanban')
 		kanban.setProperty("kanban-plugin", "basic")
-		kanban.setProperty("year", format(new Date(), this.settings.naming.DATE_FORMAT))
+		kanban.setProperty("year", format(new Date(), this.settings.dateFormat))
 		return kanban
 	}
 
@@ -230,7 +230,7 @@ export class WeeklyKanban {
 			await summary.save();
 		}
 		// Open the new note if feature is enabled
-		if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+		if (this.settings?.autoOpenNewNote) {
 			await this.app.workspace.openLinkText(summary.getObPath(true), '', false, { state: { mode: 'source' } });
 		}
 	}
@@ -260,7 +260,7 @@ export class WeeklyKanban {
 			new Notice(`Task "${task.getTitle()}" already exists!`, 5000);
 		}
 		// Open the new note if feature is enabled
-		if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+		if (this.settings?.autoOpenNewNote) {
 			await this.app.workspace.openLinkText(task.getObPath(true), '', false, { state: { mode: 'source' } });
 		}
 

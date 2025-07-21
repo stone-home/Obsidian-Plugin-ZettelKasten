@@ -2,8 +2,8 @@ import { IRawDataviewScript } from "../types";
 
 
 export const View: IRawDataviewScript = {
-	id: "research-literature-paper-references",
-	name: "Research Literature References",
+	id: "project-reference-manager-view",
+	name: "Project Reference Manager",
 	description: "A view to display literature references related to the cureent paper.",
 	parameters: [],
 	script: `

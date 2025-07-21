@@ -261,7 +261,7 @@ export class ZettelKastenModal extends Modal {
 			this.logger.info(`Created note: ${file.path}`);
 
 			// Open the new note if feature is enabled
-			if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+			if (this.settings?.autoOpenNewNote) {
 				await this.app.workspace.openLinkText(file.path, '');
 			}
 
@@ -302,7 +302,7 @@ export class ZettelKastenModal extends Modal {
 			this.logger.info(`Created note: ${file.path}`);
 
 			// Open the new note if feature is enabled
-			if (this.settings?.features.AUTO_OPEN_CREATED_NOTES) {
+			if (this.settings?.autoOpenNewNote) {
 				await this.app.workspace.openLinkText(note.getTitle(), '', false, { state: { mode: 'source' } });
 			}
 

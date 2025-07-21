@@ -3,8 +3,7 @@ import {BaseDefault} from "../notes";
 import {
 	DataviewHelper,
 	ViewResearchLiteratureMetadata,
-	ViewResearchLiteratureReferences,
-	ViewResearchLiteratureRelevantPapers
+	ViewProjectReference
 } from "../dataview";
 import {ViewProjectGanttChart} from "../dataview/views";
 
@@ -79,7 +78,7 @@ export function projectReformResearchNote(note: BaseDefault, properties: IReform
 			],
 			"🗃️Relevant Papers",
 			4)
-		note.addBodyContent([DataviewHelper.getCodeBlockContent(properties.codeblockKey, ViewResearchLiteratureReferences)], "🔖References", 1)
+		note.addBodyContent([DataviewHelper.getCodeBlockContent(properties.codeblockKey, ViewProjectReference)], "🔖References", 1)
 	}
 	properties?.eSection?.forEach(section => {
 		note.addBodyContent(section.content, section.title, section.head_level)

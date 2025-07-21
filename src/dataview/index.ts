@@ -5,12 +5,10 @@ export {
 	ViewResearchDirectionTopic,
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
-	ViewResearchTopicReference,
-	ViewResearchLiteratureRelevantPapers,
-	ViewResearchLiteratureReferences,
 	ViewResearchLiteratureMetadata,
 	ViewProjectCustomTable,
-	ViewProjectGanttChart
+	ViewProjectGanttChart,
+	ViewProjectReference
 } from "./views";
 import {IDataviewParameter, IDataviewScript, IRawDataviewScript} from "./types";
 

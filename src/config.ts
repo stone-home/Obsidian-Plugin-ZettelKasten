@@ -1,9 +1,6 @@
 import {NoteType, NoteTypeData, INoteTemplateMetadata} from "./notes";
 import {
 	ZettelkastenSettings,
-	IFeatureFlags,
-	INamingPatterns,
-	IDebugConfig,
 	INotificationConfig,
 	INoteOption
 } from "./types";
@@ -35,46 +32,6 @@ export const CreateNoteOptions: INoteOption[] = [
 		label: 'Permanent',
 	}
 ]
-
-
-/**
- * Plugin feature flags
- */
-export const FEATURES: IFeatureFlags = {
-	AUTO_OPEN_CREATED_NOTES: true,
-	SHOW_UPGRADE_NOTIFICATIONS: true,
-	DEBUG_MODE: false,
-	FOLDER_NOTES:true,
-	WEEKLY_KANBAN: {
-		enabled: true,
-		description: 'Enable weekly kanban board for task management',
-		path: "kanban"
-	},
-} as const;
-
-
-/**
- * File naming patterns
- */
-export const NAMING_PATTERNS: INamingPatterns = {
-	DATE_FORMAT: 'yyyy-MM-dd',
-	TIME_FORMAT: 'HH:mm:ss',
-	ID_LENGTH: 8,
-	TITLE_MAX_LENGTH: 100,
-	INVALID_CHARS: /[<>:"/\\|?*]/g,
-	REPLACEMENT_CHAR: '-'
-} as const;
-
-
-/**
- * Development and debugging
- */
-export const DEBUG_CONFIG: IDebugConfig = {
-	LOG_LEVEL: 'info' as const,
-	SHOW_PERFORMANCE_METRICS: false,
-	ENABLE_ERROR_BOUNDARIES: true,
-} as const;
-
 
 /**
  * Notification settings
@@ -110,6 +67,8 @@ export class ConfigHelper {
 
 
 export const DEFAULT_SETTINGS: ZettelkastenSettings = {
+	dateFormat: 'YYYY-MM-DD',
+
 	// Paths for different types of notes
 	fleetingPath: 'inbox/fleeting',
 	literaturePath: 'inbox/literature',
@@ -120,14 +79,11 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	useTemplater: true,
 	autoOpenNewNote: true,
 	showUpgradeNotifications: true,
+	// Folder notes enabled
+	folderNotesEnabled: true,
 
 	// Initialize createNoteOptions with the default values from config.ts
 	createNoteOptions: [],
-
-	// System settings
-	naming: NAMING_PATTERNS,
-	features: FEATURES,
-	debug: DEBUG_CONFIG,
 
 	// Template settings
 	includeTimestamp: true,
@@ -140,20 +96,18 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 		[NoteType.ATOMIC]: "default",
 	},
 
+	// Research settings
+	researchEnabled: true,
+	researchPath: "research",
+	researchZoteroPath: "zotero",
 
-	// Plugin - Research Dashboard settings
-	ResearchDashboard: {
-		enabled: true,
-		description: 'Enable research dashboard for managing literature and projects',
-		researchRootPath: "research",
-		zoteroPath: "zotero",
-	},
+	// Dataview settings
+	dataviewEnabled: true,
+	dataviewQueryPath: ".zettelkasten/dataview",
+	dataviewCodeBlockType: "zettelkasten-query",
 
-	DataviewConfig: {
-		enabled: true,
-		path: ".zettelkasten/dataview",
-		description: 'Enable Dataview integration for advanced querying and visualization',
-		codeBlockType: "zettelkasten-research",
-	}
+	// Kanban settings
+	kanbanEnabled: true,
+	kanbanPath: "kanban",
 }
 
