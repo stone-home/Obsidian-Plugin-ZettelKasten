@@ -757,7 +757,7 @@ export class CreateLiteratureReviewCallback extends AbsSearchHandler {
 			}
 			note.addSourceNote(`[[${selectedNote.basename}]]`);
 			note.addTag("🗂️project/PhD");
-			note.addTag("✍️writing/academic/literatureReview");
+			note.addTag("writing/academic/literatureReview");
 			note.addTag(topicTag);
 			note.addBodyContent([], "ℹTopic", 1);
 			note.addBodyContent([], "🫆Position", 1);

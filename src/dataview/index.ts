@@ -10,6 +10,7 @@ export {
 	ViewProjectCustomTable,
 	ViewProjectGanttChart,
 	ViewProjectReference,
+	ViewNoteIndex,
 } from "./views";
 import {
 	IDataviewParameter,

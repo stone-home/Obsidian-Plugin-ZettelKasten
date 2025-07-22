@@ -1,7 +1,7 @@
 import { IRawDataviewScript } from "../types";
 
 export const View: IRawDataviewScript = {
-	id: "research-custom-table-view",
+	id: "project-custom-table-view",
 	name: "Project Custom Table",
 	description:
 		"A view to display entire projects' timelines and tasks in a Gantt chart format.",

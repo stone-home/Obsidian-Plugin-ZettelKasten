@@ -450,6 +450,7 @@ export class ZettelKastenModal extends Modal {
 			card.addEventListener("click", async () => {
 				const gCards = new GroupNoteCards(
 					this.app,
+					this.plugin,
 					`All ${NoteTypeData[noteType].label} Cards`,
 					this.factory,
 					typeTemplates,

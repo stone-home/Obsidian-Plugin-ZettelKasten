@@ -15,6 +15,7 @@ import {
 	ViewProjectReference,
 	ViewProjectGanttChart,
 	ViewProjectCustomTable,
+	ViewNoteIndex,
 } from "./views";
 import { Utils } from "../utils";
 
@@ -57,6 +58,7 @@ export class DataviewJSManager extends Component {
 			ViewProjectGanttChart,
 			ViewProjectCustomTable,
 			ViewProjectReference,
+			ViewNoteIndex,
 		];
 
 		for (const script of defaultScripts) {

@@ -13,6 +13,7 @@ export interface INoteOption {
 	enabled: boolean;
 	type: NoteType;
 	label: string;
+	toKanban?: boolean;
 	emoji?: string;
 	path?: string;
 	template?: string;

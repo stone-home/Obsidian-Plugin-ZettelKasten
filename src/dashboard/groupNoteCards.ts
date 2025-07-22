@@ -3,9 +3,12 @@ import { StepByStepFolderModal, Utils } from "../utils";
 import { NoteFactory, KeyValue } from "../notes";
 import { Logger } from "../logger";
 import { INoteOption } from "../types";
+import { DataviewHelper, ViewNoteIndex } from "../dataview";
+import ZettelkastenPlugin from "../main";
 
 export class GroupNoteCards extends Modal {
 	private modalTitle: string = "Select Note Type";
+	private plugin: ZettelkastenPlugin;
 	private options: INoteOption[];
 	private callback: (noteMeta: INoteOption) => Promise<void>;
 	private factory: NoteFactory;
@@ -13,12 +16,14 @@ export class GroupNoteCards extends Modal {
 
 	constructor(
 		app: App,
+		plugin: ZettelkastenPlugin,
 		name: string,
 		factory: NoteFactory,
 		options: INoteOption[],
 		callback: (noteMeta: INoteOption) => Promise<void>,
 	) {
 		super(app);
+		this.plugin = plugin;
 		this.modalTitle = name;
 		this.options = options;
 		this.callback = callback;
@@ -41,6 +46,7 @@ export class GroupNoteCards extends Modal {
 			text: this.modalTitle,
 			cls: "modal-title",
 		});
+
 		const cardsContainer = contentEl.createDiv("note-cards-container");
 		this.options.forEach((option) => {
 			if (option.enabled) {
@@ -157,11 +163,11 @@ export class GroupNoteCards extends Modal {
 							.getBody()
 							.addContent(
 								[
-									"```dataview",
-									`Table category`,
-									`FROM "${option.path}" AND !(#📍tagNode) `,
-									`SORT category`,
-									"```",
+									DataviewHelper.getCodeBlockContent(
+										this.plugin.settings
+											.dataviewCodeBlockType,
+										ViewNoteIndex,
+									),
 								],
 								dataviewSectionName,
 							);

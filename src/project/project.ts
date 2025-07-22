@@ -1,16 +1,15 @@
 import ZettelkastenPlugin from "../main";
-import {App} from "obsidian";
-import {BaseDefault, BodySection, NoteFactory, NoteType} from "../notes";
-import {IProjectData} from "./types";
-import {ProjectConfig, ProjectFileType} from "./config";
-import {projectReformResearchNote} from "./utils";
-import {Utils} from "../utils";
-import {Logger} from "../logger";
-import {ISearchResult} from "../research/types";
-import {DataviewHelper} from "../dataview";
-import {ViewProjectCustomTable} from "../dataview/views";
-import {WeeklyKanban} from "../task";
-
+import { App } from "obsidian";
+import { BaseDefault, BodySection, NoteFactory, NoteType } from "../notes";
+import { IProjectData } from "./types";
+import { ProjectConfig, ProjectFileType } from "./config";
+import { projectReformResearchNote } from "./utils";
+import { Utils } from "../utils";
+import { Logger } from "../logger";
+import { ISearchResult } from "../research/types";
+import { DataviewHelper } from "../dataview";
+import { ViewProjectCustomTable } from "../dataview/views";
+import { WeeklyKanban } from "../task";
 
 export class Project {
 	private app: App;
@@ -185,19 +184,26 @@ export class Project {
 		sources.forEach((source) => {
 			note.addSourceNote(`[[${source.basename}]]`);
 		});
-		if (taskType === ProjectFileType.stepType && this.plugin.settings.kanbanEnabled) {
+		if (
+			taskType === ProjectFileType.stepType &&
+			this.plugin.settings.kanbanEnabled
+		) {
 			const kanban = new WeeklyKanban(
 				this.app,
 				this.plugin.settings,
 				this.factory,
-			)
+			);
 			if (!(await kanban.kanbanExists())) {
-				await kanban.kanbanCreate(false)
+				await kanban.kanbanCreate(false);
 			}
-			const kanbanFilePath = kanban.getKanbanDir() + "/" + kanban.getKanbanNoteName() + ".md";
+			const kanbanFilePath =
+				kanban.getKanbanDir() +
+				"/" +
+				kanban.getKanbanNoteName() +
+				".md";
 			const kanbanNote = await this.factory.loadFromFile(kanbanFilePath);
 			const header = new BodySection("BackLogs", 2);
-			header.addContent(note.getTitle())
+			header.addContent(note.getTitle());
 			note.addLinkedPage(kanbanNote, header, "checklist");
 		}
 		await note.save();

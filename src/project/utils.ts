@@ -13,7 +13,7 @@ export function projectReformResearchNote(
 ): BaseDefault {
 	const tags = Array.from(
 		new Set([
-			"✍️writing/academic/literatureSummary",
+			"writing/academic/literatureSummary",
 			"research",
 			"📍tagNode",
 			...(properties.eTags || []),
