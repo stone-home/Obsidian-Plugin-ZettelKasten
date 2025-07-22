@@ -758,7 +758,6 @@ export class ResearchDashboardModal extends Modal {
 			// Filter annotations that have only one tag and do not include "vocabulary" in the tag
 			.filter(
 				(annotation) =>
-					annotation.tags.length === 1 &&
 					annotation.tags.some(
 						(tag) => !tag.toLowerCase().includes("vocabulary"),
 					),
