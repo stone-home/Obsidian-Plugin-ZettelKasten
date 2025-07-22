@@ -95,11 +95,25 @@ class PaperInfo {
         return tag.split("/").pop();
     }
 
-    getName(page) {
+	getName(page) {
         const name = page.shortName || "✏️"+ page.id;
         const urlLink = page.url ? "[📑](" + page.url + ")" : "";
         const codeLink = page.code ? "[📀](" + page.code + ")" : "";
-        return "[[" + page.file.path + "|" + name + "]]" + urlLink + codeLink;
+        let linkedPage = page.file.path
+        if (page.sources.length > 1) {
+            const targetSources = page.sources.filter(source => {
+                const targetPage = dv.page(source);
+                for (const tag of targetPage.file.etags) {
+                    if (tag === "#software/Zotero") {
+                        return true;
+                    }
+                }
+            }) || [];
+            if (targetSources.length >= 1) {
+                linkedPage = targetSources[0].path
+            }
+        }
+        return "[[" + linkedPage + "|" + name + "]]" + urlLink + codeLink;
     }
 
     getYear(page) {
