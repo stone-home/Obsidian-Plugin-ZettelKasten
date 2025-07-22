@@ -116,7 +116,7 @@ export function projectReformResearchNote(
 				),
 			],
 			"🗃️Relevant Papers",
-			4,
+			2,
 		);
 		note.addBodyContent(
 			[
