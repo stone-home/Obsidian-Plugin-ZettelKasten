@@ -70,7 +70,7 @@ export class StepByStepFolderModal extends Modal {
 		const footerEl = contentEl.createDiv("modal-footer");
 
 		// Back Button (now at the end, as requested)
-		if (!this.singeLayer && this.currentFolder.path !== this.entryPath) {
+		if (!this.singeLayer) {
 			const backButton = footerEl.createEl("button", {
 				text: "Back",
 				cls: "back-btn",
