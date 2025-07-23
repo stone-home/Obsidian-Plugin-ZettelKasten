@@ -1,9 +1,9 @@
-import { App, Modal, Notice, TFolder } from "obsidian";
-import { StepByStepFolderModal, Utils } from "../utils";
-import { NoteFactory, KeyValue } from "../notes";
-import { Logger } from "../logger";
-import { INoteOption } from "../types";
-import { DataviewHelper, ViewNoteIndex } from "../dataview";
+import {App, Modal, Notice, TFolder} from "obsidian";
+import {StepByStepFolderModal, Utils} from "../utils";
+import {KeyValue, NoteFactory, NoteType} from "../notes";
+import {Logger} from "../logger";
+import {INoteOption} from "../types";
+import {DataviewHelper, ViewNoteIndex} from "../dataview";
 import ZettelkastenPlugin from "../main";
 
 export class GroupNoteCards extends Modal {
@@ -70,7 +70,13 @@ export class GroupNoteCards extends Modal {
 		// Make card clickable
 		card.addEventListener("click", async () => {
 			option.extraInfo = option.extraInfo || {};
-			option.extraInfo.prefix = Utils.generateDate()
+			if (option.type === NoteType.ATOMIC) {
+				// with my understanding of atomic notes, each note should be a unique note.
+				// all relevant information should be colledted and organized in one note with my own words
+				option.extraInfo.prefix = "A"
+			} else {
+				option.extraInfo.prefix = Utils.generateDate()
+			}
 			await this.callback(option);
 			this.close();
 		});
