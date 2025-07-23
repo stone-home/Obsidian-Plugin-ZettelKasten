@@ -69,6 +69,8 @@ export class GroupNoteCards extends Modal {
 
 		// Make card clickable
 		card.addEventListener("click", async () => {
+			option.extraInfo = option.extraInfo || {};
+			option.extraInfo.prefix = Utils.generateDate()
 			await this.callback(option);
 			this.close();
 		});
