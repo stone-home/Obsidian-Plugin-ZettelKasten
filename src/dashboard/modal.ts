@@ -402,6 +402,30 @@ export class ZettelKastenModal extends Modal {
 				noteType,
 				noteMetadata.template,
 			)) as BaseDefault;
+
+			// Ensure the node has a right suffix
+			const filename = await this.integrations
+				.getTemplater()
+				.getPrompt("Please enter the file name");
+			if (filename) {
+				this.logger.info(`Note title set to: ${filename}`);
+				const prefix =
+					noteMetadata.extraInfo?.prefix || Utils.generateDate();
+				note.setTitle(`${prefix} - ${filename}`);
+			}
+
+			// Process extra properties and other metadata
+			const extraTags = noteMetadata.extraInfo?.tags || [];
+			extraTags.forEach((tag) => {
+				note.addTag(tag);
+			});
+			const extraProperties = noteMetadata.extraInfo?.properties || [];
+			extraProperties.forEach((property) => {
+				if (property instanceof KeyValue) {
+					note.setProperty(property.getKey(), property.getValue());
+				}
+			});
+
 			note.setPath(notePath);
 			note.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
 
