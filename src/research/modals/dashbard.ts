@@ -838,20 +838,6 @@ export class ResearchDashboardModal extends Modal {
 			),
 		);
 		literatureNote.setPath(this.getResearchPath().literatures);
-		if (await literatureNote.exist()) {
-			this.logger.warn(
-				`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`,
-			);
-			new Notice(
-				`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`,
-			);
-			return;
-		}
-		const zoteroId =
-			zoteroItem.note.getProperty("id") ||
-			zoteroItem.note.getProperty("citekey") ||
-			zoteroItem.note.getTitle() ||
-			undefined;
 		const tags = zoteroItem.note
 			.getProperties()
 			.getTags()
@@ -861,6 +847,36 @@ export class ResearchDashboardModal extends Modal {
 					"research",
 				),
 			);
+		if (await literatureNote.exist()) {
+			const existNote = await this.factory.loadFromFile(literatureNote.getObPath(true)) as BaseDefault
+			let isUpdated = false;
+			tags.forEach((tag => {
+				if (!existNote.getProperties().getTags().some(
+					(existingTag) => existingTag.toLowerCase() === tag.toLowerCase(),
+				)) {
+					isUpdated = true;
+					existNote.addTag(tag)
+				}
+			}));
+			if (isUpdated) {
+				await existNote.update()
+				this.logger.info(`Note's Tags updated: ${existNote.getTitle()}`);
+			} else {
+				this.logger.warn(
+					`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`,
+				);
+				new Notice(
+					`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`,
+				);
+			}
+
+			return;
+		}
+		const zoteroId =
+			zoteroItem.note.getProperty("id") ||
+			zoteroItem.note.getProperty("citekey") ||
+			zoteroItem.note.getTitle() ||
+			undefined;
 		const reformedNote = projectReformResearchNote(literatureNote, {
 			codeblockKey: this.codeBlockType,
 			ongoingProject: false,
