@@ -15,6 +15,7 @@ import {
 } from "../dataview";
 import { ViewProjectCustomTable } from "../dataview/views";
 import { WeeklyKanban } from "../task";
+import process from "process";
 
 export class Project {
 	private app: App;
@@ -221,7 +222,7 @@ export class Project {
 	}
 
 	public async createNonResearchProject() {
-		const name = this.getProjectName();
+		const name = this.property.basename
 		if (!name) {
 			this.logger.error(
 				"Project entrypoint is an empty string. Please set a valid entrypoint in the settings.",
@@ -274,7 +275,7 @@ export class Project {
 		if (!Array.isArray(sources)) {
 			sources = [sources];
 		}
-		const name = this.getProjectName();
+		const name = this.property.basename
 		if (!name) {
 			this.logger.error(
 				"Project entrypoint is an empty string. Please set a valid entrypoint in the settings.",
