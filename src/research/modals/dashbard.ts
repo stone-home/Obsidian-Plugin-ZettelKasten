@@ -32,8 +32,8 @@ import {
 	Project,
 	ProjectConfig,
 	projectReformResearchNote,
+	ProjectFileType,
 } from "../../project";
-import { ProjectFileType } from "../../project/config";
 
 export class ResearchDashboardModal extends Modal {
 	private selectedProject: Project | undefined = undefined;
@@ -756,11 +756,10 @@ export class ResearchDashboardModal extends Modal {
 	): Promise<void> {
 		const annotationPromises = zoteroItems.annotations
 			// Filter annotations that have only one tag and do not include "vocabulary" in the tag
-			.filter(
-				(annotation) =>
-					annotation.tags.some(
-						(tag) => !tag.toLowerCase().includes("vocabulary"),
-					),
+			.filter((annotation) =>
+				annotation.tags.some(
+					(tag) => !tag.toLowerCase().includes("vocabulary"),
+				),
 			)
 			.map(async (annotation) => {
 				const zoteroId =
@@ -848,19 +847,29 @@ export class ResearchDashboardModal extends Modal {
 				),
 			);
 		if (await literatureNote.exist()) {
-			const existNote = await this.factory.loadFromFile(literatureNote.getObPath(true)) as BaseDefault
+			const existNote = (await this.factory.loadFromFile(
+				literatureNote.getObPath(true),
+			)) as BaseDefault;
 			let isUpdated = false;
-			tags.forEach((tag => {
-				if (!existNote.getProperties().getTags().some(
-					(existingTag) => existingTag.toLowerCase() === tag.toLowerCase(),
-				)) {
+			tags.forEach((tag) => {
+				if (
+					!existNote
+						.getProperties()
+						.getTags()
+						.some(
+							(existingTag) =>
+								existingTag.toLowerCase() === tag.toLowerCase(),
+						)
+				) {
 					isUpdated = true;
-					existNote.addTag(tag)
+					existNote.addTag(tag);
 				}
-			}));
+			});
 			if (isUpdated) {
-				await existNote.update()
-				this.logger.info(`Note's Tags updated: ${existNote.getTitle()}`);
+				await existNote.update();
+				this.logger.info(
+					`Note's Tags updated: ${existNote.getTitle()}`,
+				);
 			} else {
 				this.logger.warn(
 					`Note with title "${literatureNote.getTitle()}" already exists in path "${literatureNote.getPath()}". Skipping creation.`,

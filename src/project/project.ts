@@ -7,7 +7,12 @@ import { projectReformResearchNote } from "./utils";
 import { Utils } from "../utils";
 import { Logger } from "../logger";
 import { ISearchResult } from "../research/types";
-import { DataviewHelper } from "../dataview";
+import {
+	DataviewHelper,
+	ViewProjectGanttChart,
+	ViewProjectReference,
+	ViewResearchLiteratureMetadata,
+} from "../dataview";
 import { ViewProjectCustomTable } from "../dataview/views";
 import { WeeklyKanban } from "../task";
 
@@ -212,6 +217,54 @@ export class Project {
 			await this.app.workspace.openLinkText(note.getTitle(), "", false, {
 				state: { mode: "source" },
 			});
+		}
+	}
+
+	public async createNonResearchProject() {
+		const name = this.getProjectName();
+		if (!name) {
+			this.logger.error(
+				"Project entrypoint is an empty string. Please set a valid entrypoint in the settings.",
+			);
+			return;
+		}
+		const projectNote = this.factory.createNote(
+			NoteType.LITERATURE,
+		) as BaseDefault;
+		const projectName = this.projectNameToFileName(name);
+		projectNote.setTitle(projectName);
+		projectNote.setPath(this.property.entrypoint);
+		if (Utils.fileExists(this.app, this.property.entrypoint, true)) {
+			this.logger.warn(
+				`Project with name ${name} already exists. Skipping creation.`,
+			);
+			return;
+		}
+		projectNote.addTag("🗂️project");
+		projectNote.setProperty("url", "");
+		projectNote.setProperty("shortName", "");
+		projectNote.setProperty("year", Utils.generateDate());
+		projectNote.addBodyContent(["💊**TL;DR**::", ""], "👻Summary", 1);
+		projectNote.addBodyContent([], "💡Notes", 1);
+		projectNote.addBodyContent(
+			[
+				DataviewHelper.getCodeBlockContent(
+					this.plugin.settings.dataviewCodeBlockType,
+					ViewProjectGanttChart,
+				),
+			],
+			"🗓️Project Plan",
+			1,
+		);
+		await projectNote.save();
+
+		if (this.plugin.settings.autoOpenNewNote) {
+			await this.app.workspace.openLinkText(
+				projectNote.getTitle(),
+				"",
+				false,
+				{ state: { mode: "source" } },
+			);
 		}
 	}
 

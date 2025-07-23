@@ -92,9 +92,14 @@ export interface ZettelkastenSettings {
 	dataviewEnabled: boolean;
 	dataviewQueryPath: string;
 	dataviewCodeBlockType: string;
+
 	// Kanban settings
 	kanbanEnabled: boolean;
 	kanbanPath: string;
+
+	// Project settings
+	projectEnabled: boolean;
+	projectPath: string;
 
 	// New Note Options (for settings)
 	createNoteOptions: INoteOption[];

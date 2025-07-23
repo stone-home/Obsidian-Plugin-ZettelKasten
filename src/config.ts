@@ -103,6 +103,10 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	dataviewQueryPath: "dataview",
 	dataviewCodeBlockType: "zettelkasten-query",
 
+	// Project settings
+	projectEnabled: true,
+	projectPath: "projects",
+
 	// Kanban settings
 	kanbanEnabled: true,
 	kanbanPath: "kanban",

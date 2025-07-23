@@ -344,6 +344,38 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 					}
 				}),
 			);
+
+		let projectPathComponent: TextComponent;
+		new Setting(containerEl)
+			.setName("Project Entrypoint")
+			.setDesc(
+				"A entry point (folder) for all notes in the research problem",
+			)
+			.addText((text) => {
+				text.setPlaceholder("e.g., project").setValue(
+					this.plugin.settings.projectPath,
+				);
+				researchPathComponent = text;
+			})
+			.addButton((button) =>
+				button.setButtonText("Confirm").onClick(async () => {
+					const targetPath = projectPathComponent.getValue().trim();
+					if (
+						await Utils.moveFolder(
+							this.app,
+							this.plugin.settings.projectPath,
+							targetPath,
+						)
+					) {
+						this.plugin.settings.projectPath = targetPath;
+						await this.plugin.saveSettings();
+						new Notice(
+							"Please restart Obsidian to apply the changes.",
+							3000,
+						);
+					}
+				}),
+			);
 	}
 
 	private renderNoteCreationSettings(containerEl: HTMLElement): void {

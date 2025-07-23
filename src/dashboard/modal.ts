@@ -17,6 +17,7 @@ import { Utils, StepByStepFolderModal, GroupNoteCards } from "../utils";
 import { ConfigHelper } from "../config";
 import { ResearchDashboardModal } from "../research/modals";
 import { WeeklyKanbanModal } from "../task/modal";
+import { ProjectDashboardModal } from "../project";
 
 export class ZettelKastenModal extends Modal {
 	private factory: NoteFactory;
@@ -133,6 +134,18 @@ export class ZettelKastenModal extends Modal {
 				icon: "atom",
 				callback: async () => {
 					new ResearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+					).open();
+					this.close();
+				},
+			},
+			{
+				label: "Projects",
+				icon: "folder-tree",
+				callback: async () => {
+					new ProjectDashboardModal(
 						this.app,
 						this.plugin,
 						this.factory,
