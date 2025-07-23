@@ -1,6 +1,6 @@
 {
 	"name": "zettelkasten-manager",
-	"version": "1.9.2",
+	"version": "1.9.3",
 	"description": "The Readme has not done yet.",
 	"main": "main.js",
 	"scripts": {
