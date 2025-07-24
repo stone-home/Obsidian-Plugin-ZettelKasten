@@ -6,16 +6,13 @@ import { ProjectConfig, ProjectFileType } from "./config";
 import { projectReformResearchNote } from "./utils";
 import { Utils } from "../utils";
 import { Logger } from "../logger";
-import { ISearchResult } from "../research/types";
+import { ISearchResult } from "../research";
 import {
 	DataviewHelper,
 	ViewProjectGanttChart,
-	ViewProjectReference,
-	ViewResearchLiteratureMetadata,
 } from "../dataview";
 import { ViewProjectCustomTable } from "../dataview/views";
 import { WeeklyKanban } from "../task";
-import process from "process";
 
 export class Project {
 	private app: App;
@@ -45,8 +42,28 @@ export class Project {
 		return this.property.basename;
 	}
 
-	public getProjectName(): string {
+	public getFolderName(): string {
 		return this.property.entrypoint.split("/").pop() || "Untitled Project";
+	}
+
+	public getProjectName(): string {
+		const regex = /^\d{4}-\d{2}-\d{2}\s*-\s*(.*)$/;
+		const dirName = this.getFolderName();
+		const nameMatch = dirName.match(regex);
+		if (nameMatch) {
+			return nameMatch[1].trim();
+		}
+		return dirName
+	}
+
+	public getProjectDate(): string {
+		const regex = /^(\d{4}-\d{2}-\d{2})\s*-\s*.*$/;
+		const dirName = this.getFolderName();
+		const nameMatch = dirName.match(regex);
+		if (nameMatch) {
+			return nameMatch[1].trim();
+		}
+		return Utils.generateDate()
 	}
 
 	public getTargetFolderPath(type: ProjectFileType): string {
@@ -56,7 +73,7 @@ export class Project {
 	}
 
 	public projectNameToFileName(name: string): string {
-		return `${Utils.generateDate()} - Project - ${name}`;
+		return `${this.getProjectDate()} - Project - ${name}`;
 	}
 
 	public async createSubtaskProject(
