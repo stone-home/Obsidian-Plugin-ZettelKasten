@@ -355,7 +355,7 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 				text.setPlaceholder("e.g., project").setValue(
 					this.plugin.settings.projectPath,
 				);
-				researchPathComponent = text;
+				projectPathComponent = text;
 			})
 			.addButton((button) =>
 				button.setButtonText("Confirm").onClick(async () => {
