@@ -43,7 +43,12 @@ export class KeyValue<T> implements IKeyValue<T> {
 				const formattedArray = this.value
 					// prevent undefined or null values in the array
 					.filter((item) => item !== undefined && item !== null)
-					.map((item) => `  - ${item}`)
+					.map((item) => {
+						if (item[0] === "[" && item[1] === "[" && item[item.length - 1] === "]" && item[item.length - 2] === "]") {
+							item = `"${item}"`
+						}
+						return `  - ${item}`
+					})
 					.join("\n");
 				output = `${this.key}:\n${formattedArray}\n`;
 			}
