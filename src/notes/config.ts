@@ -4,7 +4,7 @@ export enum NoteType {
 	FLEETING = "fleeting",
 	LITERATURE = "literature",
 	PERMANENT = "permanent",
-	ATOMIC = "atomic",
+	ATOMIC = "atom",
 }
 
 /*

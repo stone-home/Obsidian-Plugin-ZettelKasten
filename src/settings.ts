@@ -211,9 +211,9 @@ export class ZettelkastenSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder("e.g., 000-inbox/4-atoms")
-					.setValue(this.plugin.settings.atomicPath)
+					.setValue(this.plugin.settings.atomPath)
 					.onChange(async (value) => {
-						this.plugin.settings.atomicPath = value;
+						this.plugin.settings.atomPath = value;
 						await this.plugin.saveSettings();
 					}),
 			);

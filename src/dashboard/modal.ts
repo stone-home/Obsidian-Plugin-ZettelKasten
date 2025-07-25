@@ -275,7 +275,7 @@ export class ZettelKastenModal extends Modal {
 				[NoteType.FLEETING]: this.plugin.settings?.fleetingPath,
 				[NoteType.LITERATURE]: this.plugin.settings?.literaturePath,
 				[NoteType.PERMANENT]: this.plugin.settings?.permanentPath,
-				[NoteType.ATOMIC]: this.plugin.settings?.atomicPath,
+				[NoteType.ATOMIC]: this.plugin.settings?.atomPath,
 			};
 			const defaultPath = defaultPathMap[note.type] || note.metadata.path;
 

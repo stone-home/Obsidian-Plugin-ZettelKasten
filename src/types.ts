@@ -72,7 +72,7 @@ export interface ZettelkastenSettings {
 	fleetingPath: string;
 	literaturePath: string;
 	permanentPath: string;
-	atomicPath: string;
+	atomPath: string;
 	// Basic settings
 	useTemplater: boolean;
 	autoOpenNewNote: boolean;

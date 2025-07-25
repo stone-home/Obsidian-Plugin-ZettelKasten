@@ -70,7 +70,7 @@ export const DEFAULT_SETTINGS: ZettelkastenSettings = {
 	fleetingPath: "inbox/fleeting",
 	literaturePath: "inbox/literature",
 	permanentPath: "inbox/permanent",
-	atomicPath: "inbox/atoms",
+	atomPath: "inbox/atoms",
 
 	// Basic settings
 	useTemplater: true,
