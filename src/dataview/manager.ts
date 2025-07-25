@@ -1,9 +1,5 @@
-import { App, Component, TFile, TFolder } from "obsidian";
-import {
-	IDataviewScript,
-	IDataviewParameter,
-	IDataviewExecution,
-} from "./types";
+import { App, Component, EventRef, TFile, TFolder } from "obsidian";
+import { IDataviewScript, IDataviewParameter } from "./types";
 import { DataviewScriptBuilder } from "./builder";
 import { Logger } from "../logger";
 import {
@@ -21,6 +17,7 @@ import { Utils } from "../utils";
 
 export class DataviewJSManager extends Component {
 	private app: App;
+	private fileWatcherRef: EventRef[] = [];
 	private scripts: Map<string, IDataviewScript> = new Map();
 	private scriptCache: Map<string, string> = new Map();
 	private scriptsFolder: string;
@@ -71,7 +68,7 @@ export class DataviewJSManager extends Component {
 
 	// Register file watchers for auto-reload
 	private registerFileWatchers(): void {
-		this.registerEvent(
+		this.fileWatcherRef.push(
 			this.app.vault.on("modify", (file) => {
 				if (
 					file.path.startsWith(this.scriptsFolder) &&
@@ -82,7 +79,7 @@ export class DataviewJSManager extends Component {
 			}),
 		);
 
-		this.registerEvent(
+		this.fileWatcherRef.push(
 			this.app.vault.on("delete", (file) => {
 				if (
 					file.path.startsWith(this.scriptsFolder) &&
@@ -92,6 +89,18 @@ export class DataviewJSManager extends Component {
 				}
 			}),
 		);
+
+		this.fileWatcherRef.forEach((event) => {
+			this.registerEvent(event);
+		});
+	}
+
+	public cleanUpFileWatchers(): void {
+		this.fileWatcherRef.forEach((event) => {
+			this.app.vault.offref(event);
+		});
+		this.fileWatcherRef = [];
+		this.logger.info("File watchers cleaned up.");
 	}
 
 	// Load all scripts from the scripts folder

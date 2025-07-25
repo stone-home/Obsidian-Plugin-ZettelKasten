@@ -7,10 +7,7 @@ import { projectReformResearchNote } from "./utils";
 import { Utils } from "../utils";
 import { Logger } from "../logger";
 import { ISearchResult } from "../research";
-import {
-	DataviewHelper,
-	ViewProjectGanttChart,
-} from "../dataview";
+import { DataviewHelper, ViewProjectGanttChart } from "../dataview";
 import { ViewProjectCustomTable } from "../dataview/views";
 import { WeeklyKanban } from "../task";
 
@@ -53,7 +50,7 @@ export class Project {
 		if (nameMatch) {
 			return nameMatch[1].trim();
 		}
-		return dirName
+		return dirName;
 	}
 
 	public getProjectDate(): string {
@@ -63,7 +60,7 @@ export class Project {
 		if (nameMatch) {
 			return nameMatch[1].trim();
 		}
-		return Utils.generateDate()
+		return Utils.generateDate();
 	}
 
 	public getTargetFolderPath(type: ProjectFileType): string {
@@ -239,7 +236,7 @@ export class Project {
 	}
 
 	public async createNonResearchProject() {
-		const name = this.property.basename
+		const name = this.property.basename;
 		if (!name) {
 			this.logger.error(
 				"Project entrypoint is an empty string. Please set a valid entrypoint in the settings.",
@@ -292,7 +289,7 @@ export class Project {
 		if (!Array.isArray(sources)) {
 			sources = [sources];
 		}
-		const name = this.property.basename
+		const name = this.property.basename;
 		if (!name) {
 			this.logger.error(
 				"Project entrypoint is an empty string. Please set a valid entrypoint in the settings.",

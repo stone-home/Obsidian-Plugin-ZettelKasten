@@ -17,8 +17,10 @@ export interface INoteOption {
 	emoji?: string;
 	path?: string;
 	template?: string;
-	metadata?: INoteTemplateMetadata;
+	metadata?: INoteTemplateMetadata; // Default metadata of a particular note type
 	folderNote?: boolean;
+	openAfterCreation?: boolean;
+	openMode?: string;
 	extraInfo?: INoteOptionExtraParams;
 }
 

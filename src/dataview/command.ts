@@ -28,6 +28,10 @@ export class DataviewCommand {
 		);
 	}
 
+	public unload(): void {
+		this.dataviewManager.cleanUpFileWatchers();
+	}
+
 	// In ZettelkastenPlugin
 	private async processDvjsBlock(source: string, el: HTMLElement, ctx: any) {
 		const lines = source.trim().split("\n");

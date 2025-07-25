@@ -271,6 +271,12 @@ export class Utils {
 		}
 	}
 
+	/**
+	 * Formats tags to a unified format.
+	 * @param tag - Array of tags to format
+	 * @param keepHash - If true, keeps the hash (#) prefix; otherwise, removes it
+	 * @param keepEmoji - If true, keeps emojis; otherwise, removes them
+	 */
 	static unifiedTagFormat(
 		tag: string[],
 		keepHash: boolean = true,
@@ -315,6 +321,11 @@ export class Utils {
 		return Array.from(new Set(unifiedTags));
 	}
 
+	/**
+	 * Extracts emoji code points from a string.
+	 * @param text - The text containing emojis
+	 * @returns {string[]} Array of emoji code points in the format "U+XXXX"
+	 */
 	static getEmojiCodePoints(text: string): string[] {
 		const codePoints = [];
 		for (let i = 0; i < text.length; i++) {
@@ -330,6 +341,12 @@ export class Utils {
 		return codePoints;
 	}
 
+	/**
+	 * Moves a folder from sourcePath to targetPath.
+	 * @param app - The Obsidian app instance
+	 * @param sourcePath - The path of the source folder to move
+	 * @param targetPath - The path where the folder should be moved to
+	 */
 	static async moveFolder(
 		app: App,
 		sourcePath: string,
@@ -370,5 +387,26 @@ export class Utils {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Creates a new folder at the specified path.
+	 * @param app - The Obsidian app instance
+	 * @param path - The path where the folder should be created
+	 */
+	static async createFolder(app: App, path: string): Promise<TFolder | null> {
+		if (Utils.fileExists(app, path, true)) {
+			logger.debug(`Folder at path ${path} already exists.`);
+			return null;
+		}
+		try {
+			const folder = await app.vault.createFolder(path);
+			logger.debug(`Successfully created folder at ${path}`);
+			return folder;
+		} catch (error) {
+			logger.logError(`Failed to create folder at ${path}`, error);
+			new Notice(`Failed to create folder at ${path}`, 3000);
+			return null;
+		}
 	}
 }

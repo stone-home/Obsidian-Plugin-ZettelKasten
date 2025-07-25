@@ -13,6 +13,7 @@ import { DataviewCommand } from "./dataview";
 
 export default class ZettelkastenPlugin extends Plugin {
 	private factory!: NoteFactory;
+	private dataview!: DataviewCommand;
 	private zettelkastenCommand!: ZettelkastenCommand;
 	private logger = Logger.createLogger("ZettelkastenPlugin");
 	public integrationManager!: IntegrationManager;
@@ -57,8 +58,8 @@ export default class ZettelkastenPlugin extends Plugin {
 
 			// initialize Dataview Command
 			if (this.settings.dataviewEnabled) {
-				const dataviewCommand = new DataviewCommand(this.app, this);
-				await dataviewCommand.initialize();
+				this.dataview = new DataviewCommand(this.app, this);
+				await this.dataview.initialize();
 			}
 		});
 
@@ -93,5 +94,7 @@ export default class ZettelkastenPlugin extends Plugin {
 
 	onunload() {
 		console.log("Zettelkasten Plugin unloaded");
+		this.factory.cleanUpFileWatchers();
+		this.dataview.unload();
 	}
 }

@@ -1,7 +1,5 @@
-import { App, TFile, TFolder } from "obsidian";
-import { Logger } from "../logger";
-import { Utils } from "../utils";
-import { BaseDefault, BaseNote, Body } from "./note";
+import { App, Component, EventRef, TFile } from "obsidian";
+import { BaseDefault, BaseNote, Body, KeyValue } from "./note";
 import {
 	AtomicDefaultTemplate,
 	BaseTemplate,
@@ -11,15 +9,18 @@ import {
 } from "./default";
 import { ITemplateMetadata } from "./types";
 import { NoteType } from "./config";
-import { ZettelkastenSettings } from "../types";
+import { INoteOption, ZettelkastenSettings } from "../types";
+import { Logger } from "../logger";
+import { Utils } from "../utils";
 
 /**
  * Factory class for creating and managing notes
  * Handles note creation, loading from files, and template management
  */
-export class NoteFactory {
+export class NoteFactory extends Component {
 	private app: App;
 	private logger = Logger.createLogger("NoteFactory");
+	private fileWatcherRef: EventRef[] = [];
 	// The value should be fetch from settings, but for now we use a default value
 	private defaultTemplateName: string = "default";
 	private defaultTemplatesDir: string = "900-templates"; // todo: make this configurable in settings
@@ -34,6 +35,7 @@ export class NoteFactory {
 	private defaultTemplates: Map<NoteType, string> = new Map();
 
 	constructor(app: App) {
+		super();
 		this.app = app;
 		this.noteTypeMap = new Map();
 	}
@@ -62,41 +64,40 @@ export class NoteFactory {
 		this.registerNoteClass(NoteType.ATOMIC, BaseDefault);
 		this.registerNoteClass(NoteType.PERMANENT, BaseDefault);
 
-		this.logger.info("Loading all templates from the filesystem");
-		await this.refreshAllTemplates();
-
 		this.logger.info("Initializing default templates");
-		await this.initializeDefaultTemplates(NoteType.FLEETING, settings);
-		await this.initializeDefaultTemplates(NoteType.LITERATURE, settings);
-		await this.initializeDefaultTemplates(NoteType.ATOMIC, settings);
-		await this.initializeDefaultTemplates(NoteType.PERMANENT, settings);
+		await this.initializeDefaultTemplates(settings);
+
+		this.logger.info("Initializing file watchers for templates");
+		this.registerFileWatchers();
 	}
 
 	private async initializeDefaultTemplates(
-		noteType: NoteType,
 		settings: ZettelkastenSettings,
 	): Promise<void> {
-		let defaultTemplateName: string = settings.default[noteType];
-		const isTemplateExist = await this.getTemplate(
-			noteType,
-			defaultTemplateName,
-		);
-		if (!isTemplateExist) {
-			defaultTemplateName = this.defaultTemplateName;
+		await this.refreshAllTemplates();
+		for (const type of Object.values(NoteType)) {
+			let defaultTemplateName: string = settings.default[type];
 			const isTemplateExist = await this.getTemplate(
-				noteType,
+				type,
 				defaultTemplateName,
 			);
 			if (!isTemplateExist) {
-				const defaultTemplates = this.defaultTemplatesClass();
-				await this.registerTemplate(
-					noteType,
+				defaultTemplateName = this.defaultTemplateName;
+				const isTemplateExist = await this.getTemplate(
+					type,
 					defaultTemplateName,
-					new defaultTemplates[noteType](this.app, noteType),
 				);
+				if (!isTemplateExist) {
+					const defaultTemplates = this.defaultTemplatesClass();
+					await this.registerTemplate(
+						type,
+						defaultTemplateName,
+						new defaultTemplates[type](this.app, type),
+					);
+				}
 			}
+			this.setDefaultTemplate(type, defaultTemplateName);
 		}
-		this.setDefaultTemplate(noteType, defaultTemplateName);
 	}
 
 	private defaultTemplatesClass(): Record<
@@ -109,6 +110,153 @@ export class NoteFactory {
 			[NoteType.ATOMIC]: AtomicDefaultTemplate,
 			[NoteType.PERMANENT]: PermanentDefaultTemplate,
 		};
+	}
+
+	// Register file watchers for auto-reload
+	private registerFileWatchers(): void {
+		this.fileWatcherRef.push(
+			this.app.vault.on("create", async (file) => {
+				if (
+					file.path.startsWith(this.defaultTemplatesDir) &&
+					file.path.endsWith(".md")
+				) {
+					if (!file.parent) {
+						throw new Error(
+							`Entrypoint Data is invalid, Template Folder is a two-level folder, but parent is not defined. Entrypoint Data: ${this.defaultTemplates}`,
+						);
+					}
+					const folerPath = file.parent.path;
+					if (folerPath === this.defaultTemplatesDir) {
+						this.logger.info(
+							`Skipping root directory: ${this.defaultTemplatesDir}`,
+						);
+						return; // Skip root directory
+					}
+
+					const noteTypeValue = file.parent.name;
+					const noteTypeKey = Utils.getKeyByValue(
+						NoteType,
+						noteTypeValue,
+					);
+					if (!noteTypeKey) {
+						this.logger.error(
+							`Unknown note type: ${noteTypeValue} for file: ${file.path}`,
+						);
+						return;
+					}
+					const noteType = NoteType[noteTypeKey];
+					const fileName = file.name.replace(".md", "");
+					const note = this.createTemplate(noteType);
+					note.setTitle(fileName);
+					note.setPath(folerPath);
+					await note.update();
+					await this.registerTemplate(noteType, fileName, note).then(
+						(template) => {
+							if (template) {
+								this.logger.info(
+									`Registered new template: ${fileName} for type: ${noteType}`,
+								);
+							} else {
+								this.logger.error(
+									`Failed to register template: ${fileName} for type: ${noteType}`,
+								);
+							}
+						},
+					);
+				}
+			}),
+		);
+
+		this.fileWatcherRef.push(
+			this.app.vault.on("rename", async (file) => {
+				if (
+					file.path.startsWith(this.defaultTemplatesDir) &&
+					file.path.endsWith(".md")
+				) {
+					if (!file.parent) {
+						throw new Error(
+							`Entrypoint Data is invalid, Template Folder is a two-level folder, but parent is not defined. Entrypoint Data: ${this.defaultTemplates}`,
+						);
+					}
+					const folerPath = file.parent.path;
+					if (folerPath === this.defaultTemplatesDir) {
+						this.logger.info(
+							`Skipping root directory: ${this.defaultTemplatesDir}`,
+						);
+						return; // Skip root directory
+					}
+
+					const noteTypeValue = file.parent.name as NoteType;
+					const fileName = file.name.replace(".md", "");
+
+					const originalTemplate = await this.loadFromFile(
+						file.path,
+						true,
+					);
+					const originalName = Utils.deepClone(
+						originalTemplate.getTitle(),
+					);
+
+					const templateExist = this.templates
+						.get(noteTypeValue)
+						?.has(originalName);
+					if (!templateExist) {
+						this.logger.warn(
+							`Template ${fileName} is a unregistered template, skipping rename event`,
+						);
+						return;
+					}
+					this.templates.get(noteTypeValue)?.delete(originalName);
+					originalTemplate.setTitle(fileName);
+					await originalTemplate.update();
+					await this.registerTemplate(
+						noteTypeValue,
+						fileName,
+						originalTemplate,
+					).then((template) => {
+						if (template) {
+							this.logger.info(
+								`Renamed template: ${originalName} to ${originalTemplate.getTitle()} for type: ${noteTypeValue}`,
+							);
+						} else {
+							this.logger.error(
+								`Failed to rename template: ${originalName} to ${originalTemplate.getTitle()} for type: ${noteTypeValue}`,
+							);
+						}
+					});
+				}
+			}),
+		);
+
+		this.fileWatcherRef.push(
+			this.app.vault.on("delete", (file) => {
+				if (
+					file.path.startsWith(this.defaultTemplatesDir) &&
+					file.path.endsWith(".md")
+				) {
+					const folerPath = file.path.split("/");
+					const fileName = folerPath.pop() as string;
+					const noteTypeValue = folerPath.pop() as NoteType;
+
+					this.templates
+						.get(noteTypeValue)
+						?.delete(fileName.replace(".md", ""));
+				}
+			}),
+		);
+
+		this.fileWatcherRef.forEach((event) => {
+			this.registerEvent(event);
+		});
+	}
+
+	public cleanUpFileWatchers(): void {
+		this.fileWatcherRef.forEach((event) => {
+			this.app.vault.offref(event);
+		});
+		this.fileWatcherRef = [];
+		this.logger.info("Cleaned up file watchers for templates");
+		this.logger.info("NoteFactory cleaned up");
 	}
 
 	/**
@@ -130,17 +278,11 @@ export class NoteFactory {
 	/**
 	 * Create a new note of the specified type
 	 */
-	public createNote(
-		noteType: NoteType,
-		createTemplate?: boolean,
-		template?: BaseNote,
-	): BaseNote {
+	public createNote(noteType: NoteType, template?: BaseNote): BaseNote {
 		this.logger.info(
-			`Creating new note of type: ${noteType}, createTemplate: ${createTemplate} with template: ${template?.getTitle() || "none"}`,
+			`Creating new note of type: ${noteType} with template: ${template?.getTitle() || "none"}`,
 		);
-		const NoteClass = createTemplate
-			? BaseTemplate
-			: this.noteTypeMap.get(noteType);
+		const NoteClass = this.noteTypeMap.get(noteType);
 
 		if (!NoteClass) {
 			this.logger.error(`No note class registered for type: ${noteType}`);
@@ -161,7 +303,10 @@ export class NoteFactory {
 	/**
 	 * Load a note from a markdown file
 	 */
-	public async loadFromFile(path: string): Promise<BaseNote> {
+	public async loadFromFile(
+		path: string,
+		keepOriginalName: boolean = false,
+	): Promise<BaseNote> {
 		this.logger.debug(`Loading note from file: ${path}`);
 
 		// obtain TFile object from the path
@@ -175,7 +320,9 @@ export class NoteFactory {
 		// Parse and populate the note
 		let note = await this.populateNoteFromContent(file);
 		// Ensure file name and synchronize the value of title in frontmatter
-		note.setTitle(fileName);
+		if (!keepOriginalName) {
+			note.setTitle(fileName);
+		}
 		// Set the save path based on file location
 		const pathParts = path.split("/");
 		if (pathParts.length > 1) {
@@ -229,7 +376,7 @@ export class NoteFactory {
 		if (!enumKey) {
 			enumKey = "FLEETING";
 		}
-		let newNote: BaseTemplate = this.createNote(NoteType[enumKey], true);
+		let newNote: BaseTemplate = this.createTemplate(NoteType[enumKey]);
 		const properties = newNote.getProperties();
 
 		if (frontmatter) {
@@ -438,9 +585,7 @@ export class NoteFactory {
 	 */
 	private async templateDir(noteType: NoteType): Promise<string> {
 		const dir = this.defaultTemplatesDir + "/" + noteType;
-		if (!Utils.fileExists(this.app, dir, true)) {
-			await this.app.vault.createFolder(dir);
-		}
+		await Utils.createFolder(this.app, dir);
 		return dir;
 	}
 
@@ -506,6 +651,51 @@ export class NoteFactory {
 		this.logger.info(
 			`Creating new note of type: ${noteType} from template: ${templateName || undefined}`,
 		);
-		return this.createNote(noteType, false, template);
+		return this.createNote(noteType, template);
+	}
+
+	public async createNoteCard(
+		filename: string,
+		noteCard: INoteOption,
+	): Promise<BaseNote> {
+		const copiedNoteCard = Utils.deepClone(noteCard);
+		const note = await this.createFromTemplate(
+			copiedNoteCard.type,
+			copiedNoteCard.template,
+		);
+
+		// Set the path for the new note, ensure prefix is used in a proper way
+		const prefix = copiedNoteCard.extraInfo?.prefix || Utils.generateDate();
+		if (prefix == undefined) {
+			note.setTitle(filename);
+		} else {
+			note.setTitle(`${prefix} - ${filename}`);
+		}
+		if (!copiedNoteCard.path) {
+			throw new Error(
+				`Path is not defined for note card: ${filename} with type ${copiedNoteCard.type}`,
+			);
+		}
+		note.setPath(copiedNoteCard.path);
+
+		// Process extra properties and other metadata
+		const extraTags = copiedNoteCard.extraInfo?.tags || [];
+		extraTags.forEach((tag) => {
+			note.addTag(tag);
+		});
+		const extraProperties = copiedNoteCard.extraInfo?.properties || [];
+		extraProperties.forEach((property) => {
+			if (property instanceof KeyValue) {
+				note.setProperty(property.getKey(), property.getValue());
+			}
+		});
+
+		if (copiedNoteCard.openAfterCreation) {
+			await this.app.workspace.openLinkText(note.getTitle(), "", false, {
+				state: { mode: copiedNoteCard.openMode ?? "source" },
+			});
+		}
+
+		return note;
 	}
 }

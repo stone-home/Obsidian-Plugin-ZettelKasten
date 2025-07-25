@@ -530,7 +530,6 @@ export class ImportLiteraturePaperCallback extends AbsSearchHandler {
 		}
 		const zoteroNote = this.factory.createNote(
 			NoteType[enumKey],
-			false,
 		) as BaseDefault;
 
 		const fileContent = await this.app.vault.read(file);

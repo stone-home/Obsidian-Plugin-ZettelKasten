@@ -8,7 +8,7 @@ export enum NoteType {
 }
 
 /*
- * Metadata for each note type, including label, emoji, description, and upgrade paths
+ * Default metadata for each note type, including label, emoji, description, and upgrade paths
  */
 export const NoteTypeData: Record<NoteType, INoteTemplateMetadata> = {
 	[NoteType.FLEETING]: {

@@ -81,3 +81,9 @@ export interface INoteTemplateMetadata {
 	path: string;
 	upgradePath: Array<NoteType>;
 }
+
+export interface IUnifiedNewNoteParams {
+	type: NoteType;
+	path: string;
+	template?: string;
+}

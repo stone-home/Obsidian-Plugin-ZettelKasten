@@ -948,7 +948,6 @@ export class ResearchDashboardModal extends Modal {
 		}
 		const zoteroNote = this.factory.createNote(
 			NoteType[enumKey],
-			false,
 		) as BaseDefault;
 
 		const fileContent = await this.app.vault.read(file);

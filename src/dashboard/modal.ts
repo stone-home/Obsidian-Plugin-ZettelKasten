@@ -13,11 +13,12 @@ import { CreateNoteOptions } from "../config";
 import { INoteOption } from "../types";
 import { ZettelkastenSettings } from "../types";
 import { IntegrationManager } from "../3rd";
-import { Utils, StepByStepFolderModal, GroupNoteCards } from "../utils";
+import { Utils, StepByStepFolderModal } from "../utils";
 import { ConfigHelper } from "../config";
 import { ResearchDashboardModal } from "../research/modals";
 import { WeeklyKanbanModal } from "../task/modal";
 import { ProjectDashboardModal } from "../project";
+import { GroupNoteCards } from "./groupNoteCards";
 
 export class ZettelKastenModal extends Modal {
 	private factory: NoteFactory;

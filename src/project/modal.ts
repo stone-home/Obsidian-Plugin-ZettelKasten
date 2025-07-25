@@ -58,8 +58,10 @@ export class ProjectDashboardModal extends Modal {
 			const nameMatch = folderName.match(regex);
 			if (nameMatch) {
 				const projectName = nameMatch[1].trim();
-				this.projects[projectName] =
-					this.createProjectEntity(projectName, folderName);
+				this.projects[projectName] = this.createProjectEntity(
+					projectName,
+					folderName,
+				);
 			}
 		});
 	}
@@ -233,8 +235,7 @@ export class ProjectDashboardModal extends Modal {
 		// Ensure that ProjectConfig must be copied before use to prevent mutation of the original config
 		let config = Utils.deepClone(ProjectConfig);
 		const dir = dirName || this.formatProjectName(name);
-		config.entrypoint =
-			this.getProjectsPath() + "/" + dir;
+		config.entrypoint = this.getProjectsPath() + "/" + dir;
 		config.basename = name;
 		return new Project(this.app, this.plugin, this.factory, config);
 	}
