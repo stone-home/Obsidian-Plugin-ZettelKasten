@@ -11,23 +11,58 @@ export class TemplateManager extends Component {
 	private app: App;
 	private logger = Logger.createLogger("NoteFactory");
 	private fileWatcherRef: EventRef[] = [];
-	private entrypoint: string = "zettelkasten templates";
+	private entrypoint: string;
 	private templates: Map<NoteType, Map<string, ITemplateMetadata>> =
 		new Map();
 
-	constructor(app: App) {
+	constructor(app: App, entrypoint?: string) {
 		super();
 		this.app = app;
+		this.entrypoint = entrypoint ?? "zettelkasten templates";
 	}
 
 	public async onload() {
 		super.onload();
 		await this.registerFileWatchers()
+		await this.preloadTemplates()
 	}
 
 	public async onunload() {
 		super.onunload();
 		await this.unregisterFileWatchers();
+	}
+
+	private async preloadTemplates(): Promise<void> {
+		const tFolder = this.app.vault.getAbstractFileByPath(this.entrypoint);
+		if (tFolder) {
+			const files = this.app.vault
+				.getFiles()
+				.filter(
+					(file) =>
+						file.path.startsWith(tFolder.path) && file.extension === "md",
+				).map(async file => {
+					const templateNote = await BaseTemplate.loadFromFile(
+						this.app,
+						file.path,
+					);
+					if (!this.isTemplate(templateNote)) {
+						this.logger.debug(`Skipping non-template file: ${file.path}`);
+						return;
+					}
+					// todo: I need to separate save template to fs and register it
+					await this.registerTemplate(
+						templateNote.getType(),
+						templateNote.getTitle(),
+						templateNote
+					)
+				})
+		} else {
+			this.logger.warn(
+				`Entrypoint folder for templates not found: ${this.entrypoint}`,
+			);
+			await Utils.createFolder(this.app, this.entrypoint);
+		}
+		// todo: loop through all types and create a default template if it does not exist
 	}
 
 	// Register file watchers for auto-reload
@@ -197,7 +232,7 @@ export class TemplateManager extends Component {
 	 * @returns true if the note is a template, false otherwise
 	 */
 	private isTemplate(note: BaseNote): boolean {
-		return note.getProperties().getPropertyValue("template") === true;
+		return note.getProperties().getPropertyValue("template");
 	}
 
 	/**

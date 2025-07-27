@@ -23,10 +23,10 @@ export class DataviewJSManager extends Component {
 	private scriptsFolder: string;
 	private logger = Logger.createLogger("DataviewJSManager");
 
-	constructor(app: App, scriptsFolder: string = "dataview-scripts") {
+	constructor(app: App, scriptsFolder?: string) {
 		super();
 		this.app = app;
-		this.scriptsFolder = scriptsFolder;
+		this.scriptsFolder = scriptsFolder ?? "dataview-scripts";
 	}
 
 	async onload(): Promise<void> {
@@ -39,7 +39,7 @@ export class DataviewJSManager extends Component {
 	private async initializeScriptsFolder(): Promise<void> {
 		const folder = this.app.vault.getAbstractFileByPath(this.scriptsFolder);
 		if (!folder) {
-			await this.app.vault.createFolder(this.scriptsFolder);
+			await Utils.createFolder(this.app, this.scriptsFolder);
 		}
 		await this.createDefaultScripts();
 	}
