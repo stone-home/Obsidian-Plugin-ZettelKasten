@@ -7,7 +7,21 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"typecheck": "tsc --noEmit"
+	},
+	"lint-staged": {
+		"*.{js,ts,tsx}": [
+			"eslint --fix",
+			"prettier --write",
+			"npm run typecheck"
+		],
+		"*.{json,md,yaml,yml}": [
+			"prettier --write"
+		],
+		"*": [
+			"bash -c 'docker run --rm -v \"$(pwd):/workdir\" trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD --fail'"
+		]
 	},
 	"keywords": [],
 	"author": "",
@@ -19,15 +33,16 @@
 		"@semantic-release/npm": "^12.0.2",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "5.29.0",
-		"@typescript-eslint/parser": "5.29.0",
+		"@typescript-eslint/eslint-plugin": "^5.29.0",
+		"@typescript-eslint/parser": "^5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "^0.25.5",
-		"husky": "^8.0.0",
+		"eslint": "^8.57.1",
+		"husky": "^8.0.3",
 		"jest": "^30.0.4",
 		"lint-staged": "^16.1.2",
 		"obsidian": "latest",
-		"prettier": "3.6.2",
+		"prettier": "^3.6.2",
 		"ts-jest": "^29.4.0",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"

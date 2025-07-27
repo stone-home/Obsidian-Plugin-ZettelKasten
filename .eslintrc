@@ -20,4 +20,4 @@
       "no-prototype-builtins": "off",
       "@typescript-eslint/no-empty-function": "off"
     } 
-  }
+}
