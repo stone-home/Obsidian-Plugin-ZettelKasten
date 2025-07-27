@@ -573,6 +573,7 @@ export abstract class BaseNote {
 	public async toString(): Promise<string> {
 		this.logger.debug("Generate string-form content");
 		this.pre_process();
+		this.setType(this.noteType);
 		let note: string = this.properties.toString();
 		note += this.body.toString();
 		return this.post_process(note);
@@ -804,11 +805,15 @@ export abstract class BaseNote {
 	}
 
 	/**
-	 * Load a note from a markdown file
+	 * Loads a note from a file in the vault.
+	 * @param app {App} The current application instance.
+	 * @param path {string} The path to the note file.
+	 * @param template {boolean} Whether the note is a template.
 	 */
 	static async loadFromFile(
 		app: App,
 		path: string,
+		template: boolean = false,
 	): Promise<BaseNote> {
 		// obtain TFile object from the path
 		const file = app.vault.getAbstractFileByPath(path);
@@ -820,14 +825,10 @@ export abstract class BaseNote {
 		const content = await app.vault.read(file);
 		const fileName = file.basename;
 
-		// Gather type first to create a note
-		let enumKey = Utils.getKeyByValue(NoteType, frontmatter!.type);
-		if (!enumKey) {
-			enumKey = "FLEETING";
-		}
-		const noteType = NoteType[enumKey];
+		const noteType =  frontmatter!.type as NoteType;
 
-		const note = new BaseDefault(app, noteType);
+		const noteClass = template? BaseTemplate: BaseDefault
+		const note = new noteClass(app, noteType);
 		const properties = note.getProperties();
 
 		// update properties with frontmatter
@@ -993,5 +994,18 @@ export class BaseDefault extends BaseNote {
 			}
 			this.properties.addSources(sourceNote);
 		}
+	}
+}
+
+
+export class BaseTemplate extends BaseNote {
+	defaultBody(): Body {
+		return new Body();
+	}
+
+	defaultProperty(): Property {
+		let properties: Property = new Property();
+		properties.setPropertyValue("template", true);
+		return properties;
 	}
 }

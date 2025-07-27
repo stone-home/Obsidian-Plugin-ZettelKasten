@@ -2,9 +2,14 @@ import {App, Component, EventRef, TAbstractFile} from "obsidian";
 import {Logger} from "../../logger";
 import {Utils} from "../../utils";
 import {NoteType} from "./config";
-import {BaseNote} from "./note";
+import {BaseNote, BaseTemplate} from "./note";
 import {ITemplateMetadata} from "./types";
-import {BaseTemplate} from "./default";
+import {
+	FleetingDefaultTemplate,
+	LiteratureDefaultTemplate,
+	AtomicDefaultTemplate,
+	PermanentDefaultTemplate
+} from "./default";
 
 
 export class TemplateManager extends Component {
@@ -23,8 +28,8 @@ export class TemplateManager extends Component {
 
 	public async onload() {
 		super.onload();
-		await this.registerFileWatchers()
 		await this.preloadTemplates()
+		await this.registerFileWatchers()
 	}
 
 	public async onunload() {
@@ -41,10 +46,7 @@ export class TemplateManager extends Component {
 					(file) =>
 						file.path.startsWith(tFolder.path) && file.extension === "md",
 				).map(async file => {
-					const templateNote = await BaseTemplate.loadFromFile(
-						this.app,
-						file.path,
-					);
+					const templateNote = await this.loadTemplateFromFile(file.path)
 					if (!this.isTemplate(templateNote)) {
 						this.logger.debug(`Skipping non-template file: ${file.path}`);
 						return;
@@ -103,6 +105,7 @@ export class TemplateManager extends Component {
 				const note = this.createTemplate(noteType);
 				note.setTitle(fileName);
 				note.setPath(folerPath);
+				note.setType(noteType)
 				await note.update();
 				await this.registerTemplate(noteType, fileName, note).then(
 					(template) => {
@@ -136,10 +139,7 @@ export class TemplateManager extends Component {
 				}
 				const fileName = file.name.replace(".md", "");
 
-				const originalTemplate = await BaseTemplate.loadFromFile(
-					this.app,
-					file.path,
-				);
+				const originalTemplate = await this.loadTemplateFromFile(file.path);
 				const originalName = Utils.deepClone(
 					originalTemplate.getTitle(),
 				);
@@ -188,30 +188,49 @@ export class TemplateManager extends Component {
 				this.templates
 					.get(noteTypeValue)
 					?.delete(fileName.replace(".md", ""));
+
 			}
 		})
 	}
 
 	private getFolerPath(file: TAbstractFile): [string, string]| [undefined, undefined] {
 		if (!file.parent) {
-			throw new Error(
-				`Entrypoint Data is invalid, Template Folder is a two-level folder, but parent is not defined. Entrypoint Data: ${this.entrypoint}`,
-			);
+			return [undefined, undefined];
 		}
 		const folderPath = file.parent.path;
 		if (folderPath === this.entrypoint) {
-			this.logger.info(
-				`Skipping root directory: ${this.entrypoint}`,
+			this.logger.warn(
+				`Since template file, ${file.name}, is stored in the entrypoint,
+				nothing will be done with it.`,
+			);
+			// todo: originally, moving to fleeting should be a better solution,
+			// todo: but creating a new note is gonna trigger another create event.
+			return [undefined, undefined];
+		}
+		const noteType = file.parent.name
+		if (Utils.getKeyByValue(NoteType, noteType) === undefined) {
+			this.logger.error(
+				`Invalid note type for file: ${file.path}. Expected one of: ${Object.values(NoteType).join(", ")}`,
 			);
 			return [undefined, undefined];
 		}
-		return [folderPath, file.parent.name]
+		return [folderPath, noteType];
+	}
+
+	private async loadTemplateFromFile(
+		filePath: string,
+	): Promise<BaseTemplate> {
+		return await BaseTemplate.loadFromFile(
+			this.app,
+			filePath,
+			true
+		);
 	}
 
 	/**
 	 * Create a new template note of the specified type
 	 */
-	private createTemplate(noteType: NoteType): BaseNote {
+	private createTemplate(noteType: NoteType): BaseTemplate {
 		const note = new BaseTemplate(this.app, noteType);
 		this.logger.info(`Created new ${noteType} note`);
 		return note;
@@ -264,6 +283,10 @@ export class TemplateManager extends Component {
 		return this.templates.get(noteType)!.get(templateName);
 	}
 
+	public getAllTemplates(): Map<NoteType, Map<string, ITemplateMetadata>> {
+		return this.templates;
+	}
+
 	/**
 	 * Get all templates for a specific note type
 	 */
@@ -289,14 +312,14 @@ export class TemplateManager extends Component {
 			);
 			return undefined;
 		}
-		return BaseTemplate.loadFromFile(this.app, templatePath);
+		return this.loadTemplateFromFile(templatePath)
 	}
 
 	/**
 	 * List all template names for a note type
 	 */
 	public listTemplates(noteType: NoteType): string[] {
-		const typeTemplates = this.templates.get(noteType);
+		const typeTemplates = this.getTemplatesForType(noteType);
 		if (!typeTemplates) return [];
 		return Array.from(typeTemplates.keys());
 	}

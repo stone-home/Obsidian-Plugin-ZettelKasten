@@ -1,16 +1,5 @@
-import { Body, BaseNote, Property } from "./note";
+import { Body, BaseTemplate } from "./note";
 
-export class BaseTemplate extends BaseNote {
-	defaultBody(): Body {
-		return new Body();
-	}
-
-	defaultProperty(): Property {
-		let properties: Property = new Property();
-		properties.setPropertyValue("template", true);
-		return properties;
-	}
-}
 
 export class FleetingDefaultTemplate extends BaseTemplate {
 	defaultBody(): Body {

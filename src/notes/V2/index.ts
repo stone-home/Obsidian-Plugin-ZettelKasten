@@ -1,1 +1,1 @@
-export { BaseDefault } from "./note"
+export { ZettelkastenCommand as ZettelkastenCommandV2} from "./command";
