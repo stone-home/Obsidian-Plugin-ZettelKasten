@@ -27,3 +27,7 @@ export {
 } from "./note";
 
 export { NoteFactory } from "./factory";
+
+// test use
+export { ConfirmationModal } from "./V2/modal"
+export { BaseDefault as NoteBaseV2 } from "./V2";

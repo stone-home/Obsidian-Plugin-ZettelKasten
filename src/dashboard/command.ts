@@ -1,8 +1,9 @@
 import ZettelkastenPlugin from "../main";
-import { App } from "obsidian";
-import { NoteFactory } from "../notes";
-import { Logger } from "../logger";
-import { ZettelKastenModal } from "./modal";
+import {App} from "obsidian";
+import {ConfirmationModal, NoteBaseV2, NoteFactory} from "../notes";
+import {Logger} from "../logger";
+import {ZettelKastenModal} from "./modal";
+import {NoteType} from "../notes/V2/config";
 
 export class ZettelkastenCommand {
 	private app: App;
@@ -32,6 +33,36 @@ export class ZettelkastenCommand {
 					key: "z",
 				},
 			],
+		});
+
+		plugin.addCommand({
+			id: "open-zettelkasten-dashboard-v2",
+			name: "Open Zettelkasten Dashboard (Version 2)",
+			icon: "brain",
+			callback: () => {
+				const model = new ConfirmationModal(this.app, "xxxxxxxxxx", async () => {
+					const note = new NoteBaseV2(this.app, NoteType.FLEETING)
+					note.setTitle("Zettelkasten-test");
+					note.setPath("test")
+					console.error(note)
+					await note.save();
+					console.error(`File exists: ${await note.exist()}`);
+					await sleep(5000);
+					note.addTag("new,");
+					note.addTag("test");
+					await note.update();
+					console.error(note);
+					await sleep(5000);
+					await note.rename("zetelkasten-test-renamed");
+					await sleep(5000);
+					await note.move("test2")
+					await sleep(5000);
+					await note.delete();
+
+
+				});
+				model.open()
+			}
 		});
 	}
 

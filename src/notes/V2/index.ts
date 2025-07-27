@@ -1,0 +1,1 @@
+export { BaseDefault } from "./note"
