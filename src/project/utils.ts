@@ -101,8 +101,8 @@ export function projectReformResearchNote(
 		note.addBodyContent([], "⭐️Highlights", 1);
 		note.addBodyContent([], "📌Limitation", 1);
 		note.addBodyContent([], "🪤Research Methodology", 1);
-		note.addBodyContent([], "🧑‍🔬Experiments", 1);
-		note.addBodyContent([], "🫆Key Findings", 1);
+		note.addBodyContent([], "🧑‍🔬Experiments", 2);
+		note.addBodyContent([], "🫆Key Findings", 2);
 		note.addBodyContent([], "💡Notes", 1);
 		note.addBodyContent([], "⭐️Highlights", 1);
 		note.addBodyContent(
