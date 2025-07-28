@@ -58,12 +58,17 @@ export function projectReformResearchNote(
 	);
 	note.addBodyContent(
 		[
+			"%% Treating this field as Thesis Statement %%",
+			"💊**TL;DR**::",
+			"%%The Field should be filled in the 1st %%",
 			"🩻**topic**::",
 			"🧬**position**::",
-			"🔗**evidence**::",
+			"✅**contributions**::",
+			"%%The Field should be filled in the 2st %%",
 			"🫆**method**::",
-			"💊**TL;DR**::",
-			"",
+			"💎**novelty**::",
+			"🌡️**evaluation**::",
+			""
 		],
 		"👻Summary",
 		1,
@@ -84,8 +89,20 @@ export function projectReformResearchNote(
 		);
 		note.addBodyContent([], "🔖References", 1);
 	} else {
+		note.addBodyContent(
+			[
+				"- [ ] 1st round reading",
+				"- [ ] 2st round reading",
+				"- [ ] 3st round reading",
+			],
+			"🗯️Thoughts",
+			2
+		);
 		note.addBodyContent([], "⭐️Highlights", 1);
 		note.addBodyContent([], "📌Limitation", 1);
+		note.addBodyContent([], "🪤Research Methodology", 1);
+		note.addBodyContent([], "🧑‍🔬Experiments", 1);
+		note.addBodyContent([], "🫆Key Findings", 1);
 		note.addBodyContent([], "💡Notes", 1);
 		note.addBodyContent([], "⭐️Highlights", 1);
 		note.addBodyContent(
