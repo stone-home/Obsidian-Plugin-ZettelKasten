@@ -1,0 +1,178 @@
+{
+  "dateFormat": "yyyy-MM-dd",
+  "fleetingPath": "001-fleeting/000-notes",
+  "literaturePath": "002-literature/000-notes",
+  "permanentPath": "003-permanent/000-notes",
+  "atomPath": "004-atomic",
+  "useTemplater": true,
+  "autoOpenNewNote": true,
+  "showUpgradeNotifications": true,
+  "folderNotesEnabled": true,
+  "createNoteOptions": [
+    {
+      "enabled": true,
+      "type": "fleeting",
+      "label": "En Vocab",
+      "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "template": "Eng Vocabulary",
+      "path": "001-fleeting/001-english/001-vocabulary",
+      "prefixEnabled": false
+    },
+    {
+      "enabled": true,
+      "type": "fleeting",
+      "label": "En Phrase",
+      "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "path": "001-fleeting/001-english/002-expression",
+      "template": "Eng Phrase",
+      "prefixEnabled": false
+    },
+    {
+      "enabled": true,
+      "type": "fleeting",
+      "label": "BBC Eng",
+      "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "path": "001-fleeting/001-english/002-expression",
+      "template": "BBC English",
+      "prefixEnabled": false
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "006-discipline",
+      "emoji": "📚",
+      "path": "002-literature/006-discipline",
+      "template": "default",
+      "folderNote": true
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "AI-Generation",
+      "emoji": "🤖",
+      "path": "002-literature/104-AI Notes",
+      "template": "AI-Gen",
+      "folderNote": false
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "008-software",
+      "emoji": "🌱",
+      "path": "002-literature/008-software",
+      "template": "default",
+      "folderNote": true
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "010-english",
+      "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "path": "002-literature/010-english",
+      "template": "default",
+      "folderNote": true
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "011-life",
+      "emoji": "🍁",
+      "path": "002-literature/011-life",
+      "template": "default",
+      "folderNote": true
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "012-research note",
+      "emoji": "📚",
+      "path": "002-literature/012-research note",
+      "template": "default",
+      "folderNote": true
+    },
+    {
+      "enabled": true,
+      "type": "fleeting",
+      "label": "Paper Read",
+      "emoji": "📖",
+      "template": "Paper Reading",
+      "folderNote": false
+    }
+  ],
+  "includeTimestamp": true,
+  "defaultTags": [],
+  "templateDirPath": "904-stone-templates",
+  "default": {
+    "fleeting": "default",
+    "literature": "default",
+    "permanent": "default",
+    "atomic": "default",
+    "atom": "default"
+  },
+  "researchEnabled": true,
+  "researchPath": "002-literature/007-research",
+  "researchZoteroPath": "002-literature/101-zotero",
+  "dataviewEnabled": true,
+  "dataviewQueryPath": "902-template/004-dataviews",
+  "dataviewCodeBlockType": "zettelkasten-query",
+  "projectEnabled": true,
+  "projectPath": "002-literature/009-projects",
+  "kanbanEnabled": true,
+  "kanbanPath": "001-fleeting/003-kanban",
+  "atomicPath": "004-atomic",
+  "naming": {
+    "DATE_FORMAT": "yyyy-MM-dd",
+    "TIME_FORMAT": "HH:mm:ss",
+    "ID_LENGTH": 8,
+    "TITLE_MAX_LENGTH": 100,
+    "INVALID_CHARS": {},
+    "REPLACEMENT_CHAR": "-"
+  },
+  "features": {
+    "AUTO_OPEN_CREATED_NOTES": true,
+    "SHOW_UPGRADE_NOTIFICATIONS": true,
+    "DEBUG_MODE": false,
+    "FOLDER_NOTES": true,
+    "WEEKLY_KANBAN": {
+      "enabled": true,
+      "description": "Enable weekly kanban board for task management",
+      "path": "001-fleeting/003-kanban"
+    }
+  },
+  "debug": {
+    "LOG_LEVEL": "info",
+    "SHOW_PERFORMANCE_METRICS": false,
+    "ENABLE_ERROR_BOUNDARIES": true
+  },
+  "systemSettings": {
+    "FEATURES": {
+      "AUTO_OPEN_CREATED_NOTES": true,
+      "SHOW_UPGRADE_NOTIFICATIONS": true,
+      "DEBUG_MODE": false,
+      "FOLDER_NOTES": true
+    },
+    "NOTIFICATIONS": {
+      "SUCCESS_DURATION": 4000,
+      "ERROR_DURATION": 6000,
+      "WARNING_DURATION": 5000,
+      "INFO_DURATION": 3000,
+      "SUGGESTION_COOLDOWN": 86400000
+    },
+    "NAMING": {
+      "DATE_FORMAT": "YYYY-MM-DD",
+      "TIME_FORMAT": "HH:mm:ss",
+      "ID_LENGTH": 8,
+      "TITLE_MAX_LENGTH": 100,
+      "INVALID_CHARS": {},
+      "REPLACEMENT_CHAR": "-"
+    },
+    "DEBUG": {
+      "LOG_LEVEL": "info",
+      "SHOW_PERFORMANCE_METRICS": false,
+      "ENABLE_ERROR_BOUNDARIES": true,
+      "MOCK_DATA": false
+    }
+  },
+  "maxRecentNotes": 10,
+  "enableAutoLinking": false
+}
