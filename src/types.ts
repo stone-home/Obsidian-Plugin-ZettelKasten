@@ -21,6 +21,7 @@ export interface INoteOption {
 	folderNote?: boolean;
 	openAfterCreation?: boolean;
 	openMode?: string;
+	prefixEnabled?: boolean;
 	extraInfo?: INoteOptionExtraParams;
 }
 

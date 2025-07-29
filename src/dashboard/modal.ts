@@ -335,9 +335,13 @@ export class ZettelKastenModal extends Modal {
 				.getPrompt("Please enter the file name");
 			if (filename) {
 				this.logger.info(`Note title set to: ${filename}`);
-				const prefix =
-					noteMetadata.extraInfo?.prefix || Utils.generateDate();
-				note.setTitle(`${prefix} - ${filename}`);
+				if (noteMetadata.prefixEnabled ?? true) {
+					const prefix =
+						noteMetadata.extraInfo?.prefix || Utils.generateDate();
+					note.setTitle(`${prefix} - ${filename}`);
+				} else {
+					note.setTitle(filename);
+				}
 			}
 
 			// Process extra properties and other metadata
