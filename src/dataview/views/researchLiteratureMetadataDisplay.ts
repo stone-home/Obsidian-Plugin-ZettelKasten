@@ -92,15 +92,20 @@ class PaperInfo {
     }
 
     _getTagValue(tag) {
-        return tag.split("/").pop();
+        const parts = tag.split("/")
+        if (parts.length >= 1) {
+            return parts.pop()
+        } else {
+            return tag; // Fallback if the tag format is unexpected
+        }
     }
 
-	getName(page) {
+    getName(page) {
         const name = page.shortName || "✏️"+ page.id;
         const urlLink = page.url ? "[📑](" + page.url + ")" : "";
         const codeLink = page.code ? "[📀](" + page.code + ")" : "";
         let linkedPage = page.file.path
-        if (page.sources.length > 1) {
+        if (page.sources.length >= 1) {
             const targetSources = page.sources.filter(source => {
                 const targetPage = dv.page(source);
                 for (const tag of targetPage.file.etags) {
@@ -109,7 +114,7 @@ class PaperInfo {
                     }
                 }
             }) || [];
-            if (targetSources.length >= 1) {
+            if (targetSources.length >= 1 && current) {
                 linkedPage = targetSources[0].path
             }
         }
@@ -118,6 +123,16 @@ class PaperInfo {
 
     getYear(page) {
         return Utils.convertDateFormat(page.year);
+    }
+
+    getTagNote(tag) {
+        const pages = dv.pages(tag).filter(page => {
+            return page.aliases.includes(tag);
+        });
+        if (pages.length > 0) {
+            return pages[0];
+        }
+        return null
     }
 
     getVenue(page) {
@@ -133,13 +148,27 @@ class PaperInfo {
     }
 
     getTopics(page) {
-        return this._getTags(page, "topic").map(tag => "🗯️" + this._getTagValue(tag));
+        return this._getTags(page, "topic").map(tag => {
+            const tagNote = this.getTagNote(tag);
+            if (tagNote) {
+                return "🗯️[[" + tagNote.file.path + "|" + this._getTagValue(tag) + "]]";
+            } else {
+                return "🗯️" + this._getTagValue(tag)
+            }
+        });
     }
 
     getDirections(page) {
         return this._getTags(page, "direction").map(tag => {
-            const parts = tag.split('/');
-            return "🗺️" + parts[parts.length - 1];
+            const tagNote = this.getTagNote(tag);
+            let dispalyName = "🗺️"
+            if (tagNote) {
+                dispalyName += "[[" + tagNote.file.path + "|" +  this._getTagValue(tag) + "]]";
+            } else {
+                dispalyName += this._getTagValue(tag);
+
+            }
+            return dispalyName
         });
     }
 
@@ -190,7 +219,7 @@ class PaperInfo {
     getStandardViewConfig() {
         return {
             "Name": this.getName,
-            "Dir": this.getDirections,
+            "Direction": this.getDirections,
             "Year": this.getYear,
             "Venue": this.getVenue,
             "Topic": this.getTopics,
