@@ -333,7 +333,6 @@ export class ResearchDashboardModal extends Modal {
 							new Notice("Please select a project first.");
 							return;
 						}
-						console.error(this.selectedProject)
 						new SearchDashboardModal(
 							this.app,
 							this.plugin,
