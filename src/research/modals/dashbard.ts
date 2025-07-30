@@ -84,7 +84,7 @@ export class ResearchDashboardModal extends Modal {
 			if (nameMatch) {
 				const projectName = nameMatch[1].trim();
 				this.projects[projectName] =
-					this.createProjectEntity(projectName);
+					this.createProjectEntity(projectName, folderName);
 			}
 		});
 	}
@@ -142,9 +142,17 @@ export class ResearchDashboardModal extends Modal {
 				label: "Venue",
 				icon: "building-2",
 				callback: async () => {
-					new Notice(
-						"This feature is not implemented yet. Please check the documentation for more details.",
-					);
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) =>
+							this.quickSearchAndInsetNote(selectedNote),
+						this.plugin.settings.researchPath + "/venus",
+						"Paper Venue Search",
+						["research/venus"],
+					).open();
+					this.close();
 				},
 			},
 		];
@@ -325,6 +333,7 @@ export class ResearchDashboardModal extends Modal {
 							new Notice("Please select a project first.");
 							return;
 						}
+						console.error(this.selectedProject)
 						new SearchDashboardModal(
 							this.app,
 							this.plugin,
@@ -437,6 +446,21 @@ export class ResearchDashboardModal extends Modal {
 			ch: cursor.ch + content.length,
 		};
 		editor.setCursor(newCursor);
+	}
+
+	private async quickSearchAndInsetToProperty(
+		selectedNotes: ISearchResult | ISearchResult[],
+	): Promise<void> {
+		//todo: unfinished work
+		if (!Array.isArray(selectedNotes)) {
+			selectedNotes = [selectedNotes];
+		}
+		const activeFile = this.app.workspace.getActiveFile();
+		if (activeFile && activeFile.extension === "md") {
+			const note = await this.factory.loadFromFile(
+				activeFile.path,
+			);
+		}
 	}
 
 	private async exploreImportLiteraturePaper(
@@ -922,11 +946,11 @@ export class ResearchDashboardModal extends Modal {
 		this.projects[projectName] = newProject;
 	}
 
-	private createProjectEntity(name: string): Project {
+	private createProjectEntity(name: string, dirName?: string): Project {
 		// Ensure that ProjectConfig must be copied before use to prevent mutation of the original config
 		let config = Utils.deepClone(ProjectConfig);
-		config.entrypoint =
-			this.getResearchPath().papers + "/" + this.formatProjectName(name);
+		const dir = dirName || this.formatProjectName(name);
+		config.entrypoint = this.getResearchPath().papers + "/" + dir;
 		config.basename = name;
 		return new Project(this.app, this.plugin, this.factory, config);
 	}

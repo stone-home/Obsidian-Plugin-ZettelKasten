@@ -97,6 +97,15 @@
       "emoji": "📖",
       "template": "Paper Reading",
       "folderNote": false
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "Venus",
+      "emoji": "📚",
+      "path": "002-literature/007-research/venus",
+      "template": "Research Venus",
+      "folderNote": false
     }
   ],
   "includeTimestamp": true,
