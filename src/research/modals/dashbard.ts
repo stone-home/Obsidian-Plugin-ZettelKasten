@@ -608,6 +608,7 @@ export class ResearchDashboardModal extends Modal {
 				`"#${direction.replace(zoteroKeyTagPath, "research").trim()}"`,
 			);
 			directionNote.setProperty("new", false);
+			directionNote.addBodyContent([], "👨‍🔬Followed Authors", 1)
 			directionNote.addBodyContent(
 				[
 					DataviewHelper.getCodeBlockContent(
@@ -628,6 +629,9 @@ export class ResearchDashboardModal extends Modal {
 				"Literature Reviews",
 				1,
 			);
+			directionNote.addBodyContent([], "🧩Knowledge", 1)
+			directionNote.addBodyContent([], "🎯Approaches", 1)
+			directionNote.addBodyContent([], "📃Links", 1)
 			// add the zotero note as a source note
 			const sourceNote =
 				zoteroItems.note.getProperty("id") ||
