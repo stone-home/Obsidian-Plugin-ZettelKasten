@@ -96,7 +96,8 @@
       "label": "Paper Read",
       "emoji": "📖",
       "template": "Paper Reading",
-      "folderNote": false
+      "folderNote": false,
+      "path": "001-fleeting/005-reading"
     },
     {
       "enabled": true,

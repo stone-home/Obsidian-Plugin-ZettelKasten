@@ -560,6 +560,8 @@ export class ResearchDashboardModal extends Modal {
 			note.addTag("writing/academic/literatureReview");
 			note.addTag(topicTag);
 			note.setProperty("literatures", [])
+			note.addBodyContent(["*Briefly describe why this topic is important and the current state of research.*"], "📍Core Problem & Background", 1)
+			note.addBodyContent(["*Link to atomic notes on terms*"], "🔖Key Concepts & Definitions", 1)
 			note.addBodyContent(
 				[
 					DataviewHelper.getCodeBlockContent(
@@ -567,12 +569,10 @@ export class ResearchDashboardModal extends Modal {
 						ViewReasechSynthesisMatrix,
 					),
 				],
-				"🗂️Literatures Organisation",
+				"🗯️Key Arguments & Debates",
 				1,
 			);
-			note.addBodyContent(["*Briefly describe why this topic is important and the current state of research.*"], "📍Core Problem & Background", 1)
-			note.addBodyContent(["*Link to atomic notes on terms*"], "🔖Key Concepts & Definitions", 1)
-			note.addBodyContent(["*Links to literature notes that support this argument will be placed here.*"], "🗯️Key Arguments & Debates", 1)
+			note.addBodyContent([], "🧬Synthesis & Evolution", 1)
 			note.addBodyContent(["*This is the core area for building the value of your own research*"], "💎Identified Research Gaps", 1)
 			note.addBodyContent(["*Links to notes on key researchers or theories.*"], "🧩Key People & Theories", 1)
 			await note.save();
