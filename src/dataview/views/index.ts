@@ -14,3 +14,4 @@ export { View as ViewProjectGanttChart } from "./projectGanttChart";
 export { View as ViewProjectCustomTable } from "./projectCustomTableView";
 export { View as ViewProjectReference } from "./projectReferencesView";
 export { View as ViewNoteIndex } from "./notesIndexView";
+export { View as ViewReasechSynthesisMatrix } from "./researchSynthesisMatrix";

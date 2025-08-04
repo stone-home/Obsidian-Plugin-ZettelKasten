@@ -27,6 +27,7 @@ import {
 	ViewResearchTopicMyPapers,
 	ViewResearchTopicPapers,
 	ViewProjectReference,
+	ViewReasechSynthesisMatrix
 } from "../../dataview";
 import {
 	Project,
@@ -558,15 +559,28 @@ export class ResearchDashboardModal extends Modal {
 			note.addTag("🗂️project/PhD");
 			note.addTag("writing/academic/literatureReview");
 			note.addTag(topicTag);
-			note.addBodyContent([], "ℹTopic", 1);
-			note.addBodyContent([], "🫆Position", 1);
+			note.setProperty("literatures", [])
 			note.addBodyContent(
-				["| Paper | Column 1|", "| :---: | :---: |", "| sample 1| |"],
-				"🧩Evidence",
+				[
+					DataviewHelper.getCodeBlockContent(
+						this.codeBlockType,
+						ViewReasechSynthesisMatrix,
+					),
+				],
+				"🗂️Literatures Organisation",
 				1,
 			);
-			note.addBodyContent([], "⭐Potential Solutions", 1);
+			note.addBodyContent(["*Briefly describe why this topic is important and the current state of research.*"], "📍Core Problem & Background", 1)
+			note.addBodyContent(["*Link to atomic notes on terms*"], "🔖Key Concepts & Definitions", 1)
+			note.addBodyContent(["*Links to literature notes that support this argument will be placed here.*"], "🗯️Key Arguments & Debates", 1)
+			note.addBodyContent(["*This is the core area for building the value of your own research*"], "💎Identified Research Gaps", 1)
+			note.addBodyContent(["*Links to notes on key researchers or theories.*"], "🧩Key People & Theories", 1)
 			await note.save();
+			if (this.plugin.settings.autoOpenNewNote) {
+				await this.app.workspace.openLinkText(note.getTitle(), "", false, {
+					state: { mode: "source" },
+				});
+			}
 		});
 	}
 

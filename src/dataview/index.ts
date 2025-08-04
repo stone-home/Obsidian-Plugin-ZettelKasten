@@ -11,6 +11,7 @@ export {
 	ViewProjectGanttChart,
 	ViewProjectReference,
 	ViewNoteIndex,
+	ViewReasechSynthesisMatrix
 } from "./views";
 import {
 	IDataviewParameter,
