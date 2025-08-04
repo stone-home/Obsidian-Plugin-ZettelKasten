@@ -23,7 +23,7 @@ export const NoteTypeData: Record<NoteType, INoteTemplateMetadata> = {
 		emoji: "📚",
 		description: "A note summarizing literature or research findings.",
 		path: "002-literature/001-notes",
-		upgradePath: [NoteType.FLEETING, NoteType.ATOMIC, NoteType.PERMANENT],
+		upgradePath: [NoteType.FLEETING, NoteType.LITERATURE, NoteType.ATOMIC, NoteType.PERMANENT],
 	},
 	[NoteType.ATOMIC]: {
 		label: "Atomic",
@@ -31,7 +31,7 @@ export const NoteTypeData: Record<NoteType, INoteTemplateMetadata> = {
 		description:
 			"A small, self-contained note that can be linked to others.",
 		path: "003-atomic/001-notes",
-		upgradePath: [NoteType.FLEETING, NoteType.PERMANENT],
+		upgradePath: [NoteType.ATOMIC, NoteType.PERMANENT],
 	},
 	[NoteType.PERMANENT]: {
 		label: "Permanent",
