@@ -1157,6 +1157,11 @@ export class ResearchDashboardModal extends Modal {
 				annotation.comments?.push(line);
 			} else {
 				const specificTagRegex = /#\S+/g;
+				if (line.includes("Imported (Annotations)")) {
+					// Skip lines that are not relevant to the annotation
+					// this is only a break line to highlight the timestamp of import.
+					continue
+				}
 				if (line.match(specificTagRegex)) {
 					line.split("#").forEach((tag) => {
 						tag = tag.replace("#", "").replace(",", "").trim();
