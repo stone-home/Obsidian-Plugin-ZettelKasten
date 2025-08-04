@@ -44,18 +44,29 @@ export class KeyValue<T> implements IKeyValue<T> {
 					// prevent undefined or null values in the array
 					.filter((item) => item !== undefined && item !== null)
 					.map((item) => {
-						if (item[0] === "[" && item[1] === "[" && item[item.length - 1] === "]" && item[item.length - 2] === "]") {
-							item = `"${item}"`
-						}
+						item = this.correctLinkString(item);
 						return `  - ${item}`
 					})
 					.join("\n");
 				output = `${this.key}:\n${formattedArray}\n`;
 			}
 		} else {
-			output = `${this.key}: ${this.value}\n`;
+			if (String.isString(this.value)) {
+				output = `${this.key}: ${this.correctLinkString(this.value)}\n`;
+			} else {
+				output = `${this.key}: ${this.value}\n`;
+			}
 		}
 		return output;
+	}
+
+	private correctLinkString(link: string): string {
+		const isLinkString = link[0] === "[" && link[1] === "[" && link[link.length - 1] === "]" && link[link.length - 2] === "]"
+		const isImageInLinkString = link[0] === "!" && link[1] === "[" && link[2] === "[" && link[link.length - 1] === "]" && link[link.length - 2] === "]"
+		if (isLinkString || isImageInLinkString) {
+			link = `"${link}"`
+		}
+		return link;
 	}
 }
 

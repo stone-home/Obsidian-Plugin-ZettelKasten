@@ -155,6 +155,22 @@ export class ResearchDashboardModal extends Modal {
 					this.close();
 				},
 			},
+			{
+				label: "Atom",
+				icon: "atom",
+				callback: async () => {
+					new SearchDashboardModal(
+						this.app,
+						this.plugin,
+						this.factory,
+						(selectedNote) =>
+							this.quickSearchAndInsetNote(selectedNote),
+						this.plugin.settings.atomPath,
+						"Atomic Search",
+					).open();
+					this.close();
+				},
+			},
 		];
 
 		buttons.forEach(({ label, icon, callback }) => {
