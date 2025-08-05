@@ -455,7 +455,6 @@ export class ZettelKastenModal extends Modal {
 			note.setPath(notePath);
 			if (await note.exist(false)){
 				const existNote = await this.factory.loadFromFile(note.getObPath(true), false, false) as BaseDefault;
-				console.error(existNote)
 				existNote.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
 				await existNote.update()
 
