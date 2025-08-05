@@ -306,6 +306,7 @@ export class NoteFactory extends Component {
 	public async loadFromFile(
 		path: string,
 		keepOriginalName: boolean = false,
+		isTemplate: boolean = true,
 	): Promise<BaseNote> {
 		this.logger.debug(`Loading note from file: ${path}`);
 
@@ -318,7 +319,7 @@ export class NoteFactory extends Component {
 		const fileName = file.basename;
 
 		// Parse and populate the note
-		let note = await this.populateNoteFromContent(file);
+		let note = await this.populateNoteFromContent(file, isTemplate);
 		// Ensure file name and synchronize the value of title in frontmatter
 		if (!keepOriginalName) {
 			note.setTitle(fileName);
@@ -363,7 +364,7 @@ export class NoteFactory extends Component {
 	/**
 	 * Populate a note instance with content from a file
 	 */
-	private async populateNoteFromContent(note: TFile): Promise<BaseTemplate> {
+	private async populateNoteFromContent(note: TFile, isTemplate: boolean = true): Promise<BaseTemplate | BaseDefault> {
 		this.logger.debug(
 			`Loading notes from file: ${note.basename} and populate it`,
 		);
@@ -376,7 +377,13 @@ export class NoteFactory extends Component {
 		if (!enumKey) {
 			enumKey = "FLEETING";
 		}
-		let newNote: BaseTemplate = this.createTemplate(NoteType[enumKey]);
+		let newNote: BaseTemplate | BaseDefault;
+		if (isTemplate) {
+			newNote = this.createTemplate(NoteType[enumKey]);
+		} else {
+			// If not a template, create a default note
+			newNote = this.createNote(NoteType[enumKey]);
+		}
 		const properties = newNote.getProperties();
 
 		if (frontmatter) {

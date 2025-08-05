@@ -19,6 +19,7 @@ import { ResearchDashboardModal } from "../research/modals";
 import { WeeklyKanbanModal } from "../task/modal";
 import { ProjectDashboardModal } from "../project";
 import { GroupNoteCards } from "./groupNoteCards";
+import { AtomicFileNameModal } from "./atomicNoteFilenamePrompt";
 
 export class ZettelKastenModal extends Modal {
 	private factory: NoteFactory;
@@ -330,9 +331,19 @@ export class ZettelKastenModal extends Modal {
 			}
 
 			// Ensure the node has a right suffix
-			const filename = await this.integrations
+			let filename;
+			if (noteType === NoteType.ATOMIC) {
+				const atomicNameModal = new AtomicFileNameModal(
+					this.app,
+					this.app.vault.getFiles()
+						.filter((file) => file.path.includes(this.plugin.settings.atomPath))
+				);
+				filename = await atomicNameModal.getFileName()
+			} else {
+				filename = await this.integrations
 				.getTemplater()
 				.getPrompt("Please enter the file name");
+			}
 			if (filename) {
 				this.logger.info(`Note title set to: ${filename}`);
 				if (noteMetadata.prefixEnabled ?? true) {
@@ -342,6 +353,12 @@ export class ZettelKastenModal extends Modal {
 				} else {
 					note.setTitle(filename);
 				}
+			} else {
+				return;
+			}
+
+			if (await note.exist()){
+				return;
 			}
 
 			// Process extra properties and other metadata
@@ -409,52 +426,80 @@ export class ZettelKastenModal extends Modal {
 			)) as BaseDefault;
 
 			// Ensure the node has a right suffix
-			const filename = await this.integrations
-				.getTemplater()
-				.getPrompt("Please enter the file name");
+			let filename;
+			if (noteType === NoteType.ATOMIC) {
+				const atomicNameModal = new AtomicFileNameModal(
+					this.app,
+					this.app.vault.getFiles()
+						.filter((file) => file.path.includes(this.plugin.settings.atomPath))
+				);
+				filename = await atomicNameModal.getFileName()
+			} else {
+				filename = await this.integrations
+					.getTemplater()
+					.getPrompt("Please enter the file name");
+			}
 			if (filename) {
 				this.logger.info(`Note title set to: ${filename}`);
-				const prefix =
-					noteMetadata.extraInfo?.prefix || Utils.generateDate();
-				note.setTitle(`${prefix} - ${filename}`);
-			}
-
-			// Process extra properties and other metadata
-			const extraTags = noteMetadata.extraInfo?.tags || [];
-			extraTags.forEach((tag) => {
-				note.addTag(tag);
-			});
-			const extraProperties = noteMetadata.extraInfo?.properties || [];
-			extraProperties.forEach((property) => {
-				if (property instanceof KeyValue) {
-					note.setProperty(property.getKey(), property.getValue());
+				if (noteMetadata.prefixEnabled ?? true) {
+					const prefix =
+						noteMetadata.extraInfo?.prefix || Utils.generateDate();
+					note.setTitle(`${prefix} - ${filename}`);
+				} else {
+					note.setTitle(filename);
 				}
-			});
+			} else {
+				return;
+			}
 
 			note.setPath(notePath);
-			note.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
+			if (await note.exist(false)){
+				const existNote = await this.factory.loadFromFile(note.getObPath(true), false, false) as BaseDefault;
+				console.error(existNote)
+				existNote.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
+				await existNote.update()
 
-			// Save the note
-			const file = await note.save();
-
-			// Show success notification
-			const duration = ConfigHelper.getNotificationDuration("success");
-			new Notice(
-				`Created new ${noteType} note: ${note.getTitle()}`,
-				duration,
-			);
-			this.logger.info(`Created note: ${file.path}`);
-
-			// Open the new note if feature is enabled
-			if (this.plugin.settings?.autoOpenNewNote) {
-				await this.app.workspace.openLinkText(
-					note.getTitle(),
-					"",
-					false,
-					{ state: { mode: "source" } },
+				// Open the new note if feature is enabled
+				if (this.plugin.settings?.autoOpenNewNote) {
+					await this.app.workspace.openLinkText(
+						existNote.getTitle(),
+						"",
+						false,
+						{ state: { mode: "source" } },
+					);
+				}
+			} else {
+				// Process extra properties and other metadata
+				const extraTags = noteMetadata.extraInfo?.tags || [];
+				extraTags.forEach((tag) => {
+					note.addTag(tag);
+				});
+				const extraProperties = noteMetadata.extraInfo?.properties || [];
+				extraProperties.forEach((property) => {
+					if (property instanceof KeyValue) {
+						note.setProperty(property.getKey(), property.getValue());
+					}
+				});
+				note.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
+				// Save the note
+				const file = await note.save();
+				// Show success notification
+				const duration = ConfigHelper.getNotificationDuration("success");
+				new Notice(
+					`Created new ${noteType} note: ${note.getTitle()}`,
+					duration,
 				);
+				this.logger.info(`Created note: ${file.path}`);
+				// Open the new note if feature is enabled
+				if (this.plugin.settings?.autoOpenNewNote) {
+					await this.app.workspace.openLinkText(
+						note.getTitle(),
+						"",
+						false,
+						{ state: { mode: "source" } },
+					);
+				}
 			}
-
 			// Close modal
 			this.close();
 		} catch (error) {
