@@ -2,7 +2,7 @@ import ZettelkastenPlugin from "../main";
 import { Modal, App, Notice, TFolder, setIcon } from "obsidian";
 import {
 	BaseDefault,
-	BaseNote,
+	BaseNote, BaseTemplate,
 	KeyValue,
 	NoteFactory,
 	NoteType,
@@ -454,8 +454,8 @@ export class ZettelKastenModal extends Modal {
 
 			note.setPath(notePath);
 			if (await note.exist(false)){
-				const existNote = await this.factory.loadFromFile(note.getObPath(true), false, false) as BaseDefault;
-				existNote.addSourceNote(`[[${this.currentNote?.getTitle()}]]`);
+				const existNote = await this.factory.loadFromFile(note.getObPath(true), false, true) as BaseTemplate;
+				existNote.getProperties().setPropertyValue("sources", `[[${this.currentNote?.getTitle()}]]`);
 				await existNote.update()
 
 				// Open the new note if feature is enabled
