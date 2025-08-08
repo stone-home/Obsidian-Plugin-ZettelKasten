@@ -165,6 +165,22 @@ export class SearchDashboardModal extends Modal {
 		// Action Buttons
 		const buttonContainer = container.createDiv("button-container");
 
+		const openButton = buttonContainer.createEl("button", {
+			text: "Open",
+		});
+		openButton.addClass("action-button", "insert-button");
+		openButton.onclick = async () => {
+			if (this.selectedResult) {
+				await this.app.workspace.openLinkText(
+					this.selectedResult.path,
+					"",
+					false,
+					{ state: { mode: "source" } },
+				);
+				this.close();
+			}
+		};
+
 		const insertButton = buttonContainer.createEl("button", {
 			text: "Insert",
 		});

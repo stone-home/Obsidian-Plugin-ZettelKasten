@@ -17,7 +17,7 @@ import {
 	IZoteroNoteItems,
 } from "../types";
 import ZettelkastenPlugin from "../../main";
-import { BaseDefault, Body, NoteFactory, NoteType } from "../../notes";
+import {BaseDefault, BaseTemplate, Body, NoteFactory, NoteType} from "../../notes";
 import { Logger } from "../../logger";
 import { Utils } from "../../utils";
 import {
@@ -432,7 +432,7 @@ export class ResearchDashboardModal extends Modal {
 		return `Summary - ${year} - ${safeFilename}`;
 	}
 
-	private async quickSearchAndInsetNote(
+	public async quickSearchAndInsetNote(
 		selectedNotes: ISearchResult | ISearchResult[],
 	): Promise<void> {
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -906,7 +906,7 @@ export class ResearchDashboardModal extends Modal {
 		if (await literatureNote.exist()) {
 			const existNote = (await this.factory.loadFromFile(
 				literatureNote.getObPath(true),
-			)) as BaseDefault;
+			)) as BaseTemplate;
 			let isUpdated = false;
 			tags.forEach((tag) => {
 				if (
@@ -923,6 +923,10 @@ export class ResearchDashboardModal extends Modal {
 				}
 			});
 			if (isUpdated) {
+				let property = existNote.getProperties()
+				if (property.getPropertyValue("template")){
+					delete property.getProperties().template;
+				}
 				await existNote.update();
 				this.logger.info(
 					`Note's Tags updated: ${existNote.getTitle()}`,

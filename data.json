@@ -107,6 +107,15 @@
       "path": "002-literature/007-research/venus",
       "template": "Research Venus",
       "folderNote": false
+    },
+    {
+      "enabled": true,
+      "type": "literature",
+      "label": "013-hardware",
+      "emoji": "📟",
+      "path": "002-literature/013-hardware",
+      "template": "default",
+      "folderNote": true
     }
   ],
   "includeTimestamp": true,

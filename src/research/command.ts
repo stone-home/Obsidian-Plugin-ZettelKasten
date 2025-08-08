@@ -17,11 +17,17 @@ export class ResearchCommands {
 	private app: App;
 	private plugin: ZettelkastenPlugin;
 	private factory: NoteFactory;
+	private researchDashboard: ResearchDashboardModal;
 
 	constructor(app: App, plugin: ZettelkastenPlugin, factory: NoteFactory) {
 		this.app = app;
 		this.plugin = plugin;
 		this.factory = factory;
+		this.researchDashboard = new ResearchDashboardModal(
+			this.app,
+			this.plugin,
+			this.factory,
+		);
 	}
 
 	// Register all commands
@@ -37,6 +43,7 @@ export class ResearchCommands {
 		}
 		// Dashboard Commands
 		this.registerDashboardCommands();
+		this.registerAtomicNotesSearchCommands()
 	}
 
 	// Dashboard Commands
@@ -46,10 +53,25 @@ export class ResearchCommands {
 			name: "Open Research Dashboard",
 			icon: "layout-dashboard",
 			callback: () => {
-				new ResearchDashboardModal(
+				this.researchDashboard.open()
+			},
+		});
+	}
+
+	private registerAtomicNotesSearchCommands() {
+		this.plugin.addCommand({
+			id: "open-atomic-notes-search-dashboard",
+			name: "Open Atomic Notes Search",
+			icon: "atom",
+			callback: () => {
+				new SearchDashboardModal(
 					this.app,
 					this.plugin,
 					this.factory,
+					(selectedNote) =>
+						this.researchDashboard.quickSearchAndInsetNote(selectedNote),
+					this.plugin.settings.atomPath,
+					"Atomic Search",
 				).open();
 			},
 		});
