@@ -28,6 +28,14 @@ export function projectReformResearchNote(
 	note.setProperty("code", properties.code || "");
 	note.setProperty("new", properties.new || false);
 	note.setProperty("star", false);
+	note.setProperty("models", []);
+	note.setProperty("trainFeatures", []);
+	note.setProperty("trainMetrics", []);
+	note.setProperty("trainOptimizer", []);
+	note.setProperty("modelDataset", []);
+	note.setProperty("datasetProcess", []);
+	note.setProperty("datasetSampling", []);
+
 	note.addTag(tags);
 	properties.sourceNotes?.forEach((source) => {
 		note.addSourceNote(`[[${source}]]`);
@@ -68,6 +76,7 @@ export function projectReformResearchNote(
 			"🫆**method**::",
 			"💎**novelty**::",
 			"🌡️**evaluation**::",
+			"📌**limitation**::",
 			""
 		],
 		"👻Summary",
@@ -100,6 +109,7 @@ export function projectReformResearchNote(
 		);
 		note.addBodyContent([], "⭐️Highlights", 1);
 		note.addBodyContent([], "📌Limitation", 1);
+		note.addBodyContent([], "🫀Method", 1);
 		note.addBodyContent([], "🪤Research Methodology", 1);
 		note.addBodyContent([], "🧑‍🔬Experiments", 2);
 		note.addBodyContent([], "🫆Key Findings", 2);

@@ -174,7 +174,7 @@ export class SearchDashboardModal extends Modal {
 				await this.app.workspace.openLinkText(
 					this.selectedResult.path,
 					"",
-					false,
+					true,
 					{ state: { mode: "source" } },
 				);
 				this.close();

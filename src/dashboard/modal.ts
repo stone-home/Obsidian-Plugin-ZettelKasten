@@ -386,7 +386,12 @@ export class ZettelKastenModal extends Modal {
 
 			// Open the new note if feature is enabled
 			if (this.plugin.settings?.autoOpenNewNote) {
-				await this.app.workspace.openLinkText(file.path, "");
+				await this.app.workspace.openLinkText(
+					file.path,
+					"",
+			true,
+					{ state: { mode: "source" } },
+				);
 			}
 
 			// Close modal
@@ -494,7 +499,7 @@ export class ZettelKastenModal extends Modal {
 					await this.app.workspace.openLinkText(
 						note.getTitle(),
 						"",
-						false,
+						true,
 						{ state: { mode: "source" } },
 					);
 				}
