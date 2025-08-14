@@ -374,6 +374,7 @@ export class ZettelKastenModal extends Modal {
 			});
 
 			// save note
+			note.getProperties().remove("template");
 			const file = await note.save();
 
 			// Show success notification
@@ -458,6 +459,7 @@ export class ZettelKastenModal extends Modal {
 			}
 
 			note.setPath(notePath);
+			note.getProperties().remove("template");
 			if (await note.exist(false)){
 				const existNote = await this.factory.loadFromFile(note.getObPath(true), false, true) as BaseTemplate;
 				existNote.getProperties().setPropertyValue("sources", `[[${this.currentNote?.getTitle()}]]`);
