@@ -147,6 +147,7 @@ export class Project {
 			note.setProperty("Section", "inbox");
 			note.setProperty("Dependencies", "");
 			note.setProperty("Length", 1);
+			note.setProperty("shortName", name)
 		}
 		note.addTag([
 			"🗂️project/PhD",
