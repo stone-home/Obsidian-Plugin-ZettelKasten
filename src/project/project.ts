@@ -201,6 +201,71 @@ export class Project {
 				`🛤️Research Path - ${taskType}`,
 				1,
 			);
+		} else {
+			note.setProperty("status", "");
+			note.addBodyContent([], "🧩Method Description", 1)
+			note.addBodyContent([], "Theoretical Foundation", 2)
+			note.addBodyContent([], "Specific Implementation Steps", 2)
+			note.addBodyContent(
+				[
+					"- Software:",
+					"- Hardware:",
+					"- Datasets:",
+					"- References:",
+				],
+				"Tool/Materials Used",
+				2
+			)
+			note.addBodyContent([], "📌Failure Analysis", 1)
+			note.addBodyContent([
+				"- **Expected**: What effect was anticipated",
+				"- **Actual**: What actually occurred",
+			], "Expected Results vs Actual Results", 2)
+			note.addBodyContent([
+				"- **Problem 1**: Description of the first problem encountered",
+			], "Specific Failure Manifestations", 2)
+			note.addBodyContent([], "🔍Root Cause Analysis", 2)
+			note.addBodyContent([
+				"- [ ] Theoretical assumption was incorrect",
+				"- [ ] Implementation had bugs",
+				"- [ ] Theoretical applicability conditions not met",
+				"- [ ] Misunderstanding of theory",
+			], "Theoretical Level", 3)
+			note.addBodyContent([
+				"- [ ] Implementation method problematic",
+				"- [ ] Parameter settings inappropriate",
+				"- [ ] Tool/equipment limitations"
+			], "Technical Level", 3)
+			note.addBodyContent([
+				"- [ ] Data quality issues",
+				"- [ ] Insufficient data quantity",
+				"- [ ] Data does not meet method requirements",
+			], "Data Level", 3)
+			note.addBodyContent([], "👀Insights Gained", 1)
+			note.addBodyContent([
+				"- Although the main goal failed, what interesting phenomena were observed?"
+			], "## Unexpected Discoveries", 2)
+			note.addBodyContent([
+				"- What new insights about the problem itself did this failure provide?"
+			], "New Understanding of the Research Problem", 3)
+			note.addBodyContent([
+				"- What hints does this failure give for other research paths?"
+			], "Inspiration for Other Methods", 3)
+			note.addBodyContent([], "🔖Follow-up Actions", 1)
+			note.addBodyContent([
+				"- [ ] Possible improvement point 1"
+			], "Improvement Directions", 2)
+			note.addBodyContent([
+				"- links"
+			], "Related Methods", 2)
+			note.addBodyContent([
+				"Under what circumstances might this method be reconsidered?"
+			], "Conditions for Future Reconsideration", 2)
+			note.addBodyContent(["Literature supporting this method"], "References", 2)
+			note.addBodyContent([], "Discussion Records", 2)
+			note.addBodyContent([
+				"- Date: Discussion key points"
+			], "Discussions with Advisor/Colleagues", 3)
 		}
 		sources.forEach((source) => {
 			note.addSourceNote(`[[${source.basename}]]`);
