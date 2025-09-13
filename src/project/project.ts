@@ -181,13 +181,13 @@ export class Project {
 								name: "header",
 								type: "array",
 								required: true,
-								value: [`🐾${taskType} Tasks`, "Active"],
+								value: [`🐾${taskType} Tasks`, "Active", "Status"],
 							},
 							{
 								name: "property",
 								type: "array",
 								required: true,
-								value: ["file.link", "new"],
+								value: ["file.link", "new", "status"],
 							},
 							{
 								name: "tags",
