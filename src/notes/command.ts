@@ -1,8 +1,8 @@
 import {App} from "obsidian";
 import {ConfirmationModal} from "./modal";
-import {Logger} from "../../logger";
+import {Logger} from "../logger";
 import {TemplateManager} from "./template";
-import ZettelkastenPlugin from "../../main";
+import ZettelkastenPlugin from "../main";
 
 export class ZettelkastenCommand {
 	private app: App;

@@ -33,6 +33,14 @@ export class KeyValue<T> implements IKeyValue<T> {
 		this.value = value;
 	}
 
+	private linkStringProcess(item: string): string {
+		// [TS] Process the string to ensure it is properly formatted for linking
+		if (item[0] === "[" && item[1] === "[" && item[item.length - 1] === "]" && item[item.length - 2] === "]") {
+			item = `"${item}"`;
+		}
+		return item;
+	}
+
 	public toString(): string {
 		let output: string = "";
 		// [TS] using different approach to format the output based on the type of value
@@ -44,16 +52,19 @@ export class KeyValue<T> implements IKeyValue<T> {
 					// prevent undefined or null values in the array
 					.filter((item) => item !== undefined && item !== null)
 					.map((item) => {
-						if (item[0] === "[" && item[1] === "[" && item[item.length - 1] === "]" && item[item.length - 2] === "]") {
-							item = `"${item}"`
-						}
+						item = this.linkStringProcess(item);
 						return `  - ${item}`
 					})
 					.join("\n");
 				output = `${this.key}:\n${formattedArray}\n`;
 			}
 		} else {
-			output = `${this.key}: ${this.value}\n`;
+			if (String.isString(this.value)) {
+				output = `${this.key}: ${ this.linkStringProcess(this.value)}\n`;
+			} else {
+				// For other types, we convert them to string directly
+				output = `${this.key}: ${this.value}\n`;
+			}
 		}
 		return output;
 	}
@@ -194,7 +205,9 @@ export class Property {
 
 	public addTag(tag: string | string[]): void {
 		this.logger.debug(`Add Property: tags:${tag}`);
-		this.setPropertyValue("tags", tag);
+		const tags = Array.isArray(tag) ? tag : [tag];
+		const unifiedTags = Utils.unifiedTagFormat(tags, false, true);
+		this.setPropertyValue("tags", unifiedTags);
 	}
 
 	public getAliases(): string[] {
@@ -430,9 +443,12 @@ export abstract class BaseNote {
 		}
 	}
 
-	public getProperties(): Property {
-		this.logger.debug("Get properties of the note");
-		return this.properties;
+	public addBodyContent(
+		content: string | string[],
+		section_name: string,
+		head_level: number,
+	): void {
+		this.body.addContent(content, section_name, head_level);
 	}
 
 	public getBody(): Body {
@@ -440,12 +456,33 @@ export abstract class BaseNote {
 		return this.body;
 	}
 
-	public setBody(body: Body): void {
+	/**
+	 * Empties the body of the note, resetting it to a new Body instance.
+	 * This method is useful for clearing the content of the note.
+	 */
+	public emptyBody(): void {
+		this.logger.debug("Empty the body of the note");
+		this.setBody(new Body());
+	}
+
+	private setBody(body: Body): void {
 		this.logger.debug("Set body of the note");
 		this.body = body;
 	}
 
-	// 基础属性操作方法
+	public getProperties(): Property {
+		this.logger.debug("Get properties of the note");
+		return this.properties;
+	}
+
+	public setProperty(key: string, value: any): void {
+		this.properties.setPropertyValue(key, value);
+	}
+
+	public getProperty(key: string): any {
+		return this.properties.getPropertyValue(key);
+	}
+
 	public getTitle(): string {
 		return this.properties.getTitle();
 	}
@@ -479,32 +516,12 @@ export abstract class BaseNote {
 	}
 
 	public addTag(tag: string | string[]): void {
-		const tags = Array.isArray(tag) ? tag : [tag];
-		const unifiedTags = Utils.unifiedTagFormat(tags, false, true);
-		this.properties.addTag(unifiedTags);
+		this.properties.addTag(tag);
 	}
 
 	public addAlias(alias: string | string[]): void {
 		const aliases = Array.isArray(alias) ? alias : [alias];
 		this.properties.addAlias(aliases);
-	}
-
-	public setProperty(key: string, value: any): void {
-		this.properties.setPropertyValue(key, value);
-	}
-
-	public getProperty(key: string): any {
-		return this.properties.getPropertyValue(key);
-	}
-
-	public enableSubpage(): void {
-		this.subPage = true;
-		this.logger.debug("Subpage mode is enabled");
-	}
-
-	public disableSubpage(): void {
-		this.subPage = false;
-		this.logger.debug("Subpage mode is disabled");
 	}
 
 	public getObPath(extension: boolean = false): string {
@@ -515,21 +532,12 @@ export abstract class BaseNote {
 		return obPath;
 	}
 
-	public addBodyContent(
-		content: string | string[],
-		section_name: string,
-		head_level: number,
-	): void {
-		this.body.addContent(content, section_name, head_level);
-	}
 
-	/**
-	 * Empties the body of the note, resetting it to a new Body instance.
-	 * This method is useful for clearing the content of the note.
-	 */
-	public emptyBody(): void {
-		this.logger.debug("Empty the body of the note");
-		this.body = new Body();
+	protected async linkingPages(): Promise<void> {
+		this.logger.info("Start linking pages");
+		for (const link of this.linkedPages) {
+			await link.link(this);
+		}
 	}
 
 	public addLinkInstance(link: INoteLink): void {
@@ -565,6 +573,7 @@ export abstract class BaseNote {
 	public async toString(): Promise<string> {
 		this.logger.debug("Generate string-form content");
 		this.pre_process();
+		this.setType(this.noteType);
 		let note: string = this.properties.toString();
 		note += this.body.toString();
 		return this.post_process(note);
@@ -577,20 +586,13 @@ export abstract class BaseNote {
 		return this.app.vault.getAbstractFileByPath(path);
 	}
 
-	// Check if the note exists in the vault
-	public async exist(dir: boolean = false): Promise<boolean> {
-		const path = (await this.getTfile(dir)) as TAbstractFile;
-		return Utils.fileExists(this.app, path, dir);
-	}
-
 	protected async checkBeforeSave(): Promise<void> {
 		this.logger.debug("Execute a Checking-before-saving");
 
 		// check whether the directory exists
 		const dirExists = await this.exist(true);
 		if (!dirExists) {
-			await this.app.vault.createFolder(this.getPath());
-			this.logger.warn(`Dir was created, ${this.getPath()}`);
+			await Utils.createFolder(this.app, this.getPath());
 		}
 
 		// Check whether title is empty
@@ -623,6 +625,22 @@ export abstract class BaseNote {
 		this.setType(this.noteType);
 	}
 
+	/**
+	 * Checks if the note exists in the vault.
+	 * @param {boolean} dir - If true, checks for the existence of the directory instead of the file.
+	 **/
+	public async exist(dir: boolean = false): Promise<boolean> {
+		const path = (await this.getTfile(dir)) as TAbstractFile;
+		return Utils.fileExists(this.app, path, dir);
+	}
+
+	/**
+	 * Saves the note to the vault.
+	 * If the note already exists, it will be updated.
+	 * If it doesn't exist, a new file will be created.
+	 * @returns {Promise<TFile>} The saved TFile object.
+	 * @throws {Error} If the save operation fails.
+	 **/
 	public async save(): Promise<TFile> {
 		this.logger.info(`Start saving note to ${this.getObPath()}`);
 		await this.checkBeforeSave();
@@ -645,6 +663,42 @@ export abstract class BaseNote {
 		}
 	}
 
+	/**
+	 * Renames the note in the vault.
+	 * * This method updates the title of the note and renames the file on disk.
+	 * @param newTitle
+	 * @returns {Promise<void>} A promise that resolves when the rename operation is complete.
+	 */
+	public async rename(newTitle: string): Promise<void> {
+		const tFile = await this.getTfile();
+		if (!tFile) {
+			this.logger.error("Original file not found, cannot rename.");
+			return;
+		}
+
+		this.setTitle(newTitle);
+		const targetPath = this.getObPath(true);
+
+		try {
+			// 3. Rename the file on the disk FIRST. This is the most critical step.
+			await this.app.vault.rename(tFile, targetPath);
+		} catch (error) {
+			this.logger.logError(
+				`Failed to rename file to ${targetPath}: ${error}`,
+				error,
+			);
+			return;
+		}
+
+		await this.update();
+	}
+
+	/**
+	 * Updates an existing note in the vault.
+	 * * This method modifies the content of the note and performs linking operations.
+	 * * @returns {Promise<TFile>} The updated TFile object.
+	 * @throws {Error} If the update operation fails.
+	 */
 	public async update(): Promise<TFile> {
 		this.logger.info(`Start updating note at ${this.getObPath()}`);
 		const updated_note = await this.toString();
@@ -671,6 +725,26 @@ export abstract class BaseNote {
 			throw error;
 		}
 		return file;
+	}
+
+	async delete(): Promise<void> {
+		this.logger.info(`Start deleting note at ${this.getObPath()}`);
+		const file = await this.getTfile();
+		if (file instanceof TFile) {
+			try {
+				await this.app.vault.trash(file, true);
+				this.logger.info(`Note deleted: ${this.getObPath(false)}`);
+			} catch (error) {
+				this.logger.logError(
+					`Delete ${this.getTitle()} failed: ${error}`,
+					error,
+				);
+				throw error;
+			}
+		} else {
+			this.logger.warn(`File not found: ${this.getObPath(true)}`);
+			new Notice(`File not found: ${this.getObPath(true)}`);
+		}
 	}
 
 	/**
@@ -713,6 +787,7 @@ export abstract class BaseNote {
 		try {
 			// The renameFile method moves the file by changing its path
 			if (file) {
+				await this.checkBeforeSave()
 				await this.app.fileManager.renameFile(
 					file,
 					this.getObPath(true),
@@ -729,12 +804,99 @@ export abstract class BaseNote {
 		}
 	}
 
-	protected async linkingPages(): Promise<void> {
-		this.logger.info("Start linking pages");
-		for (const link of this.linkedPages) {
-			await link.link(this);
+	/**
+	 * Loads a note from a file in the vault.
+	 * @param app {App} The current application instance.
+	 * @param path {string} The path to the note file.
+	 * @param template {boolean} Whether the note is a template.
+	 */
+	static async loadFromFile(
+		app: App,
+		path: string,
+		template: boolean = false,
+	): Promise<BaseNote> {
+		// obtain TFile object from the path
+		const file = app.vault.getAbstractFileByPath(path);
+		if (!file || !(file instanceof TFile)) {
+			throw new Error(`File not found or is not a valid file: ${path}`);
 		}
+		const cache = app.metadataCache.getFileCache(file);
+		const frontmatter = cache!.frontmatter;
+		const content = await app.vault.read(file);
+		const fileName = file.basename;
+
+		const noteType =  frontmatter!.type as NoteType;
+
+		const noteClass = template? BaseTemplate: BaseDefault
+		const note = new noteClass(app, noteType);
+		const properties = note.getProperties();
+
+		// update properties with frontmatter
+		if (frontmatter) {
+			for (const [key, propValue] of Object.entries(frontmatter)) {
+				properties.setPropertyValue(key, propValue, true);
+			}
+		}
+
+		const noteBody = note.getBody();
+		const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+		const match = content.match(frontmatterRegex);
+		if (match) {
+			const [, frontmatter, bodyContent] = match;
+			const lines = bodyContent.split("\n");
+			let currentSection = "default";
+			let currentHeadLevel = 1;
+			let contentBuffer: string[] = [];
+
+			for (const line of lines) {
+				// Check if line is a header
+				const headerMatch = line.match(/^(#+)\s+(.+)$/);
+
+				if (headerMatch) {
+					// Save previous section content if exists
+					if (contentBuffer.length > 0) {
+						noteBody.addContent(
+							contentBuffer.join("\n").trim(),
+							currentSection,
+							currentHeadLevel,
+						);
+						contentBuffer = [];
+					}
+
+					// Update current section
+					currentHeadLevel = headerMatch[1].length;
+					currentSection = headerMatch[2].trim();
+
+					// Create new section
+					noteBody.newSection(currentSection, currentHeadLevel);
+				} else {
+					// Add line to content buffer (skip empty lines at the beginning)
+					if (line.trim() || contentBuffer.length > 0) {
+						contentBuffer.push(line);
+					}
+				}
+			}
+
+			// Save remaining content
+			if (contentBuffer.length > 0) {
+				noteBody.addContent(
+					contentBuffer.join("\n").trim(),
+					currentSection,
+					currentHeadLevel,
+				);
+			}
+		}
+
+		// Set the save path based on file location
+		const pathParts = path.split("/");
+		if (pathParts.length > 1) {
+			pathParts.pop(); // Remove filename
+			note.setPath(pathParts.join("/"));
+		}
+
+		return note;
 	}
+
 }
 
 // Zettelkasten Relevant Class
@@ -832,5 +994,18 @@ export class BaseDefault extends BaseNote {
 			}
 			this.properties.addSources(sourceNote);
 		}
+	}
+}
+
+
+export class BaseTemplate extends BaseNote {
+	defaultBody(): Body {
+		return new Body();
+	}
+
+	defaultProperty(): Property {
+		let properties: Property = new Property();
+		properties.setPropertyValue("template", true);
+		return properties;
 	}
 }

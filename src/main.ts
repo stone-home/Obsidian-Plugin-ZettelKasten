@@ -1,7 +1,6 @@
 // Example integration in your main.ts file
 import { Plugin, Notice } from "obsidian";
 import { Logger } from "./logger";
-import { NoteFactory } from "./notes";
 import { IntegrationManager } from "./3rd";
 import { ZettelkastenSettings } from "./types";
 import { ZettelkastenSettingTab } from "./settings";
@@ -10,11 +9,9 @@ import { WeeklyKanbanCommand } from "./task";
 import { ZettelkastenCommand } from "./dashboard";
 import { ResearchCommands } from "./research";
 import { DataviewCommand } from "./dataview";
-import { ZettelkastenCommandV2} from "./notes/V2";
+import { ZettelkastenCommandV2} from "./notes";
 
 export default class ZettelkastenPlugin extends Plugin {
-	private factory!: NoteFactory;
-	private dataview!: DataviewCommand;
 	private zettelkastenCommand!: ZettelkastenCommandV2;
 	private logger = Logger.createLogger("ZettelkastenPlugin");
 	public integrationManager!: IntegrationManager;

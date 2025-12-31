@@ -1,6 +1,6 @@
 import {App, Component, EventRef, TAbstractFile} from "obsidian";
-import {Logger} from "../../logger";
-import {Utils} from "../../utils";
+import {Logger} from "../logger";
+import {Utils} from "../utils";
 import {NoteType} from "./config";
 import {BaseNote, BaseTemplate} from "./note";
 import {ITemplateMetadata} from "./types";
